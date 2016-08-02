@@ -11,6 +11,7 @@ import java.util.Map;
 
 import javax.servlet.ServletContext;
 
+import edu.cornell.mannlib.vitro.webapp.web.templatemodels.individuallist.ListedIndividualBuilder;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.json.JSONArray;
@@ -142,7 +143,9 @@ public class BrowseDataGetter extends DataGetterBase implements DataGetter {
    
     /**
      * Gets a list of all VClassGroups with vclasses with individual counts.
-     * @param params2 
+     * @param request current VitroRequest
+     * @param params a parameter map
+     * @param context current servlet context
      */
     protected Map<String,Object> getAllClassGroupData(VitroRequest request, Map params, ServletContext context){
         Map<String,Object> map = new HashMap<String,Object>();                  
@@ -174,7 +177,7 @@ public class BrowseDataGetter extends DataGetterBase implements DataGetter {
         
         List<ListedIndividual> tInds = new ArrayList<ListedIndividual>(inds.size());
         for( Individual ind : inds){
-            tInds.add(new ListedIndividual(ind, vreq));
+            tInds.add(ListedIndividualBuilder.build(ind, vreq));
         }
         map.put("individualsInClass", tInds);
 

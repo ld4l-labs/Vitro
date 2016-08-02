@@ -4,6 +4,8 @@
     Macros and functions for working with properties and property lists
 ------------------------------------------------------------------------------>
 
+<#import "lib-generator-classes.ftl" as generators />
+
 <#-- Return true iff there are statements for this property -->
 <#function hasStatements propertyGroups propertyName>
 
@@ -177,25 +179,23 @@ name will be used as the label. -->
     </#if>
 </#macro>
 <#macro editLink propertyLocalName propertyName statement rangeUri="">
-<#if propertyLocalName?contains("ARG_2000028")>
-    <#if rangeUri?contains("Address")>
-        <#local url = statement.editUrl + "&addressUri=" + "${statement.address!}">
-    <#elseif rangeUri?contains("Telephone") || rangeUri?contains("Fax")>
-        <#local url = statement.editUrl + "&phoneUri=" + "${statement.phone!}">
-    <#elseif rangeUri?contains("Work") || rangeUri?contains("Email")>
-        <#local url = statement.editUrl + "&emailUri=" + "${statement.email!}">
-    <#elseif rangeUri?contains("Name")>
-        <#local url = statement.editUrl + "&fullNameUri=" + "${statement.fullName!}">
-    <#elseif rangeUri?contains("Title")>
-        <#local url = statement.editUrl + "&titleUri=" + "${statement.title!}">
-    </#if>
-<#else>
-    <#local url = statement.editUrl>
-</#if>
-    <#if url?has_content>
+	<#local url = statement.editUrl>
+	<#if url?has_content>
+		<#if propertyLocalName?contains("ARG_2000028")>
+		    <#if rangeUri?contains("Address")>
+		        <#local url = url + "&addressUri=" + "${statement.address!}">
+		    <#elseif rangeUri?contains("Telephone") || rangeUri?contains("Fax")>
+		        <#local url = url + "&phoneUri=" + "${statement.phone!}">
+		    <#elseif rangeUri?contains("Work") || rangeUri?contains("Email")>
+		        <#local url = url + "&emailUri=" + "${statement.email!}">
+		    <#elseif rangeUri?contains("Name")>
+		        <#local url = url + "&fullNameUri=" + "${statement.fullName!}">
+		    <#elseif rangeUri?contains("Title")>
+		        <#local url = url + "&titleUri=" + "${statement.title!}">
+		    </#if>
+		</#if>
         <@showEditLink propertyLocalName url />
     </#if>
-
 </#macro>
 
 <#macro showEditLink propertyLocalName url>
@@ -304,7 +304,7 @@ name will be used as the label. -->
     	<#if editable>
     		<#assign imageAlt = "${i18n().manage}" />
     		<#assign linkTitle = "${i18n().manage_list_of_labels}">
-    		<#assign labelLink= "${urls.base}/editRequestDispatch?subjectUri=${individualUri}&editForm=edu.cornell.mannlib.vitro.webapp.edit.n3editing.configuration.generators.ManageLabelsGenerator&predicateUri=${labelPropertyUri}${extraParameters}">
+    		<#assign labelLink= "${urls.base}/editRequestDispatch?subjectUri=${individualUri}&editForm=${generators.ManageLabelsGenerator}&predicateUri=${labelPropertyUri}${extraParameters}">
     	<#else>
 			<#assign linkTitle = "${i18n().view_list_of_labels}">
 			<#assign imageAlt = "${i18n().view}" /> 
@@ -334,6 +334,10 @@ name will be used as the label. -->
 
 <#--Property group names may have spaces in them, replace spaces with underscores for html id/hash-->
 <#function createPropertyGroupHtmlId propertyGroupName>
-	<#return propertyGroupName?replace(" ", "_")>
+    <#local groupName = propertyGroupName?replace(" ", "_")>
+    <#local groupName = groupName?replace("/", "-slash-")>
+    <#local groupName = groupName?replace(",", "-comma-")>
+    <#local groupName = groupName?replace("&", "-and-")>
+    <#return groupName>
 </#function>
 

@@ -73,6 +73,7 @@ import edu.cornell.mannlib.vitro.webapp.modelaccess.ModelAccess.WhichService;
 import edu.cornell.mannlib.vitro.webapp.rdfservice.ChangeSet;
 import edu.cornell.mannlib.vitro.webapp.rdfservice.RDFService;
 import edu.cornell.mannlib.vitro.webapp.rdfservice.RDFServiceException;
+import edu.cornell.mannlib.vitro.webapp.rdfservice.adapters.VitroModelFactory;
 import edu.cornell.mannlib.vitro.webapp.utils.SparqlQueryUtils;
 import edu.cornell.mannlib.vitro.webapp.utils.jena.JenaIngestUtils;
 import edu.cornell.mannlib.vitro.webapp.utils.jena.JenaIngestUtils.MergeResult;
@@ -187,8 +188,15 @@ public class JenaIngestController extends BaseEditController {
             request.setAttribute("bodyJsp",INGEST_MENU_JSP);
         }
         
-        maker = getModelMaker(vreq); 
-        request.setAttribute("modelNames", maker.listModels().toList());
+        maker = getModelMaker(vreq);
+        List<String> modelNames = maker.listModels().toList();
+        for (int mnIdx = modelNames.size() - 1; mnIdx > -1; mnIdx--) {
+            if (!modelNames.get(mnIdx).startsWith("http")) {
+                modelNames.remove(mnIdx);
+            }
+        }
+
+        request.setAttribute("modelNames", modelNames);
    
         RequestDispatcher rd = request.getRequestDispatcher(
                 Controllers.BASIC_JSP);      
@@ -706,14 +714,13 @@ public class JenaIngestController extends BaseEditController {
     
     private void doClearModel(String modelName, ModelMaker modelMaker) {
         Model m = modelMaker.getModel(modelName);
-        OntModel o = ModelFactory.createOntologyModel(OntModelSpec.OWL_MEM,m);
+        OntModel o = VitroModelFactory.createOntologyModel(m);
         o.enterCriticalSection(Lock.WRITE);
         try {
-            o.removeAll(null,null,null);
+            o.removeAll();
         } finally {
             o.leaveCriticalSection();
         }
-        // removeAll() doesn't work with the listeners!
     }
     
     private void doLoadRDFData(String modelName, String docLoc, String filePath, String language, ModelMaker modelMaker) {

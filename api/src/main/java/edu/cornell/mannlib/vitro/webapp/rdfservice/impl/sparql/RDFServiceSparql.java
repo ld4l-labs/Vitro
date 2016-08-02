@@ -16,8 +16,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-import edu.cornell.mannlib.vitro.webapp.rdfservice.ResultSetConsumer;
-import edu.cornell.mannlib.vitro.webapp.utils.http.HttpClientFactory;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -65,10 +63,11 @@ import edu.cornell.mannlib.vitro.webapp.rdfservice.ChangeSet;
 import edu.cornell.mannlib.vitro.webapp.rdfservice.ModelChange;
 import edu.cornell.mannlib.vitro.webapp.rdfservice.RDFService;
 import edu.cornell.mannlib.vitro.webapp.rdfservice.RDFServiceException;
+import edu.cornell.mannlib.vitro.webapp.rdfservice.ResultSetConsumer;
 import edu.cornell.mannlib.vitro.webapp.rdfservice.impl.ChangeSetImpl;
 import edu.cornell.mannlib.vitro.webapp.rdfservice.impl.RDFServiceImpl;
 import edu.cornell.mannlib.vitro.webapp.rdfservice.impl.RDFServiceUtils;
-import edu.cornell.mannlib.vitro.webapp.rdfservice.impl.jena.ListeningGraph;
+import edu.cornell.mannlib.vitro.webapp.utils.http.HttpClientFactory;
 import edu.cornell.mannlib.vitro.webapp.utils.sparql.ResultSetIterators.ResultSetQuadsIterator;
 import edu.cornell.mannlib.vitro.webapp.utils.sparql.ResultSetIterators.ResultSetTriplesIterator;
 
@@ -83,7 +82,7 @@ public class RDFServiceSparql extends RDFServiceImpl implements RDFService {
 	protected String readEndpointURI;
 	protected String updateEndpointURI;
 	// the number of triples to be
-	private static final int CHUNK_SIZE = 1000; // added/removed in a single
+	private static final int CHUNK_SIZE = 5000; // added/removed in a single
 	// SPARQL UPDATE
 
 	protected HttpClient httpClient;
@@ -93,9 +92,9 @@ public class RDFServiceSparql extends RDFServiceImpl implements RDFService {
 
 	/**
 	 * Returns an RDFService for a remote repository
-	 * @param String - URI of the read SPARQL endpoint for the knowledge base
-	 * @param String - URI of the update SPARQL endpoint for the knowledge base
-	 * @param String - URI of the default write graph within the knowledge base.
+	 * @param readEndpointURI - URI of the read SPARQL endpoint for the knowledge base
+	 * @param updateEndpointURI - URI of the update SPARQL endpoint for the knowledge base
+	 * @param defaultWriteGraphURI - URI of the default write graph within the knowledge base.
 	 *                   this is the graph that will be written to when a graph
 	 *                   is not explicitly specified.
 	 *
@@ -126,8 +125,8 @@ public class RDFServiceSparql extends RDFServiceImpl implements RDFService {
 
 	/**
 	 * Returns an RDFService for a remote repository
-	 * @param String - URI of the read SPARQL endpoint for the knowledge base
-	 * @param String - URI of the update SPARQL endpoint for the knowledge base
+	 * @param readEndpointURI - URI of the read SPARQL endpoint for the knowledge base
+	 * @param updateEndpointURI - URI of the update SPARQL endpoint for the knowledge base
 	 *
 	 * The default read graph is the union of all graphs in the
 	 * knowledge base
@@ -138,7 +137,7 @@ public class RDFServiceSparql extends RDFServiceImpl implements RDFService {
 
 	/**
 	 * Returns an RDFService for a remote repository
-	 * @param String - URI of the read and update SPARQL endpoint for the knowledge base
+	 * @param endpointURI - URI of the read and update SPARQL endpoint for the knowledge base
 	 *
 	 * The default read graph is the union of all graphs in the
 	 * knowledge base
@@ -158,7 +157,7 @@ public class RDFServiceSparql extends RDFServiceImpl implements RDFService {
 	 * If the precondition query returns a non-empty result no updates
 	 * will be made.
 	 *
-	 * @param ChangeSet - a set of changes to be performed on the RDF store.
+	 * @param changeSet - a set of changes to be performed on the RDF store.
 	 *
 	 * @return boolean - indicates whether the precondition was satisfied
 	 */
@@ -170,12 +169,13 @@ public class RDFServiceSparql extends RDFServiceImpl implements RDFService {
 				&& !isPreconditionSatisfied(
 				changeSet.getPreconditionQuery(),
 				changeSet.getPreconditionQueryType())) {
-			return false;
+		    return false;
 		}
 
 		try {
-			for (Object o : changeSet.getPreChangeEvents()) {
-				this.notifyListenersOfEvent(o);
+
+		    for (Object o : changeSet.getPreChangeEvents()) {
+		        this.notifyListenersOfEvent(o);
 			}
 
 			Iterator<ModelChange> csIt = changeSet.getModelChanges().iterator();
@@ -188,29 +188,8 @@ public class RDFServiceSparql extends RDFServiceImpl implements RDFService {
 				modelChange.getSerializedModel().mark(Integer.MAX_VALUE);
 				performChange(modelChange);
 			}
-
-			// notify listeners of triple changes
-			csIt = changeSet.getModelChanges().iterator();
-			while (csIt.hasNext()) {
-				ModelChange modelChange = csIt.next();
-				modelChange.getSerializedModel().reset();
-				Model model = ModelFactory.createModelForGraph(
-						new ListeningGraph(modelChange.getGraphURI(), this));
-				if (modelChange.getOperation() == ModelChange.Operation.ADD) {
-					model.read(modelChange.getSerializedModel(), null,
-							getSerializationFormatString(
-									modelChange.getSerializationFormat()));
-				} else if (modelChange.getOperation() == ModelChange.Operation.REMOVE){
-					Model temp = ModelFactory.createDefaultModel();
-					temp.read(modelChange.getSerializedModel(), null,
-							getSerializationFormatString(
-									modelChange.getSerializationFormat()));
-					model.remove(temp);
-				} else {
-					log.error("Unsupported model change type " +
-							modelChange.getOperation().getClass().getName());
-				}
-			}
+			
+			notifyListenersOfChanges(changeSet);						
 
 			for (Object o : changeSet.getPostChangeEvents()) {
 				this.notifyListenersOfEvent(o);
@@ -229,10 +208,8 @@ public class RDFServiceSparql extends RDFServiceImpl implements RDFService {
 	 * Performs a SPARQL construct query against the knowledge base. The query may have
 	 * an embedded graph identifier.
 	 *
-	 * @param String query - the SPARQL query to be executed against the RDF store
-	 * @param RDFService.ModelSerializationFormat resultFormat - type of serialization for RDF result of the SPARQL query
-	 * @param OutputStream outputStream - the result of the query
-	 *
+	 * @param queryStr - the SPARQL query to be executed against the RDF store
+	 * @param resultFormat - type of serialization for RDF result of the SPARQL query
 	 */
 	@Override
 	public InputStream sparqlConstructQuery(String queryStr,
@@ -274,8 +251,8 @@ public class RDFServiceSparql extends RDFServiceImpl implements RDFService {
 	 * Performs a SPARQL describe query against the knowledge base. The query may have
 	 * an embedded graph identifier.
 	 *
-	 * @param String query - the SPARQL query to be executed against the RDF store
-	 * @param RDFService.ModelSerializationFormat resultFormat - type of serialization for RDF result of the SPARQL query
+	 * @param queryStr - the SPARQL query to be executed against the RDF store
+	 * @param resultFormat - type of serialization for RDF result of the SPARQL query
 	 *
 	 * @return InputStream - the result of the query
 	 *
@@ -304,8 +281,8 @@ public class RDFServiceSparql extends RDFServiceImpl implements RDFService {
 	 * Performs a SPARQL select query against the knowledge base. The query may have
 	 * an embedded graph identifier.
 	 *
-	 * @param String query - the SPARQL query to be executed against the RDF store
-	 * @param RDFService.ResultFormat resultFormat - format for the result of the Select query
+	 * @param queryStr - the SPARQL query to be executed against the RDF store
+	 * @param resultFormat - format for the result of the Select query
 	 *
 	 * @return InputStream - the result of the query
 	 *
@@ -325,7 +302,7 @@ public class RDFServiceSparql extends RDFServiceImpl implements RDFService {
 				if (statusCode > 399) {
 					log.error("response " + statusCode + " to query. \n");
 					log.debug("update string: \n" + queryStr);
-					throw new RDFServiceException("Unable to perform SPARQL UPDATE");
+					throw new RDFServiceException("Unable to perform SPARQL SELECT");
 				}
 
 				try (InputStream in = response.getEntity().getContent()) {
@@ -395,7 +372,7 @@ public class RDFServiceSparql extends RDFServiceImpl implements RDFService {
 	 * Performs a SPARQL ASK query against the knowledge base. The query may have
 	 * an embedded graph identifier.
 	 *
-	 * @param String query - the SPARQL query to be executed against the RDF store
+	 * @param queryStr - the SPARQL query to be executed against the RDF store
 	 *
 	 * @return  boolean - the result of the SPARQL query
 	 */
@@ -414,8 +391,6 @@ public class RDFServiceSparql extends RDFServiceImpl implements RDFService {
 
 	/**
 	 * Get a list of all the graph URIs in the RDF store.
-	 *
-	 * @return  List<String> - list of all the graph URIs in the RDF store
 	 */
 	@Override
 	public List<String> getGraphURIs() throws RDFServiceException {
@@ -463,12 +438,10 @@ public class RDFServiceSparql extends RDFServiceImpl implements RDFService {
 	}
 
 	/**
-	 * TODO - what is the definition of this method?
-	 * @return
 	 */
 	@Override
 	public void getGraphMetadata() throws RDFServiceException {
-
+	    throw new UnsupportedOperationException();
 	}
 
 	/**
@@ -549,7 +522,9 @@ public class RDFServiceSparql extends RDFServiceImpl implements RDFService {
 
 	public void addModel(Model model, String graphURI) throws RDFServiceException {
 		try {
+		    long start = System.currentTimeMillis();
 			verbModel(model, graphURI, "INSERT");
+			log.info((System.currentTimeMillis() - start) + " ms to insert " + model.size() + " triples");
 		} finally {
 			rebuildGraphURICache = true;
 		}
@@ -591,45 +566,45 @@ public class RDFServiceSparql extends RDFServiceImpl implements RDFService {
 		}
 	}
 
-	protected void addTriple(Triple t, String graphURI) throws RDFServiceException {
-		try {
-			StringBuffer updateString = new StringBuffer();
-			updateString.append("INSERT DATA { ");
-			updateString.append((graphURI != null) ? "GRAPH <" + graphURI + "> { " : "");
-			updateString.append(sparqlNodeUpdate(t.getSubject(), ""));
-			updateString.append(" ");
-			updateString.append(sparqlNodeUpdate(t.getPredicate(), ""));
-			updateString.append(" ");
-			updateString.append(sparqlNodeUpdate(t.getObject(), ""));
-			updateString.append(" }");
-			updateString.append((graphURI != null) ? " } " : "");
-
-			executeUpdate(updateString.toString());
-			notifyListeners(t, ModelChange.Operation.ADD, graphURI);
-		} finally {
-			rebuildGraphURICache = true;
-		}
-	}
-
-	protected void removeTriple(Triple t, String graphURI) throws RDFServiceException {
-		try {
-			StringBuffer updateString = new StringBuffer();
-			updateString.append("DELETE DATA { ");
-			updateString.append((graphURI != null) ? "GRAPH <" + graphURI + "> { " : "");
-			updateString.append(sparqlNodeUpdate(t.getSubject(), ""));
-			updateString.append(" ");
-			updateString.append(sparqlNodeUpdate(t.getPredicate(), ""));
-			updateString.append(" ");
-			updateString.append(sparqlNodeUpdate(t.getObject(), ""));
-			updateString.append(" }");
-			updateString.append((graphURI != null) ? " } " : "");
-
-			executeUpdate(updateString.toString());
-			notifyListeners(t, ModelChange.Operation.REMOVE, graphURI);
-		} finally {
-			rebuildGraphURICache = true;
-		}
-	}
+//	protected void addTriple(Triple t, String graphURI) throws RDFServiceException {
+//		try {
+//			StringBuffer updateString = new StringBuffer();
+//			updateString.append("INSERT DATA { ");
+//			updateString.append((graphURI != null) ? "GRAPH <" + graphURI + "> { " : "");
+//			updateString.append(sparqlNodeUpdate(t.getSubject(), ""));
+//			updateString.append(" ");
+//			updateString.append(sparqlNodeUpdate(t.getPredicate(), ""));
+//			updateString.append(" ");
+//			updateString.append(sparqlNodeUpdate(t.getObject(), ""));
+//			updateString.append(" }");
+//			updateString.append((graphURI != null) ? " } " : "");
+//
+//			executeUpdate(updateString.toString());
+//			notifyListeners(t, ModelChange.Operation.ADD, graphURI);
+//		} finally {
+//			rebuildGraphURICache = true;
+//		}
+//	}
+//
+//	protected void removeTriple(Triple t, String graphURI) throws RDFServiceException {
+//		try {
+//			StringBuffer updateString = new StringBuffer();
+//			updateString.append("DELETE DATA { ");
+//			updateString.append((graphURI != null) ? "GRAPH <" + graphURI + "> { " : "");
+//			updateString.append(sparqlNodeUpdate(t.getSubject(), ""));
+//			updateString.append(" ");
+//			updateString.append(sparqlNodeUpdate(t.getPredicate(), ""));
+//			updateString.append(" ");
+//			updateString.append(sparqlNodeUpdate(t.getObject(), ""));
+//			updateString.append(" }");
+//			updateString.append((graphURI != null) ? " } " : "");
+//
+//			executeUpdate(updateString.toString());
+//			notifyListeners(t, ModelChange.Operation.REMOVE, graphURI);
+//		} finally {
+//			rebuildGraphURICache = true;
+//		}
+//	}
 
 	@Override
 	protected boolean isPreconditionSatisfied(String query,
@@ -957,7 +932,7 @@ public class RDFServiceSparql extends RDFServiceImpl implements RDFService {
 			}
 		}
 
-		return null;
+		return new BasicHttpContext();
 	}
 
 	protected UsernamePasswordCredentials getCredentials() {
