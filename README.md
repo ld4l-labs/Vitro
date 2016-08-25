@@ -1,6 +1,6 @@
 # What is Vitro?
 Vitro is a general-purpose web-based ontology and instance editor with customizable public browsing. 
-
+ 
 Vitro is an integrated ontology editor and semantic web application.
 
 Vitro is a Java web application that runs in a Tomcat servlet container.
