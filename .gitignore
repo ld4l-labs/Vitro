@@ -1,7 +1,7 @@
 /webapp/.build/
-/.classpath
-/.project
-/.settings
+**/.classpath
+**/.project
+**/.settings
 /bin/
 /webapp/config/deploy.properties
 /webapp/config/build.properties
