@@ -16,28 +16,31 @@ import edu.cornell.mannlib.vitro.webapp.rdfservice.ResultSetConsumer;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.jena.query.QuerySolutionMap;
+import org.apache.jena.query.Syntax;
+import org.apache.jena.rdf.model.Literal;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.log4j.lf5.util.StreamUtils;
 
-import com.hp.hpl.jena.graph.Triple;
-import com.hp.hpl.jena.query.Dataset;
-import com.hp.hpl.jena.query.DatasetFactory;
-import com.hp.hpl.jena.query.Query;
-import com.hp.hpl.jena.query.QueryExecution;
-import com.hp.hpl.jena.query.QueryExecutionFactory;
-import com.hp.hpl.jena.query.QueryFactory;
-import com.hp.hpl.jena.query.QuerySolution;
-import com.hp.hpl.jena.query.ResultSet;
-import com.hp.hpl.jena.query.ResultSetFormatter;
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.ModelFactory;
-import com.hp.hpl.jena.rdf.model.RDFNode;
-import com.hp.hpl.jena.rdf.model.Resource;
-import com.hp.hpl.jena.rdf.model.Statement;
-import com.hp.hpl.jena.rdf.model.StmtIterator;
-import com.hp.hpl.jena.sdb.SDB;
-import com.hp.hpl.jena.shared.Lock;
-import com.hp.hpl.jena.sparql.core.Quad;
+import org.apache.jena.graph.Triple;
+import org.apache.jena.query.Dataset;
+import org.apache.jena.query.DatasetFactory;
+import org.apache.jena.query.Query;
+import org.apache.jena.query.QueryExecution;
+import org.apache.jena.query.QueryExecutionFactory;
+import org.apache.jena.query.QueryFactory;
+import org.apache.jena.query.QuerySolution;
+import org.apache.jena.query.ResultSet;
+import org.apache.jena.query.ResultSetFormatter;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.RDFNode;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.Statement;
+import org.apache.jena.rdf.model.StmtIterator;
+import org.apache.jena.sdb.SDB;
+import org.apache.jena.shared.Lock;
+import org.apache.jena.sparql.core.Quad;
 
 import edu.cornell.mannlib.vitro.webapp.dao.jena.DatasetWrapper;
 import edu.cornell.mannlib.vitro.webapp.dao.jena.RDFServiceDataset;
@@ -613,6 +616,71 @@ public abstract class RDFServiceJena extends RDFServiceImpl implements RDFServic
     }
 
     @Override
+    public long countTriples(RDFNode subject, RDFNode predicate, RDFNode object) throws RDFServiceException {
+        Query countQuery = QueryFactory.create("SELECT (COUNT(?s) AS ?count) WHERE { ?s ?p ?o } ORDER BY ?s ?p ?o", Syntax.syntaxSPARQL_11);
+        QuerySolutionMap map = new QuerySolutionMap();
+        if ( subject != null ) {
+            map.add("s", subject);
+        }
+        if ( predicate != null ) {
+            map.add("p", predicate);
+        }
+        if ( object != null ) {
+            map.add("o", object);
+        }
+
+        DatasetWrapper dw = getDatasetWrapper();
+        try {
+            Dataset d = dw.getDataset();
+            try (QueryExecution qexec = QueryExecutionFactory.create(countQuery, d, map)) {
+                ResultSet results = qexec.execSelect();
+                if (results.hasNext()) {
+                    QuerySolution soln = results.nextSolution() ;
+                    Literal literal = soln.getLiteral("count");
+                    return literal.getLong();
+                }
+            }
+        } finally {
+            dw.close();
+        }
+
+        return 0;
+    }
+
+    @Override
+    public Model getTriples(RDFNode subject, RDFNode predicate, RDFNode object, long limit, long offset) throws RDFServiceException {
+        Query query = QueryFactory.create("CONSTRUCT WHERE { ?s ?p ?o }", Syntax.syntaxSPARQL_11);
+        QuerySolutionMap map = new QuerySolutionMap();
+        if ( subject != null ) {
+            map.add("s", subject);
+        }
+        if ( predicate != null ) {
+            map.add("p", predicate);
+        }
+        if ( object != null ) {
+            map.add("o", object);
+        }
+
+        query.setOffset(offset);
+        query.setLimit(limit);
+
+        Model triples = ModelFactory.createDefaultModel();
+
+        DatasetWrapper dw = getDatasetWrapper();
+        try {
+            Dataset d = dw.getDataset();
+            try (QueryExecution qexec = QueryExecutionFactory.create(query, d, map)) {
+                qexec.execConstruct(triples);
+            }
+
+            return triples;
+        } finally {
+            dw.close();
+        }
+    }
+
+
+    @Override
     public void close() {
         // nothing
     }
@@ -620,5 +688,4 @@ public abstract class RDFServiceJena extends RDFServiceImpl implements RDFServic
     protected QueryExecution createQueryExecution(String queryString, Query q, Dataset d) {
         return QueryExecutionFactory.create(q, d);
     }
-    
 }

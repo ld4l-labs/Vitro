@@ -6,14 +6,15 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
 
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.ModelChangedListener;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelChangedListener;
 
 import edu.cornell.mannlib.vitro.webapp.rdfservice.ChangeListener;
 import edu.cornell.mannlib.vitro.webapp.rdfservice.ChangeSet;
 import edu.cornell.mannlib.vitro.webapp.rdfservice.RDFService;
 import edu.cornell.mannlib.vitro.webapp.rdfservice.RDFServiceException;
 import edu.cornell.mannlib.vitro.webapp.rdfservice.ResultSetConsumer;
+import org.apache.jena.rdf.model.RDFNode;
 
 /**
  * This RDFService wrapper adds instrumentation to the time-consuming methods of
@@ -180,6 +181,16 @@ public class LoggingRDFService implements RDFService {
 	@Override
 	public ChangeSet manufactureChangeSet() {
 		return innerService.manufactureChangeSet();
+	}
+
+	@Override
+	public long countTriples(RDFNode subject, RDFNode predicate, RDFNode object) throws RDFServiceException {
+		return innerService.countTriples(subject, predicate, object);
+	}
+
+	@Override
+	public Model getTriples(RDFNode subject, RDFNode predicate, RDFNode object, long limit, long offset) throws RDFServiceException {
+		return innerService.getTriples(subject, predicate, object, limit, offset);
 	}
 
 	@Override
