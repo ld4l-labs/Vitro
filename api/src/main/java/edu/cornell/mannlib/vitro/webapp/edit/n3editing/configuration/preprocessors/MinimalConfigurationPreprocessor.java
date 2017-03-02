@@ -57,7 +57,7 @@ public class MinimalConfigurationPreprocessor extends
 		BaseEditSubmissionPreprocessorVTwo {
 
 	protected static final Log log = LogFactory
-			.getLog(AddAssociatedConceptsPreprocessor.class.getName());
+			.getLog(MinimalConfigurationPreprocessor.class.getName());
 	protected OntModel ontModel = null;
 	protected WebappDaoFactory wdf = null;
 

@@ -12,10 +12,13 @@ import javax.servlet.http.HttpSession;
 import org.apache.commons.lang.StringUtils;
 
 import org.apache.jena.ontology.OntModel;
-import org.apache.jena.query.ResultSet;
 import org.apache.jena.rdf.model.Literal;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
+
+
+import org.apache.jena.query.QuerySolution;
+import org.apache.jena.query.ResultSet;
 
 import edu.cornell.mannlib.vitro.webapp.beans.Individual;
 import edu.cornell.mannlib.vitro.webapp.controller.VitroRequest;
@@ -46,11 +49,10 @@ public class MinimalEditConfigurationGenerator  implements EditConfigurationGene
 	 public EditConfigurationVTwo getEditConfiguration(VitroRequest vreq, HttpSession session) throws Exception {
 	    	
 		
-			EditConfigurationVTwo editConfiguration = new EditConfigurationVTwo();    	
+			EditConfigurationVTwo editConfiguration = new EditConfigurationVTwo();  
+			//includes getting the configuration json file associated with this property
 			addFormSpecificData(editConfiguration, vreq);
-			
-			//Load N3 file, perhaps convert to JSON-LD
-			loadConfigurationFile(vreq, editConfiguration);
+		
 			
 	    	
 	    	//process subject, predicate, object parameters
@@ -109,37 +111,45 @@ public class MinimalEditConfigurationGenerator  implements EditConfigurationGene
 	  //Form specific data
     public void addFormSpecificData(EditConfigurationVTwo editConfiguration, VitroRequest vreq) {
     	 HashMap<String, Object> formSpecificData = new HashMap<String, Object>();
+    	 String configFile = getConfigurationFile(vreq, editConfiguration);
          formSpecificData.put("editMode", getEditMode(vreq).name().toLowerCase());
-         formSpecificData.put("configfile", "minimaledit.jsonld");
+         if(configFile != null) {
+        	 formSpecificData.put("configfile", configFile);
+         } 
+         //Do we have a default for configFile if none is returned?
          editConfiguration.setFormSpecificData(formSpecificData);
     }
 	 
 			
-	private void loadConfigurationFile(VitroRequest vreq, EditConfigurationVTwo editConfiguration) {
-		//The file is already loaded into the system
-		//Query it and convert to JSON-LD to be sent on to the front-end
-		//How to connect this to the property? How do we know which property?
-		//Just hang off the predicate? How does this work with faux properties?
-		//OR: to test it out and not have to write sparql queries
-		//Just dump the whole thing into JSON-LD format and have it passed along to the front-end for now
-		//Later will need a PROPERTY to CONFIG connection which can only be done via property stored
-		//Could do property TO CONFIG FILE as a whole instead of RDF that needs to be read in at the server level?
-		String configNamespace = "http://vitro.mannlib.cornell.edu/ns/vitro/CustomFormConfiguration#";
-		String formURI = configNamespace + "addPublicationsToPerson";
+    //Get the configuration file required
+	private String getConfigurationFile(VitroRequest vreq, EditConfigurationVTwo editConfiguration) {
+		//Custom form entry predicate: http://vitro.mannlib.cornell.edu/ns/vitro/0.7#customEntryFormAnnot
+		String configFilePredicate = "http://vitro.mannlib.cornell.edu/ns/vitro/0.7#customConfigFileAnnot";
+		
+		
+    	String predicateUri = EditConfigurationUtils.getPredicateUri(vreq);
 		
 		//Get everything really
-		String query = "SELECT ?p ?o WHERE {<" + formURI + "> ?p ?o .}";
+		String query = "SELECT ?configFile WHERE {<" + predicateUri + ">  <" + configFilePredicate + "> ?configFile .}";
 		 RDFService rdfService = vreq.getRDFService();
 
 		 
 	        try {
 	        	ResultSet rs = QueryUtils.getQueryResults(query, vreq);
+	        	while(rs.hasNext()) {
+	        		QuerySolution qs = rs.nextSolution();
+	        		Literal configFileLiteral = qs.getLiteral("configFile");
+	        		if(configFileLiteral != null && StringUtils.isNotEmpty(configFileLiteral.getString())) {
+	        			return configFileLiteral.getString();
+	        		}
+	        	}
 	        	editConfiguration.addFormSpecificData("queryresult", rs);
 	        } catch (Exception ex) {
 	        	log.error("Exception occurred in query retrieving information for this field", ex);
 	        }
 		
 	      // 
+	        return null;
 		
 	}
 
