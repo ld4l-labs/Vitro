@@ -3,11 +3,11 @@
 <#-- Template for adding a publication to a foaf:Persons -->
 
 <#--  Common section -->
-<#import "lib-vivo-form.ftl" as lvf>
+<#import "lib-vitro-form.ftl" as lvf>
 
 <#--Retrieve certain edit configuration information-->
 <#assign editMode = editConfiguration.pageData.editMode />
-
+<#assign formTitle = editConfiguration.formTitle />
 <#assign newUriSentinel = "" />
 <#if editConfigurationConstants?has_content>
 	<#assign newUriSentinel = editConfigurationConstants["NEW_URI_SENTINEL"] />
@@ -46,7 +46,8 @@ Set this flag on the input acUriReceiver where you would like this behavior to o
 
 
 <#--  Get the configfile name and include below -->
-<#assign configFile = editConfiguration.pageData.configfile />
+<#assign configFile = editConfiguration.pageData.configFile />
+<#assign configDisplayFile = editConfiguration.pageData.configDisplayFile>
 <#if editMode == "edit">        
         <#assign titleVerb="${i18n().edit_capitalized}">        
         <#assign submitButtonText="${i18n().save_changes}">
@@ -57,7 +58,8 @@ Set this flag on the input acUriReceiver where you would like this behavior to o
         <#assign disabledVal=""/>
 </#if>
 
-<h2>${titleVerb}&nbsp;${i18n().publication_entry_for} ${editConfiguration.subjectName}</h2>
+<#--  What to replace publication entry for with? Display name of property-->
+<h2>${formTitle}</h2>
 
 <#if submissionErrors?has_content>
 	<#--  Some custom handling -->
@@ -118,24 +120,9 @@ Set this flag on the input acUriReceiver where you would like this behavior to o
              </#list>
         </select>
     </p-->
-    
-    <#--  Form field option, regular literal -->
-        <#--  p>
-            <label for="title">${i18n().title_capitalized} ${requiredHint}</label>
-            <input class="acSelector" size="60"  type="text" id="title" name="title" acGroupName="publication"  value="${titleValue}" />
-        </p-->
+    <div id="formcontent">
+    </div>
 
-	<#--  autocomplete option -->
-        <#--  div class="acSelection" acGroupName="publication" id="pubAcSelection">
-            <p class="inline">
-                <label>${i18n().selected_publication}:</label>
-                <span class="acSelectionInfo"></span>
-                <a href="" class="verifyMatch"  title="${i18n().verify_match_capitalized}">(${i18n().verify_match_capitalized}</a> ${i18n().or} 
-                <a href="#" class="changeSelection" id="changeSelection">${i18n().change_selection})</a>
-            </p>
-            <input class="acUriReceiver" type="hidden" id="pubUri" name="pubUri" value="${pubUriValue}"  ${flagClearLabelForExisting}="true" />
-        </div-->
-  
 
        <p class="submit">
             <input type="hidden" name = "editKey" value="${editKey}"/>
@@ -146,6 +133,38 @@ Set this flag on the input acUriReceiver where you would like this behavior to o
        <p id="requiredLegend" class="requiredHint">* ${i18n().required_fields}</p>
     </form>
 
+
+    <#--  Form field option, Simple literal -->
+    <#--  Need to handle required vs. non-required, also put these in their own templates -->
+    	<div id="literalTemplate" style="display:none" > 
+	        <p>
+	            <label for="title"></label>
+	            <input size="60"  type="text" id="title" name="title" value="" />
+	        </p>
+	
+		
+	      
+  		</div>
+  		
+  		<#--  Autocomplete literal template -->
+    
+		<div id="autocompleteLiteralTemplate" style="display:none"> 
+	        <p>
+	            <label for="title">${i18n().title_capitalized} ${requiredHint}</label>
+	            <input class="acSelector" size="60"  type="text" id="title" name="title" acGroupName="publication"  value="${titleValue}" />
+	        </p>
+	
+		
+	        <div class="acSelection" acGroupName="group" id="literalSelection">
+	            <p class="inline">
+	                <label><span id="labelLabel"></span>:</label>
+	                <span class="acSelectionInfo"></span>
+	                <a href="" class="verifyMatch"  title="${i18n().verify_match_capitalized}">(${i18n().verify_match_capitalized}</a> ${i18n().or} 
+	                <a href="#" class="changeSelection" id="changeSelection">${i18n().change_selection})</a>
+	            </p>
+	            <input class="acUriReceiver" type="hidden" id="pubUri" name="pubUri" value=""  ${flagClearLabelForExisting}="true" />
+	        </div>
+  		</div>
 
 <#assign sparqlQueryUrl = "${urls.base}/ajax/sparqlQuery" >
 
@@ -174,12 +193,12 @@ Set this flag on the input acUriReceiver where you would like this behavior to o
 </#if>
 
 <#-- Common section -->
-${stylesheets.add('<link rel="stylesheet" href="${urls.base}/js/jquery-ui/css/smoothness/jquery-ui-1.8.9.custom.css" />')}
+${stylesheets.add('<link rel="stylesheet" href="${urls.base}/js/jquery-ui/css/smoothness/jquery-ui-1.12.1.css" />')}
  ${stylesheets.add('<link rel="stylesheet" href="${urls.base}/templates/freemarker/edit/forms/css/customForm.css" />')}
  ${stylesheets.add('<link rel="stylesheet" href="${urls.base}/templates/freemarker/edit/forms/css/customFormWithAutocomplete.css" />')}
 
 
- ${scripts.add('<script type="text/javascript" src="${urls.base}/js/jquery-ui/js/jquery-ui-1.8.9.custom.min.js"></script>',
+ ${scripts.add('<script type="text/javascript" src="${urls.base}/js/jquery-ui/js/jquery-ui-1.12.1.min.js"></script>',
               '<script type="text/javascript" src="${urls.base}/js/customFormUtils.js"></script>',
               '<script type="text/javascript" src="${urls.base}/js/browserUtils.js"></script>',              
               '<script type="text/javascript" src="${urls.base}/templates/freemarker/edit/forms/js/customFormWithAutocomplete.js"></script>',

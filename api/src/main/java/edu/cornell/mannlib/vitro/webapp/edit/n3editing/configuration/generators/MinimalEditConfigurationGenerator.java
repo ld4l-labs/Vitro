@@ -113,9 +113,16 @@ public class MinimalEditConfigurationGenerator  implements EditConfigurationGene
     	 HashMap<String, Object> formSpecificData = new HashMap<String, Object>();
     	 String configFile = getConfigurationFile(vreq, editConfiguration);
          formSpecificData.put("editMode", getEditMode(vreq).name().toLowerCase());
-         if(configFile != null) {
-        	 formSpecificData.put("configfile", configFile);
-         } 
+         if(configFile != null && configFile.endsWith(".jsonld")) {
+        	 formSpecificData.put("configFile", configFile);
+        	 //TODO: override later    	
+        	 //Just for now but this will probably be overridden later
+        	 String configFileName = configFile.substring(0, configFile.indexOf(".jsonld"));
+        	 String configDisplayFile = configFileName + ".json";
+        	 formSpecificData.put("configDisplayFile", configDisplayFile);
+         } else {
+        	 log.error("Config File either not found or does not have proper ending");
+         }
          //Do we have a default for configFile if none is returned?
          editConfiguration.setFormSpecificData(formSpecificData);
     }
