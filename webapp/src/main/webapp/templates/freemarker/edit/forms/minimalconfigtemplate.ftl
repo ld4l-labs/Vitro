@@ -136,10 +136,10 @@ Set this flag on the input acUriReceiver where you would like this behavior to o
 
     <#--  Form field option, Simple literal -->
     <#--  Need to handle required vs. non-required, also put these in their own templates -->
-    	<div id="literalTemplate" style="display:none" > 
+    	<div templateId="literalTemplate" style="display:none" > 
 	        <p>
-	            <label for="title"></label>
-	            <input size="60"  type="text" id="title" name="title" value="" />
+	            <label for=""></label>
+	            <input size="60"  type="text" id="" name="" value="" />
 	        </p>
 	
 		
@@ -148,22 +148,28 @@ Set this flag on the input acUriReceiver where you would like this behavior to o
   		
   		<#--  Autocomplete literal template -->
     
-		<div id="autocompleteLiteralTemplate" style="display:none"> 
-	        <p>
-	            <label for="title">${i18n().title_capitalized} ${requiredHint}</label>
-	            <input class="acSelector" size="60"  type="text" id="title" name="title" acGroupName="publication"  value="${titleValue}" />
+		<div templateId="autocompleteLiteralTemplate" style="display:none"> 
+	        <p templateId="inputAcSelector">
+	            <label for=""> ${requiredHint}</label>
+	            <input class="acSelector" size="60"  type="text" id="" name="" acGroupName="group"  value="" />
 	        </p>
 	
 		
-	        <div class="acSelection" acGroupName="group" id="literalSelection">
+	        <div class="acSelection" acGroupName="group" templateId="literalSelection">
 	            <p class="inline">
-	                <label><span id="labelLabel"></span>:</label>
+	                <label>${i18n().selected}:</label>
 	                <span class="acSelectionInfo"></span>
 	                <a href="" class="verifyMatch"  title="${i18n().verify_match_capitalized}">(${i18n().verify_match_capitalized}</a> ${i18n().or} 
 	                <a href="#" class="changeSelection" id="changeSelection">${i18n().change_selection})</a>
 	            </p>
-	            <input class="acUriReceiver" type="hidden" id="pubUri" name="pubUri" value=""  ${flagClearLabelForExisting}="true" />
+	            <input class="acUriReceiver" type="hidden" id="" name="" value=""  ${flagClearLabelForExisting}="true" />
 	        </div>
+  		</div>
+  		
+  		<div templateId="selectDropdownTemplate" style="display:none">
+  			   <select id="" name="" role="select">
+                
+            	</select>
   		</div>
 
 <#assign sparqlQueryUrl = "${urls.base}/ajax/sparqlQuery" >
@@ -174,18 +180,21 @@ Set this flag on the input acUriReceiver where you would like this behavior to o
     var customFormData  = {
         sparqlQueryUrl: '${sparqlQueryUrl}',
         acUrl: '${urls.base}/autocomplete?tokenize=true',
+        customFormAJAXUrl:'${urls.base}/ajax/customForm',
         editMode: '${editMode}',
         baseHref: '${urls.base}/individual?uri=',
         blankSentinel: '${blankSentinel}',
         flagClearLabelForExisting: '${flagClearLabelForExisting}',
         defaultTypeName: 'publication',
-        acTypes: {publication: 'http://purl.org/ontology/bibo/Document', collection: 'http://purl.org/ontology/bibo/Periodical', book: 'http://purl.org/ontology/bibo/Book', conference: 'http://purl.org/NET/c4dm/event.owl#Event', event: 'http://purl.org/NET/c4dm/event.owl#Event', editor: 'http://xmlns.com/foaf/0.1/Person', publisher: 'http://xmlns.com/foaf/0.1/Organization'}
+        acTypes: {}
     };
     var i18nStrings = {
         selectAnExisting: '${i18n().select_an_existing}',
         orCreateNewOne: '${i18n().or_create_new_one}',
         selectedString: '${i18n().selected}'
     };
+    //Prevent custom form on load on document ready so these event listeners can be associated AFTER form is loaded
+    preventLoadFlag = true;
     </script>
     
    
@@ -203,4 +212,5 @@ ${stylesheets.add('<link rel="stylesheet" href="${urls.base}/js/jquery-ui/css/sm
               '<script type="text/javascript" src="${urls.base}/js/browserUtils.js"></script>',              
               '<script type="text/javascript" src="${urls.base}/templates/freemarker/edit/forms/js/customFormWithAutocomplete.js"></script>',
               '<script type="text/javascript" src="${urls.base}/templates/freemarker/edit/forms/js/jsonconfig/${configFile}"></script>', 
+               '<script type="text/javascript" src="${urls.base}/templates/freemarker/edit/forms/js/jsonconfig/${configDisplayFile}"></script>', 
               '<script type="text/javascript" src="${urls.base}/templates/freemarker/edit/forms/js/minimalconfigtemplate.js"></script>')}

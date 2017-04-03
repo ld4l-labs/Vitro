@@ -744,5 +744,9 @@ var customForm = {
 };
 
 $(document).ready(function() {
-    customForm.onLoad();
+	//If undefined or set to false, load normally
+	//If set to true, don't laod
+	if(preventLoadFlag == undefined || !preventLoadFlag) {
+		customForm.onLoad();
+	}
 });

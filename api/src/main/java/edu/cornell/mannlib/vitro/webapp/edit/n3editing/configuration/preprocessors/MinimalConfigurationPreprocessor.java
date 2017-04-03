@@ -112,7 +112,7 @@ public class MinimalConfigurationPreprocessor extends
 	
 	
 	private void processConfigurationJSONFields(JSONObject contentsJSON) {
-		String fieldNameProperty =  "http://vitro.mannlib.cornell.edu/ns/vitro/CustomFormConfiguration#fieldName";
+		String fieldNameProperty =  "http://vitro.mannlib.cornell.edu/ns/vitro/CustomFormConfiguration#varName";
 		JSONArray graph = contentsJSON.getJSONArray("@graph");
 		
 		int len = graph.size();
@@ -147,6 +147,8 @@ public class MinimalConfigurationPreprocessor extends
 			if(types.contains("forms:OptionalN3Pattern")) {
 				this.optionalN3Component= component;
 			}
+			//TODO: New resources now identified on field itself as proeprty not type
+			//"http://vitro.mannlib.cornell.edu/ns/vitro/CustomFormConfiguration#mayUseNewResource": true,
 			//new resources
 			if(types.contains("forms:NewResource")) {
 				this.newResourcesComponent = component;
@@ -156,6 +158,7 @@ public class MinimalConfigurationPreprocessor extends
 				newResourcesSet.addAll(new ArrayList<String>(Arrays.asList(newResourcesArray)));
 			}
 			//Check for dependencies components
+			//TODO:Assume these will be modeled exactly the same way
 			if(types.contains( "forms:FieldDependencies")) {
 				JSONArray dependenciesArray = component.getJSONArray("http://vitro.mannlib.cornell.edu/ns/vitro/CustomFormConfiguration#dependencies");
 				int n, numberDependencies = dependenciesArray.size();

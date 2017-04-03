@@ -3,11 +3,16 @@
 var minimalconfigtemplate = {
 
     /* *** Initial page setup *** */
-   fieldNameProperty : "http://vitro.mannlib.cornell.edu/ns/vitro/CustomFormConfiguration#varName",
+   fieldNameProperty : "customform:varName",
     onLoad: function() {
     		
             this.mixIn();               
             this.initPage();       
+            //Bind event listeners only when everything on the page has been populated
+            //Putting in bind event listeners here - any autocomplete fields should already be setup
+            //As far as fields generated using AJAX requests - the event listeners should be attached
+            //in the done/success methods of the ajax requests
+            this.bindEventListeners();
         },
 
     mixIn: function() {
@@ -21,19 +26,26 @@ var minimalconfigtemplate = {
     initPage: function() {
     	//hash to store form fields
 		this.formFields = {};
-		
-        //this.initItemData();
-       
-        this.bindEventListeners();
+		this.formFieldsToOptions = {};//Key is field name, but options saved as component
+		this.allConfigComponents = {}; //Hash where key is @id
         
         this.processConfigJSON();
         
         this.generateFields();
                        
     },
+    bindEventListeners:function() {
+    	//This relies on the custom form with autocomplete file
+    	//TODO: Find a better way to do this
+    	if(customForm) {
+    		customForm.onLoad();
+    	}
+    },
     
     //process the json and create a hash by varname/fieldname
     processConfigJSON: function() {
+    	//Process the entire JSON to save all components by @id in hash
+    	this.generateConfigHash();
     	//Get fields from the displayconfig
     	this.fieldDisplayProperties = displayConfig.fieldDisplayProperties;
     	//Are these ALL fields?
@@ -44,10 +56,38 @@ var minimalconfigtemplate = {
     		var configComponent = minimalconfigtemplate.getConfigurationComponent(fieldName);
     		if(configComponent != null) {
     			this.formFields[fieldName] = configComponent;
+    			//if form field has associated field options, store within formFieldsToFieldOptions hash
+    			var fieldOptions = minimalconfigtemplate.getFieldOptions(configComponent);
+    			if(fieldOptions != null) {
+    				minimalconfigtemplate.formFieldsToOptions[fieldName] = fieldOptions;
+    			}
     		}
 		}
     },
    
+    generateConfigHash : function() {
+    	var graph = configjson["@graph"];
+    	var numberComponents = graph.length;
+    	var n;
+    	var fieldNameProperty = "customform:varName";
+    	for(n = 0; n < numberComponents; n++) {
+    		var component = graph[n];
+    		var id = component["@id"];
+    		this.allConfigComponents[id] = component;
+    	}
+    },
+    
+    getFieldOptions: function(configComponent) {
+    	var fieldOptionsFieldName = "customform:fieldOptions";
+    	if(fieldOptionsFieldName in configComponent) {
+    		var configId = configComponent[fieldOptionsFieldName]["@id"];
+    		var configComponent = this.allConfigComponents[configId];
+    		//TODO: Include check - whether this id even exists, etc.
+    		return configComponent;
+    	}
+    	return null;
+    	
+    },
     generateFields: function() {
     	//date time has specific handling, do separately
     	//fields in order
@@ -63,35 +103,8 @@ var minimalconfigtemplate = {
     		var fieldName = this.fieldOrder[f];
     		if(fieldName in this.formFields) {
     			var configComponent = this.formFields[fieldName];
-    			displayConfigComponent(configComponent);
+    			minimalconfigtemplate.displayConfigComponent(configComponent);
     		}
-    		
-    		/*
-    		//TODO: Move these portions into HTML instead that will be copied from the template
-    		if(minimalconfigtemplate.componentHasType(configComponent, "forms:ConstantOptionsField")) {	
-    			var options = configComponent["http://vitro.mannlib.cornell.edu/ns/vitro/CustomFormConfiguration#options"];
-    			options = options.replace("\n", "");
-    			//array of arrays
-    			options = "[" + options + "]";
-    			var optionsArray = jQuery.parseJSON(options);
-    			var  optionLength = optionsArray.length;
-    			var o;
-    			//This is a drop down that should be generated with the options available
-    			var selectHTML= '<p class="inline"><label for="typeSelector">Publication Type</label><select id="typeSelector" name="' + fieldName + '" acGroupName="publication" ><option value="">Select One</option>';
-    			for(o = 0; o < optionLength; o++) {
-    				//also an array
-    				var option = optionsArray[o];
-    				selectHTML += "<option value='" + option[0] + "'>" + option[1] + "</option>";
-    			}
-    			selectHTML += '</select>';
-    			form.append(selectHTML);
-             
-    		}     		//Input field
-    		else if(minimalconfigtemplate.componentHasType(configComponent, "forms:LiteralField")) {
-    			var HTML =  '<p><label for="title">' + fieldName + '</label><input class="acSelector" size="60"  type="text" id="' + fieldName + '" name="' + fieldName + '" acGroupName="publication"  value="" /></p>';
-    			form.append(HTML);
-    		}*/
-    		
     	}
     	
     	
@@ -103,29 +116,119 @@ var minimalconfigtemplate = {
     	var fieldName = configComponent[minimalconfigtemplate.fieldNameProperty];
     	//TODO: Check if this key exists
     	var displayInfo = minimalconfigtemplate.fieldDisplayProperties[fieldName];
+    	var templateClone = "";
     	if(minimalconfigtemplate.componentHasType(configComponent, "forms:LiteralField")) {
     		//Either autocomplete or regular field
-    		var templateClone = "";
-    		if("autocomplete" in displayInfo) {
-    			//Copy autocomplete portion over
-    			templateClone = $("#autocompleteLiteralTemplate").clone();
-    			
-    		} else {
-    			//Otherwise copy regular literal over
-    			templateClone = $("#literalTemplate").clone();
+    		templateClone = minimalconfigtemplate.createLiteralField(configComponent, displayInfo);
+    		
+    		
+    	} else if(minimalconfigtemplate.componentHasType(configComponent, "forms:UriField")) {
+    		//UriField may have different field types for drop downs
+    	//Generated drop-down options are signified by field options	
+    	//} else if(minimalconfigtemplate.componentHasType(configComponent, "forms:FieldOptions")) {
+    		
+    		//dropdown needed - since field options are always drop-downs of some sort
+    		if(fieldName in minimalconfigtemplate.formFieldsToOptions) {
+    			templateClone = minimalconfigtemplate.createURIField(configComponent);
     		}
-    		templateClone.appendTo("#formcontent");
     	}
     	//URI Field
     	//Constant options field
     	//How do you treate "generated" fields?
+    	
+    	//If options associated, then use an AJAX request to populate the drop-down
+    	//How to do this then? Create drop-down and THEN display?
+    	//First, just see if this even works
+    	if(fieldName in minimalconfigtemplate.formFieldsToOptions) {
+    		var fieldOptionComponent = minimalconfigtemplate.formFieldsToOptions[fieldName];
+    		//Just pass the entire JSON object to the servlet and let the servlet parse it
+    		$.ajax({
+    			  method: "GET",
+    			  url: minimalconfigtemplate.customFormAJAXUrl,
+    			  data: { "configComponent": JSON.stringify(fieldOptionComponent),
+    				  		"fieldName": fieldName
+    			  }
+    			})
+    			  .done(function( content ) {
+    				  //populate drop downs
+    				  var dropdownElement = templateClone.find("select");
+    				  $.each(content, function(key, value) {
+    					  var html = "<option value='" + key + "'>" + value + "</option>";
+    					  dropdownElement.append(html);
+    				  });
+    			  });
+    	}
+    	if(templateClone != "" && templateClone != null) {
+    		templateClone.show();
+    		templateClone.appendTo("#formcontent");
+    	}
     },
-    
+    createLiteralField:function(configComponent, displayInfo) {
+    	var varName = minimalconfigtemplate.getVarName(configComponent);
+    	var label = varName;
+    	if("label" in displayInfo)
+    		label = displayInfo["label"];
+    	//Coding in a shortcut but autocomplete requires id and LABEL
+    	//how to encode that?
+    	if("autocomplete" in displayInfo) {
+    		var labelFieldFor = displayInfo["labelFieldFor"];
+			//Copy autocomplete portion over
+    		//Just add label
+			templateClone = $("[templateId='autocompleteLiteralTemplate']").clone();
+			var selectorComponent = templateClone.find("[templateId='inputAcSelector']");
+			var inputField = selectorComponent.find("input.acSelector");
+			//TODO: Should id be the varname or something else?
+			inputField.attr("id", varName);
+			inputField.attr("name", varName);
+			//acGroupName attribute
+			var selectedComponent = templateClone.find("[templateId='literalSelection']");
+			//e.g. agentName corresponds to agent
+			selectedComponent.find("input.acUriReceiver").attr("id", labelFieldFor);
+			selectedComponent.find("input.acUriReceiver").attr("name", labelFieldFor);
+			//Label field
+			var labelField = templateClone.find("p[templateId='inputAcSelector'] label");
+			labelField.html(label);
+			labelField.attr("for", varName);
+			
+		} else {
+			//Otherwise copy regular literal over
+			templateClone = $("[templateId='literalTemplate']").clone();
+			//Set the label and id/field name of the template clone
+			var textInput= templateClone.find("input[type='text']");
+			var labelField = templateClone.find("label");
+			textInput.attr("id", varName);
+			textInput.attr("name", varName);
+			labelField.html(label);
+			labelField.attr("for", varName);
+			
+		}
+    	return templateClone;
+    	
+    	
+    },
+    createURIField:function(configComponent) {
+    	var varName = minimalconfigtemplate.getVarName(configComponent);
+    	var templateClone = $("[templateId='selectDropdownTemplate']").clone();
+    	var selectInput = templateClone.find("select");
+    	selectInput.attr("id", varName);
+		selectInput.attr("name", varName);
+		return templateClone;
+    },
+    getVarName:function(configComponent) {
+    	var varNameFieldName = "customform:varName";
+    	if(varNameFieldName in configComponent)
+    		return configComponent[varNameFieldName];
+    	return null;
+    },
+    //field options need to be generated
+    createFieldOptions:function(configComponent) {
+    	return null;
+    },
     getConfigurationComponent:function(componentName) {
     	var graph = configjson["@graph"];
     	var numberComponents = graph.length;
     	var n;
-    	var fieldNameProperty = "http://vitro.mannlib.cornell.edu/ns/vitro/CustomFormConfiguration#varName";
+    	var fieldNameProperty = "customform:varName";
     	for(n = 0; n < numberComponents; n++) {
     		var component = graph[n];
     		//if field name property is contained within component
@@ -155,13 +258,7 @@ var minimalconfigtemplate = {
     			return true;
     	}
     	return false;
-    },
-    
-    bindEventListeners: function() {
-
-               
-    }
-                      
+    }           
    
 
 };

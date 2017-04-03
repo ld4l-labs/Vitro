@@ -118,7 +118,7 @@ public class MinimalEditConfigurationGenerator  implements EditConfigurationGene
         	 //TODO: override later    	
         	 //Just for now but this will probably be overridden later
         	 String configFileName = configFile.substring(0, configFile.indexOf(".jsonld"));
-        	 String configDisplayFile = configFileName + ".json";
+        	 String configDisplayFile = configFileName + "DisplayConfig.json";
         	 formSpecificData.put("configDisplayFile", configDisplayFile);
          } else {
         	 log.error("Config File either not found or does not have proper ending");
