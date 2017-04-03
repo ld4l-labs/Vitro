@@ -150,12 +150,9 @@ var minimalconfigtemplate = {
     			  }
     			})
     			  .done(function( content ) {
-    				  //populate drop downs
-    				  var dropdownElement = templateClone.find("select");
-    				  $.each(content, function(key, value) {
-    					  var html = "<option value='" + key + "'>" + value + "</option>";
-    					  dropdownElement.append(html);
-    				  });
+    				  //templateclone is from URI Field, so make this work better
+    				  minimalconfigtemplate.createDropdownField(templateClone, content, configComponent, displayInfo);
+    				 
     			  });
     	}
     	if(templateClone != "" && templateClone != null) {
@@ -213,6 +210,23 @@ var minimalconfigtemplate = {
     	selectInput.attr("id", varName);
 		selectInput.attr("name", varName);
 		return templateClone;
+    },
+    createDropdownField:function(templateClone, content, configComponent, displayInfo) {
+    	
+    	var varName = minimalconfigtemplate.getVarName(configComponent);	
+    	  var dropdownLabelElement = templateClone.find("label");
+		  var dropdownLabelValue = varName;
+		  if("label" in displayInfo) {
+			  dropdownLabelValue = displayInfo["label"];
+		  }
+		  dropdownLabelElement.attr("for", varName);
+		  dropdownLabelElement.html(dropdownLabelValue);
+		  //populate drop downs
+		  var dropdownElement = templateClone.find("select");
+		  $.each(content, function(key, value) {
+			  var html = "<option value='" + key + "'>" + value + "</option>";
+			  dropdownElement.append(html);
+		  });
     },
     getVarName:function(configComponent) {
     	var varNameFieldName = "customform:varName";

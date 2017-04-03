@@ -1,6 +1,6 @@
 <#-- $This file is distributed under the terms of the license in /doc/license.txt$ -->
 
-<#-- Template for adding a publication to a foaf:Persons -->
+<#-- Minimal template for use with JSON-LD and JSON configuration for custom forms -->
 
 <#--  Common section -->
 <#import "lib-vitro-form.ftl" as lvf>
@@ -110,16 +110,6 @@ Set this flag on the input acUriReceiver where you would like this behavior to o
 <@lvf.unsupportedBrowser urls.base/>
 <form id="addpublicationToPerson" class="customForm noIE67" action="${submitUrl}"  role="add/edit publication" >
         
-        <#--TODO: Check if possible to have existing publication options here in order to select-->
-        <#--  Type selector, can keep this as a selector option -->
-    <#--  p class="inline"><label for="typeSelector">${i18n().publication_type}<#if editMode != "edit"> ${requiredHint}<#else>:</#if></label>
-        <select id="typeSelector" name="pubType" acGroupName="publication" >
-             <option value="" <#if (publicationTypeValue?length = 0)>selected="selected"</#if>>${i18n().select_one}</option>
-             <#list pubTypeLiteralOptions?keys as key>
-                 <option value="${key}" <#if (publicationTypeValue = key)>selected="selected"</#if>>${pubTypeLiteralOptions[key]}</option>
-             </#list>
-        </select>
-    </p-->
     <div id="formcontent">
     </div>
 
@@ -167,16 +157,19 @@ Set this flag on the input acUriReceiver where you would like this behavior to o
   		</div>
   		
   		<div templateId="selectDropdownTemplate" style="display:none">
+  		<p>
+  		<label for=""> </label>
   			   <select id="" name="" role="select">
                 
             	</select>
+        </p>
   		</div>
 
 <#assign sparqlQueryUrl = "${urls.base}/ajax/sparqlQuery" >
 
     <script type="text/javascript">
          
-
+	//TODO: Handle multiple autocompletes on the same page?
     var customFormData  = {
         sparqlQueryUrl: '${sparqlQueryUrl}',
         acUrl: '${urls.base}/autocomplete?tokenize=true',
@@ -185,7 +178,7 @@ Set this flag on the input acUriReceiver where you would like this behavior to o
         baseHref: '${urls.base}/individual?uri=',
         blankSentinel: '${blankSentinel}',
         flagClearLabelForExisting: '${flagClearLabelForExisting}',
-        defaultTypeName: 'publication',
+        defaultTypeName: 'entity', //REPLACE with type name for specific auto complete
         acTypes: {}
     };
     var i18nStrings = {
