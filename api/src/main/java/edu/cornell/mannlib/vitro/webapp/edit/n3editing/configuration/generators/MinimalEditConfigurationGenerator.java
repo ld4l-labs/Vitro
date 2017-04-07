@@ -91,7 +91,9 @@ public class MinimalEditConfigurationGenerator  implements EditConfigurationGene
 	    
 	    	
 	    	//Form title and submit label moved to template
-	    	editConfiguration.setTemplate("minimalconfigtemplate.ftl");
+	    	//Can also assign a custom template and not the minimal template if need be
+	    	setTemplate(vreq, editConfiguration);
+	    	
 	    	
 	    
 	    	
@@ -108,7 +110,45 @@ public class MinimalEditConfigurationGenerator  implements EditConfigurationGene
 	    }
 	
 	
-	  //Form specific data
+	  private void setTemplate(VitroRequest vreq, EditConfigurationVTwo editConfiguration) {
+		  String customTemplate = getCustomTemplateFile(vreq);
+		  if(customTemplate != null) {
+			  editConfiguration.setTemplate(customTemplate);
+		  } else {
+			  editConfiguration.setTemplate("minimalconfigtemplate.ftl");
+		  }
+		
+	}
+
+
+	private String getCustomTemplateFile(VitroRequest vreq) {
+		String configFilePredicate = "http://vitro.mannlib.cornell.edu/ns/vitro/0.7#customTemplateFileAnnot";
+		
+		
+    	String predicateUri = EditConfigurationUtils.getPredicateUri(vreq);
+		
+		//Get everything really
+		String query = "SELECT ?templateFile WHERE {<" + predicateUri + ">  <" + configFilePredicate + "> ?templateFile .}";
+
+		 
+	        try {
+	        	ResultSet rs = QueryUtils.getQueryResults(query, vreq);
+	        	while(rs.hasNext()) {
+	        		QuerySolution qs = rs.nextSolution();
+	        		Literal configFileLiteral = qs.getLiteral("templateFile");
+	        		if(configFileLiteral != null && StringUtils.isNotEmpty(configFileLiteral.getString())) {
+	        			return configFileLiteral.getString();
+	        		}
+	        	}
+	        	
+	        } catch (Exception ex) {
+	        	log.error("Exception occurred in query retrieving information for this field", ex);
+	        }
+		return null;
+	}
+
+
+	//Form specific data
     public void addFormSpecificData(EditConfigurationVTwo editConfiguration, VitroRequest vreq) {
     	 HashMap<String, Object> formSpecificData = new HashMap<String, Object>();
     	 String configFile = getConfigurationFile(vreq, editConfiguration);
@@ -138,9 +178,6 @@ public class MinimalEditConfigurationGenerator  implements EditConfigurationGene
 		
 		//Get everything really
 		String query = "SELECT ?configFile WHERE {<" + predicateUri + ">  <" + configFilePredicate + "> ?configFile .}";
-		 RDFService rdfService = vreq.getRDFService();
-
-		 
 	        try {
 	        	ResultSet rs = QueryUtils.getQueryResults(query, vreq);
 	        	while(rs.hasNext()) {

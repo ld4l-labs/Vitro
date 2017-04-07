@@ -4,15 +4,24 @@ var minimalconfigtemplate = {
 
     /* *** Initial page setup *** */
    fieldNameProperty : "customform:varName",
+   configJSON:null,
     onLoad: function() {
-    		
-            this.mixIn();               
-            this.initPage();       
-            //Bind event listeners only when everything on the page has been populated
-            //Putting in bind event listeners here - any autocomplete fields should already be setup
-            //As far as fields generated using AJAX requests - the event listeners should be attached
-            //in the done/success methods of the ajax requests
-            this.bindEventListeners();
+    	 	this.mixIn();  
+    		//Do ajax request to get config and only then trigger the rest
+	    	$.ajax({
+				  method: "GET",
+				  url: this.configFileURL
+				})
+			  .done(function( content ) {
+				  minimalconfigtemplate.configJSON = JSON.parse(content);
+				  minimalconfigtemplate.initPage();
+				//Bind event listeners only when everything on the page has been populated
+		            //Putting in bind event listeners here - any autocomplete fields should already be setup
+		            //As far as fields generated using AJAX requests - the event listeners should be attached
+		            //in the done/success methods of the ajax requests
+				  minimalconfigtemplate.bindEventListeners();
+			  });      
+            
         },
 
     mixIn: function() {
@@ -66,14 +75,15 @@ var minimalconfigtemplate = {
     },
    
     generateConfigHash : function() {
-    	var graph = configjson["@graph"];
+    	//Load configjson
+    	var graph = minimalconfigtemplate.configJSON["@graph"];
     	var numberComponents = graph.length;
     	var n;
     	var fieldNameProperty = "customform:varName";
     	for(n = 0; n < numberComponents; n++) {
     		var component = graph[n];
     		var id = component["@id"];
-    		this.allConfigComponents[id] = component;
+    		minimalconfigtemplate.allConfigComponents[id] = component;
     	}
     },
     
@@ -120,6 +130,7 @@ var minimalconfigtemplate = {
     	if(minimalconfigtemplate.componentHasType(configComponent, "forms:LiteralField")) {
     		//Either autocomplete or regular field
     		templateClone = minimalconfigtemplate.createLiteralField(configComponent, displayInfo);
+    	
     		
     		
     	} else if(minimalconfigtemplate.componentHasType(configComponent, "forms:UriField")) {
@@ -128,9 +139,18 @@ var minimalconfigtemplate = {
     	//} else if(minimalconfigtemplate.componentHasType(configComponent, "forms:FieldOptions")) {
     		
     		//dropdown needed - since field options are always drop-downs of some sort
+    		//if(fieldName in minimalconfigtemplate.formFieldsToOptions) {
+    		//	templateClone = minimalconfigtemplate.createURIField(configComponent);
     		if(fieldName in minimalconfigtemplate.formFieldsToOptions) {
-    			templateClone = minimalconfigtemplate.createURIField(configComponent);
+    			templateClone = minimalconfigtemplate.createDropdownFieldContainer(configComponent, displayInfo);
     		}
+    	}
+    	
+    	if(templateClone != "" && templateClone != null) {
+    		alert(fieldName);
+    		alert(templateClone.html());
+    		templateClone.appendTo("#formcontent");
+    		templateClone.show();
     	}
     	//URI Field
     	//Constant options field
@@ -151,16 +171,17 @@ var minimalconfigtemplate = {
     			})
     			  .done(function( content ) {
     				  //templateclone is from URI Field, so make this work better
-    				  minimalconfigtemplate.createDropdownField(templateClone, content, configComponent, displayInfo);
-    				 
+    				  //templateClone = minimalconfigtemplate.createURIField(configComponent);
+    				  minimalconfigtemplate.createDropdownField(fieldName, content);
+    				  
     			  });
-    	}
-    	if(templateClone != "" && templateClone != null) {
-    		templateClone.show();
-    		templateClone.appendTo("#formcontent");
-    	}
+    	} 
+    	
+    	
+    	
     },
     createLiteralField:function(configComponent, displayInfo) {
+    	var templateClone = "";
     	var varName = minimalconfigtemplate.getVarName(configComponent);
     	var label = varName;
     	if("label" in displayInfo)
@@ -203,6 +224,7 @@ var minimalconfigtemplate = {
     	
     	
     },
+    //this needs to be changed
     createURIField:function(configComponent) {
     	var varName = minimalconfigtemplate.getVarName(configComponent);
     	var templateClone = $("[templateId='selectDropdownTemplate']").clone();
@@ -211,22 +233,31 @@ var minimalconfigtemplate = {
 		selectInput.attr("name", varName);
 		return templateClone;
     },
-    createDropdownField:function(templateClone, content, configComponent, displayInfo) {
-    	
+    createDropdownFieldContainer:function(configComponent, displayInfo) {
     	var varName = minimalconfigtemplate.getVarName(configComponent);	
-    	  var dropdownLabelElement = templateClone.find("label");
+    	var templateClone = $("[templateId='selectDropdownTemplate']").clone();
+    	var selectInput = templateClone.find("select");
+    	selectInput.attr("id", varName);
+		selectInput.attr("name", varName);
+		  var dropdownLabelElement = templateClone.find("label");
 		  var dropdownLabelValue = varName;
 		  if("label" in displayInfo) {
 			  dropdownLabelValue = displayInfo["label"];
 		  }
 		  dropdownLabelElement.attr("for", varName);
 		  dropdownLabelElement.html(dropdownLabelValue);
+		  
+		  return templateClone;
+    },
+    createDropdownField:function(varName, content) {
 		  //populate drop downs
-		  var dropdownElement = templateClone.find("select");
+		  var dropdownElement = $("select#" + varName);
+		  var htmlList = "";
 		  $.each(content, function(key, value) {
-			  var html = "<option value='" + key + "'>" + value + "</option>";
-			  dropdownElement.append(html);
+			  htmlList += "<option value='" + key + "'>" + value + "</option>";
+			 
 		  });
+		  dropdownElement.empty().append(htmlList);
     },
     getVarName:function(configComponent) {
     	var varNameFieldName = "customform:varName";
@@ -239,7 +270,7 @@ var minimalconfigtemplate = {
     	return null;
     },
     getConfigurationComponent:function(componentName) {
-    	var graph = configjson["@graph"];
+    	var graph = minimalconfigtemplate.configJSON["@graph"];
     	var numberComponents = graph.length;
     	var n;
     	var fieldNameProperty = "customform:varName";

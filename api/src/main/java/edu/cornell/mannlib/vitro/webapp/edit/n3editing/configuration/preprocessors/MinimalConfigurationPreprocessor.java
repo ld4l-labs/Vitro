@@ -44,6 +44,7 @@ import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
 import org.apache.jena.vocabulary.XSD;
 
+import edu.cornell.mannlib.vitro.webapp.application.ApplicationUtils;
 import edu.cornell.mannlib.vitro.webapp.controller.VitroRequest;
 import edu.cornell.mannlib.vitro.webapp.dao.WebappDaoFactory;
 import edu.cornell.mannlib.vitro.webapp.edit.n3editing.VTwo.BaseEditSubmissionPreprocessorVTwo;
@@ -92,12 +93,11 @@ public class MinimalConfigurationPreprocessor extends
 		copySubmissionValues();
 		
 		String configjsonString = vreq.getParameter("configFile");
-		configjsonString = "C:\\Users\\hjk54\\workspace\\vivocode\\VIVO\\webapp\\src\\main\\webapp\\templates\\freemarker\\edit\\forms\\js\\jsonconfig\\" + configjsonString;
+		//This needs to be based on the VIVO app itself and deployment, not installation directory
+		configjsonString = ApplicationUtils.instance().getServletContext().getRealPath("/templates/freemarker/edit/forms/js/jsonconfig/" + configjsonString);
 		//Read in config file, interpret and store as json object
 		try {
 			String contents = new String(Files.readAllBytes(Paths.get(configjsonString)));
-			//Remove these characters from the beginning of the string
-			contents = contents.replaceFirst("var configjson =", "");
 			JSONObject contentsJSON = (JSONObject) JSONSerializer.toJSON(contents);
 			processConfigurationJSONFields(contentsJSON);
 			updateConfiguration(vreq, contentsJSON);
@@ -112,7 +112,7 @@ public class MinimalConfigurationPreprocessor extends
 	
 	
 	private void processConfigurationJSONFields(JSONObject contentsJSON) {
-		String fieldNameProperty =  "http://vitro.mannlib.cornell.edu/ns/vitro/CustomFormConfiguration#varName";
+		String fieldNameProperty =  "customform:varName";
 		JSONArray graph = contentsJSON.getJSONArray("@graph");
 		
 		int len = graph.size();
@@ -150,17 +150,27 @@ public class MinimalConfigurationPreprocessor extends
 			//TODO: New resources now identified on field itself as proeprty not type
 			//"http://vitro.mannlib.cornell.edu/ns/vitro/CustomFormConfiguration#mayUseNewResource": true,
 			//new resources
+			//Earlier, there was a separate component entirely with id new resources which listed the new resources
+			//so it would be a the component level
+			if(component.containsKey("customform:mayUseNewResource")) {
+				
+				Boolean mayUseNewResource = component.getBoolean("customform:mayUseNewResource");
+				if(mayUseNewResource) {
+					newResourcesSet.add(component.getString(fieldNameProperty));
+				}
+			}
+			/*
 			if(types.contains("forms:NewResource")) {
 				this.newResourcesComponent = component;
-				JSONArray newResourceFieldNames = component.getJSONArray("http://vitro.mannlib.cornell.edu/ns/vitro/CustomFormConfiguration#fieldName");
+				JSONArray newResourceFieldNames = component.getJSONArray("customform:varName");
 				String[] newResourcesArray = new String[newResourceFieldNames.size()];
 				newResourcesArray = (String []) newResourceFieldNames.toArray(newResourcesArray);
 				newResourcesSet.addAll(new ArrayList<String>(Arrays.asList(newResourcesArray)));
-			}
+			}*/
 			//Check for dependencies components
 			//TODO:Assume these will be modeled exactly the same way
 			if(types.contains( "forms:FieldDependencies")) {
-				JSONArray dependenciesArray = component.getJSONArray("http://vitro.mannlib.cornell.edu/ns/vitro/CustomFormConfiguration#dependencies");
+				JSONArray dependenciesArray = component.getJSONArray("customform:dependencies");
 				int n, numberDependencies = dependenciesArray.size();
 				for(n = 0; n < numberDependencies; n++ ) {
 					String dependencyDelimited = dependenciesArray.getString(n);
@@ -213,7 +223,7 @@ public class MinimalConfigurationPreprocessor extends
 		//N3 required
 		//how did this even work before?
 		
-		String requiredN3String = this.requiredN3Component.getString("http://vitro.mannlib.cornell.edu/ns/vitro/CustomFormConfiguration#pattern");
+		String requiredN3String = this.requiredN3Component.getString("customform:pattern");
 		if(StringUtils.isNotEmpty(requiredN3String)) {
 			this.editConfiguration.addN3Required(requiredN3String);
 		}
@@ -239,7 +249,7 @@ public class MinimalConfigurationPreprocessor extends
 					this.editConfiguration.addUrisOnForm(s);
 					addField = true;
 					isURI = true;
-				} else if(types.contains("forms:StringField")){
+				} else if(types.contains("forms:LiteralField")){
 					this.editConfiguration.addLiteralsOnForm(s);
 					addField = true;
 					isLiteral = true;
@@ -335,8 +345,8 @@ public class MinimalConfigurationPreprocessor extends
 	private String createN3WithFakeNS(String fakeNS) {
 		//Take the N3 strings, and then URI-ize them
 		//Need to check if empty or not
-		String n3Prefixes = optionalN3Component.getString("http://vitro.mannlib.cornell.edu/ns/vitro/CustomFormConfiguration#prefixes");
-		JSONArray optionalN3Array = optionalN3Component.getJSONArray("http://vitro.mannlib.cornell.edu/ns/vitro/CustomFormConfiguration#pattern");		//Do we need period at end?
+		String n3Prefixes = optionalN3Component.getString("customform:prefixes");
+		JSONArray optionalN3Array = optionalN3Component.getJSONArray("customform:pattern");		//Do we need period at end?
 		
 		String fakeNSPrefix = "@prefix v: <" + fakeNS + "> .";
 		//For now we are going to pretend there are no ?s in the strings for now - 
