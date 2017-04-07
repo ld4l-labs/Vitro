@@ -224,8 +224,13 @@ public class MinimalConfigurationPreprocessor extends
 		//how did this even work before?
 		
 		String requiredN3String = this.requiredN3Component.getString("customform:pattern");
+		
 		if(StringUtils.isNotEmpty(requiredN3String)) {
-			this.editConfiguration.addN3Required(requiredN3String);
+			String addRequiredString = requiredN3String;
+			if(this.requiredN3Component.containsKey("customform:prefixes")) {
+				addRequiredString += this.requiredN3Component.getString("customform:prefixes");
+			}
+			this.editConfiguration.addN3Required(addRequiredString);
 		}
 		//Attach allowedN3 as n3 required
 		this.editConfiguration.addN3Required(allowedN3);
