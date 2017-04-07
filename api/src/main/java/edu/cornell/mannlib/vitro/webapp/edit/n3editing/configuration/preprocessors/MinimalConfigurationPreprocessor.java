@@ -222,15 +222,20 @@ public class MinimalConfigurationPreprocessor extends
 		//Hardcoding here - will do the rest above
 		//N3 required
 		//how did this even work before?
+		JSONArray requiredN3Array = this.requiredN3Component.getJSONArray("customform:pattern");	
 		
-		String requiredN3String = this.requiredN3Component.getString("customform:pattern");
-		
-		if(StringUtils.isNotEmpty(requiredN3String)) {
-			String addRequiredString = requiredN3String;
+		if(requiredN3Array.size() > 0) {
+			String prefixes = "";
 			if(this.requiredN3Component.containsKey("customform:prefixes")) {
-				addRequiredString += this.requiredN3Component.getString("customform:prefixes");
+				prefixes = this.requiredN3Component.getString("customform:prefixes");
 			}
-			this.editConfiguration.addN3Required(addRequiredString);
+			String requiredN3String = prefixes;
+			int slen = requiredN3Array.size();
+			int s;
+			for(s = 0; s < slen; s++) {
+				requiredN3String += requiredN3Array.getString(s);
+			}
+			this.editConfiguration.addN3Required(requiredN3String);
 		}
 		//Attach allowedN3 as n3 required
 		this.editConfiguration.addN3Required(allowedN3);

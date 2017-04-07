@@ -147,8 +147,7 @@ var minimalconfigtemplate = {
     	}
     	
     	if(templateClone != "" && templateClone != null) {
-    		alert(fieldName);
-    		alert(templateClone.html());
+    		
     		templateClone.appendTo("#formcontent");
     		templateClone.show();
     	}
@@ -207,6 +206,7 @@ var minimalconfigtemplate = {
 			var labelField = templateClone.find("p[templateId='inputAcSelector'] label");
 			labelField.html(label);
 			labelField.attr("for", varName);
+			//remove the templateId attribute
 			
 		} else {
 			//Otherwise copy regular literal over
@@ -220,6 +220,8 @@ var minimalconfigtemplate = {
 			labelField.attr("for", varName);
 			
 		}
+		templateClone.removeAttr("templateId");
+
     	return templateClone;
     	
     	
@@ -231,6 +233,8 @@ var minimalconfigtemplate = {
     	var selectInput = templateClone.find("select");
     	selectInput.attr("id", varName);
 		selectInput.attr("name", varName);
+		templateClone.removeAttr("templateId");
+
 		return templateClone;
     },
     createDropdownFieldContainer:function(configComponent, displayInfo) {
@@ -246,7 +250,8 @@ var minimalconfigtemplate = {
 		  }
 		  dropdownLabelElement.attr("for", varName);
 		  dropdownLabelElement.html(dropdownLabelValue);
-		  
+			templateClone.removeAttr("templateId");
+
 		  return templateClone;
     },
     createDropdownField:function(varName, content) {
