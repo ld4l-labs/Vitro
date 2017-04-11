@@ -41,7 +41,10 @@ var minimalconfigtemplate = {
         this.processConfigJSON();
         this.generateFields();
         //If this is an EDITING operation, need to get existing values
-        this.retrieveExistingValueRequests();
+        if(this.editMode == "edit") {
+        	//Retrieve existing values if edit operation
+        	this.retrieveExistingValueRequests();
+        }
                        
     },
     //get existing values

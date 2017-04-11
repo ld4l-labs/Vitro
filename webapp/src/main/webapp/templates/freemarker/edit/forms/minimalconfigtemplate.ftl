@@ -168,6 +168,16 @@ Set this flag on the input acUriReceiver where you would like this behavior to o
 <#assign sparqlQueryUrl = "${urls.base}/ajax/sparqlQuery" >
 
     <script type="text/javascript">
+    var urisInScope = {};
+    var literalsInScope = {};
+    <#list editConfiguration.pageData.urisInScope?keys as uriKey>
+    	urisInScope["${uriKey}"]=[];
+    	<#assign uriValue = editConfiguration.pageData.urisInScope[uriKey] />
+    	<#list uriValue as val>
+    		urisInScope["${uriKey}"].push("${val}");
+    	</#list>
+    	
+    </#list>
          
 	//TODO: Handle multiple autocompletes on the same page?
     var customFormData  = {
@@ -181,8 +191,8 @@ Set this flag on the input acUriReceiver where you would like this behavior to o
         defaultTypeName: 'entity', //REPLACE with type name for specific auto complete
         acTypes: {},
         configFileURL:"${urls.base}/templates/freemarker/edit/forms/js/jsonconfig/${configFile}",
-        urisInScope:"${editConfiguration.pageData.urisInScope}"
-        literalsInScope:"${editConfiguration.pageData.literalsInScope}"
+        urisInScope:urisInScope,
+        literalsInScope:literalsInScope
     };
     var i18nStrings = {
         selectAnExisting: '${i18n().select_an_existing}',
