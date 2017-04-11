@@ -50,8 +50,7 @@ public class MinimalEditConfigurationGenerator  implements EditConfigurationGene
 	    	
 		
 			EditConfigurationVTwo editConfiguration = new EditConfigurationVTwo();  
-			//includes getting the configuration json file associated with this property
-			addFormSpecificData(editConfiguration, vreq);
+			
 		
 			
 	    	
@@ -89,7 +88,8 @@ public class MinimalEditConfigurationGenerator  implements EditConfigurationGene
 	    	prepareForUpdate(vreq, session, editConfiguration);
 	    	
 	    
-	    	
+	    	//includes getting the configuration json file associated with this property
+			addFormSpecificData(editConfiguration, vreq);
 	    	//Form title and submit label moved to template
 	    	//Can also assign a custom template and not the minimal template if need be
 	    	setTemplate(vreq, editConfiguration);
@@ -163,6 +163,9 @@ public class MinimalEditConfigurationGenerator  implements EditConfigurationGene
          } else {
         	 log.error("Config File either not found or does not have proper ending");
          }
+         //Add URIs and literals in scope
+         formSpecificData.put("urisInScope", editConfiguration.getUrisInScope());
+         formSpecificData.put("literalsInScope", editConfiguration.getLiteralsInScope());
          //Do we have a default for configFile if none is returned?
          editConfiguration.setFormSpecificData(formSpecificData);
     }

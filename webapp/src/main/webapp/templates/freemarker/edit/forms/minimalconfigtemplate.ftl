@@ -180,7 +180,9 @@ Set this flag on the input acUriReceiver where you would like this behavior to o
         flagClearLabelForExisting: '${flagClearLabelForExisting}',
         defaultTypeName: 'entity', //REPLACE with type name for specific auto complete
         acTypes: {},
-        configFileURL:"${urls.base}/templates/freemarker/edit/forms/js/jsonconfig/${configFile}"
+        configFileURL:"${urls.base}/templates/freemarker/edit/forms/js/jsonconfig/${configFile}",
+        urisInScope:"${editConfiguration.pageData.urisInScope}"
+        literalsInScope:"${editConfiguration.pageData.literalsInScope}"
     };
     var i18nStrings = {
         selectAnExisting: '${i18n().select_an_existing}',

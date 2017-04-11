@@ -39,9 +39,40 @@ var minimalconfigtemplate = {
 		this.allConfigComponents = {}; //Hash where key is @id
         
         this.processConfigJSON();
-        
         this.generateFields();
+        //If this is an EDITING operation, need to get existing values
+        this.retrieveExistingValueRequests();
                        
+    },
+    //get existing values
+    retrieveExistingValueRequests:function() {
+    	var fieldName;
+    	var existingValueRequests = [];
+    	for(fieldName in this.formFields) {
+    		var configComponent = this.formFields[fieldName];
+    		//See if existing URI
+    		if("customform:queryForExistingValue" in configComponent) {
+    			existingValueRequests.push(configComponent);
+    		}
+    	}
+    	
+    	//Do an ajax request to get existing values
+    	$.ajax({
+			  method: "GET",
+			  url: minimalconfigtemplate.customFormAJAXUrl,
+			  data: { "configComponentsExistingValues": JSON.stringify(existingValueRequests),
+				  "urisInScope":JSON.stringify(urisInScope),
+				  "literalsInScope":JSON.stringify(literalsInScope),
+				  "action":"existingValues"
+			  }
+			})
+			  .done(function( content ) {
+				  //templateclone is from URI Field, so make this work better
+				  //Should retrieve a hash with var name to existing value
+				  //and those can be used to populate the form
+				  
+			  });
+    	
     },
     bindEventListeners:function() {
     	//This relies on the custom form with autocomplete file
@@ -147,7 +178,6 @@ var minimalconfigtemplate = {
     	}
     	
     	if(templateClone != "" && templateClone != null) {
-    		
     		templateClone.appendTo("#formcontent");
     		templateClone.show();
     	}
@@ -165,7 +195,8 @@ var minimalconfigtemplate = {
     			  method: "GET",
     			  url: minimalconfigtemplate.customFormAJAXUrl,
     			  data: { "configComponent": JSON.stringify(fieldOptionComponent),
-    				  		"fieldName": fieldName
+    				  		"fieldName": fieldName,
+    				  		"action": "dropdown"
     			  }
     			})
     			  .done(function( content ) {
