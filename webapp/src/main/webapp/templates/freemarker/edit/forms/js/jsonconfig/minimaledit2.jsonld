@@ -1,0 +1,197 @@
+var configjson ={
+  "@context": {
+    "foaf": "http://xmlns.com/foaf/0.1/",
+    "forms": "java:edu.cornell.mannlib.vitro.webapp.edit.n3editing.configuration.forms#",
+    "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+    "vcard": "http://www.w3.org/2006/vcard/ns#",
+    "vivo": "http://vivoweb.org/ontology/core#",
+    "xsd": "http://www.w3.org/2001/XMLSchema#"
+  },
+  "@graph": [
+    {
+      "@id": "http://vitro.mannlib.cornell.edu/ns/vitro/CustomFormConfiguration#ap2p_optionalN3",
+      "@type": [
+        "forms:OptionalN3Pattern",
+        "forms:FormComponent"
+      ],
+      "http://vitro.mannlib.cornell.edu/ns/vitro/CustomFormConfiguration#pattern": [
+        "\n        ?objectVar core:relates ?pubUri .\n        ?pubUri core:relatedBy ?objectVar .\n    \n        ?pubUri vivo:hasPublicationVenue ?collectionUri . \n        ?collectionUri vivo:publicationVenueFor ?pubUri . \n        \n        ?pubUri vivo:hasPublicationVenue ?bookUri . \n        ?bookUri vivo:publicationVenueFor ?pubUri . \n        \n        ?pubUri bibo:presentedAt ?conferenceUri . \n        ?conferenceUri obo:BFO_0000051 ?pubUri . \n        \n        ?pubUri vivo:proceedingsOf ?eventUri . \n        ?eventUri vivo:hasProceedings ?pubUri . \n        \n        ?pubUri vivo:publisher ?publisherUri . \n        ?publisherUri vivo:publisherOf ?pubUri . \n\n        ?pubUri vivo:hasPublicationVenue ?newCollection . \n        ?newCollection vivo:publicationVenueFor ?pubUri . \n\n        ?pubUri vivo:hasPublicationVenue ?newBook . \n        ?newBook vivo:publicationVenueFor ?pubUri . \n\n        ?pubUri bibo:presentedAt ?newConference . \n        ?newConference obo:BFO_0000051 ?pubUri . \n\n        ?pubUri vivo:proceedingsOf ?newEvent . \n        ?newEvent vivo:hasProceedings ?pubUri . \n\n        ?pubUri vivo:publisher ?newPublisher . \n        ?newPublisher vivo:publisherOf ?pubUri .\n        \n        ?pubUri vivo:relatedBy ?editorship . \n        ?editorship vivo:relates ?pubUri . \n    ",
+        "\n        ?dateTimeNode \n          a core:DateTimeValue ; \n          core:dateTime ?dateTime-value ; \n          core:dateTimePrecision ?dateTime-precision . \n    ",
+        "\n        ?newEditor \n          a foaf:Person ; \n          rdfs:label ?editor ;\n          obo:ARG_2000028  ?vcardEditor . \n\n        ?vcardEditor \n          a vcard:Individual ; \n          obo:ARG_2000029  ?newEditor ; \n          vcard:hasName  ?vcardName . \n\n        ?vcardName \n          a vcard:Name ; \n          vcard:givenName ?firstName ;         vcard:familyName ?lastName .\n    ",
+        "\n        ?newBook \n          a bibo:Book ; \n          bibo:volume ?volume ; \n          core:placeOfPublication ?locale ; \n          rdfs:label ?book ; \n          core:dateTimeValue ?dateTimeNode . \n          \n        ?newBook vivo:publisher ?publisherUri . \n        ?publisherUri vivo:publisherOf ?newBook . \n\n        ?newBook vivo:publisher ?newPublisher . \n        ?newPublisher vivo:publisherOf ?newBook . \n\n        ?newBook vivo:relatedBy ?editorship . \n        ?editorship vivo:relates ?newBook . \n    ",
+        "\n        ?editorship \n          a vivo:Editorship .\n           \n        ?editorship vivo:relates ?editorUri . \n        ?editorUri vivo:relatedBy ?editorship .\n         \n        ?editorship vivo:relates ?newEditor . \n        ?newEditor vivo:relatedBy ?editorship . \n    ",
+        "\n        ?newPublisher \n          a core:Publisher ; \n          rdfs:label ?publisher .\n    ",
+        "\n        ?newCollection \n          a bibo:Journal ; \n          rdfs:label ?collection .\n    ",
+        "\n        ?newEvent a bibo:Conference ; \n          rdfs:label ?event .\n    ",
+        "\n        ?objectVar core:relates ?newPublication .\n        ?newPublication core:relatedBy ?objectVar .\n        \n        ?newPublication \n          a ?pubType ;\n          rdfs:label ?title ;\n          core:placeOfPublication ?locale ;\n          bibo:volume ?volume ;\n          bibo:number ?number ;\n          bibo:issue ?issue ;\n          bibo:chapter ?chapterNbr ; \n          bibo:pageStart ?startPage ;\n          bibo:pageEnd ?endPage .\n          \n        ?newPublication vivo:hasPublicationVenue ?collectionUri . \n        ?collectionUri vivo:publicationVenueFor ?newPublication . \n\n        ?newPublication vivo:hasPublicationVenue ?bookUri . \n        ?bookUri vivo:publicationVenueFor ?newPublication . \n\n        ?newPublication bibo:presentedAt ?conferenceUri . \n        ?conferenceUri obo:BFO_0000051 ?newPublication . \n\n        ?newPublication vivo:proceedingsOf ?eventUri . \n        ?eventUri vivo:hasProceedings ?newPublication . \n\n        ?newPublication vivo:publisher ?publisherUri . \n        ?publisherUri vivo:publisherOf ?newPublication . \n\n        ?newPublication vivo:hasPublicationVenue ?newCollection . \n        ?newCollection vivo:publicationVenueFor ?newPublication . \n\n        ?newPublication vivo:hasPublicationVenue ?newBook . \n        ?newBook vivo:publicationVenueFor ?newPublication . \n\n        ?newPublication bibo:presentedAt ?newConference . \n        ?newConference core:obo:BFO_0000051 ?newPublication . \n\n        ?newPublication vivo:proceedingsOf ?newEvent . \n        ?newEvent vivo:hasProceedings ?newPublication .\n        \n        ?newPublication vivo:publisher ?newPublisher . \n        ?newPublisher vivo:publisherOf ?newPublication . \n\n        ?newPublication vivo:relatedBy ?editorship . \n        ?editorship vivo:relates ?newPublication . \n\n        ?newPublication core:dateTimeValue ?dateTimeNode . \n    ",
+        "\n        ?newConference \n          a bibo:Conference ; \n          rdfs:label ?conference .\n    "
+      ],
+      "http://vitro.mannlib.cornell.edu/ns/vitro/CustomFormConfiguration#prefixes": "@prefix afn: <http://jena.hpl.hp.com/ARQ/function#> .  @prefix bibo: <http://purl.org/ontology/bibo/> . @prefix core: <http://vivoweb.org/ontology/core#> .  @prefix vivo: <http://vivoweb.org/ontology/core#> . @prefix foaf: <http://xmlns.com/foaf/0.1/> .      @prefix obo: <http://purl.obolibrary.org/obo/>.    @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>. @prefix vcard: <http://www.w3.org/2006/vcard/ns#> .    "
+    },
+    {
+      "@id": "http://vitro.mannlib.cornell.edu/ns/vitro/CustomFormConfiguration#ap2p_requiredN3",
+      "@type": [
+        "forms:FormComponent",
+        "forms:RequiredN3Pattern"
+      ],
+      "http://vitro.mannlib.cornell.edu/ns/vitro/CustomFormConfiguration#pattern": "\n        PREFIX core: <http://vivoweb.org/ontology/core#>\n        ?objectVar \n          a core:Authorship ;\n          core:relates ?person .\n        ?person core:relatedBy ?objectVar .\n    "
+    },
+    {
+      "@id": "http://vitro.mannlib.cornell.edu/ns/vitro/CustomFormConfiguration#addPublicationsToPerson",
+      "@type": [
+        "forms:FormBuilder",
+        "forms:ConditionalFormBuilder"
+      ],
+      "http://vitro.mannlib.cornell.edu/ns/vitro/CustomFormConfiguration#component": [
+        {
+          "@id": "http://vitro.mannlib.cornell.edu/ns/vitro/CustomFormConfiguration#ap2p_dateTimeField"
+        },
+        {
+          "@id": "http://vitro.mannlib.cornell.edu/ns/vitro/CustomFormConfiguration#ap2p_requiredN3"
+        },
+        {
+          "@id": "http://vitro.mannlib.cornell.edu/ns/vitro/CustomFormConfiguration#ap2p_optionalN3"
+        },
+        {
+          "@id": "http://vitro.mannlib.cornell.edu/ns/vitro/CustomFormConfiguration#ap2p_uriFields"
+        },
+        {
+          "@id": "http://vitro.mannlib.cornell.edu/ns/vitro/CustomFormConfiguration#ap2p_pubTypeField"
+        },
+        {
+          "@id": "http://vitro.mannlib.cornell.edu/ns/vitro/CustomFormConfiguration#ap2p_autoCompleteValidator"
+        },
+        {
+          "@id": "http://vitro.mannlib.cornell.edu/ns/vitro/CustomFormConfiguration#ap2p_sparqlQueryInfo"
+        },
+        {
+          "@id": "http://vitro.mannlib.cornell.edu/ns/vitro/CustomFormConfiguration#ap2p_newResources"
+        },
+        {
+          "@id": "http://vitro.mannlib.cornell.edu/ns/vitro/CustomFormConfiguration#ap2p_stringFields"
+        },
+        {
+          "@id": "http://vitro.mannlib.cornell.edu/ns/vitro/CustomFormConfiguration#ap2p_nameValidator"
+        }
+      ],
+      "http://vitro.mannlib.cornell.edu/ns/vitro/CustomFormConfiguration#returnTo": "HERE",
+      "http://vitro.mannlib.cornell.edu/ns/vitro/CustomFormConfiguration#template": "addPublicationToPerson.ftl"
+    },
+    {
+      "@id": "http://vitro.mannlib.cornell.edu/ns/vitro/CustomFormConfiguration#ap2p_stringFields",
+      "@type": [
+        "forms:FormComponent",
+        "forms:StringField"
+      ],
+      "http://vitro.mannlib.cornell.edu/ns/vitro/CustomFormConfiguration#fieldName": [
+        "collection",
+        "conference",
+        "startPage",
+        "lastName",
+        "conferenceDisplay",
+        "title",
+        "number",
+        "collectionDisplay",
+        "publisherDisplay",
+        "issue",
+        "firstName",
+        "endPage",
+        "eventDisplay",
+        "editorDisplay",
+        "chapterNbr",
+        "locale",
+        "bookDisplay",
+        "event",
+        "editor",
+        "book",
+        "publisher",
+        "volume"
+      ]
+    },
+    {
+      "@id": "http://vitro.mannlib.cornell.edu/ns/vitro/CustomFormConfiguration#ap2p_uriFields",
+      "@type": [
+        "forms:UriField",
+        "forms:FormComponent"
+      ],
+      "http://vitro.mannlib.cornell.edu/ns/vitro/CustomFormConfiguration#fieldName": [
+        "collectionUri",
+        "conferenceUri",
+        "editorUri",
+        "publisherUri",
+        "pubUri",
+        "bookUri",
+        "eventUri"
+      ]
+    },
+    {
+      "@id": "http://vitro.mannlib.cornell.edu/ns/vitro/CustomFormConfiguration#aptp_pubTypeField",
+      "@type": [
+        "forms:ConstantOptionsField",
+        "forms:FormComponent"
+      ],
+      "http://vitro.mannlib.cornell.edu/ns/vitro/CustomFormConfiguration#fieldName": "pubType",
+      "http://vitro.mannlib.cornell.edu/ns/vitro/CustomFormConfiguration#flags": "nonempty",
+      "http://vitro.mannlib.cornell.edu/ns/vitro/CustomFormConfiguration#options": "[\"http://vivoweb.org/ontology/core#Abstract\", \"Abstract\"],   [\"http://purl.org/ontology/bibo/AcademicArticle\", \"Academic Article\"], [\"http://purl.org/ontology/bibo/Article\", \"Article\"],  [\"http://purl.org/ontology/bibo/AudioDocument\", \"Audio Document\"],  [\"http://vivoweb.org/ontology/core#BlogPosting\", \"Blog Posting\"],  [\"http://purl.org/ontology/bibo/Book\", \"Book\"],    [\"http://vivoweb.org/ontology/core#CaseStudy\", \"Case Study\"],     [\"http://vivoweb.org/ontology/core#Catalog\", \"Catalog\"],     [\"http://purl.org/ontology/bibo/Chapter\", \"Chapter\"],     [\"http://vivoweb.org/ontology/core#ConferencePaper\", \"Conference Paper\"],      [\"http://vivoweb.org/ontology/core#ConferencePoster\", \"Conference Poster\"],       [\"http://vivoweb.org/ontology/core#Database\", \"Database\"],     [\"http://vivoweb.org/ontology/core#Dataset\", \"Dataset\"],      [\"http://purl.org/ontology/bibo/EditedBook\", \"Edited Book\"],     [\"http://vivoweb.org/ontology/core#EditorialArticle\", \"Editorial Article\"],      [\"http://purl.org/ontology/bibo/Film\", \"Film\"],      [\"http://vivoweb.org/ontology/core#Newsletter\", \"Newsletter\"],    [\"http://vivoweb.org/ontology/core#NewsRelease\", \"News Release\"],      [\"http://purl.org/ontology/bibo/Patent\", \"Patent\"],       [\"http://purl.obolibrary.org/obo/OBI_0000272\", \"Protocol\"],      [\"http://purl.org/ontology/bibo/Report\", \"Report\"],      [\"http://vivoweb.org/ontology/core#ResearchProposal\", \"Research Proposal\"],       [\"http://vivoweb.org/ontology/core#Review\", \"Review\"],       [\"http://purl.obolibrary.org/obo/ERO_0000071\" , \"Software\"],     [\"http://vivoweb.org/ontology/core#Speech\", \"Speech\"],      [\"http://purl.org/ontology/bibo/Thesis\", \"Thesis\"],      [\"http://vivoweb.org/ontology/core#Video\", \"Video\"],      [\"http://purl.org/ontology/bibo/Webpage\", \"Webpage\"],     [\"http://purl.org/ontology/bibo/Website\", \"Website\"],   [\"http://vivoweb.org/ontology/core#WorkingPaper\", \"Working Paper\"]  "
+    },
+    {
+      "@id": "http://vitro.mannlib.cornell.edu/ns/vitro/CustomFormConfiguration#ap2p_dateTimeField",
+      "@type": [
+        "forms:DateTimeField",
+        "forms:FormComponent"
+      ],
+      "http://vitro.mannlib.cornell.edu/ns/vitro/CustomFormConfiguration#fieldName": "dateTimeNode",
+      "http://vitro.mannlib.cornell.edu/ns/vitro/CustomFormConfiguration#minimumPrecision": "YEAR",
+      "http://vitro.mannlib.cornell.edu/ns/vitro/CustomFormConfiguration#precisionField": "dateTimePrecision",
+      "http://vitro.mannlib.cornell.edu/ns/vitro/CustomFormConfiguration#valueField": "dateTimeValue"
+    },
+    {
+      "@id": "http://vitro.mannlib.cornell.edu/ns/vitro/CustomFormConfiguration#ap2p_autoCompleteValidator",
+      "@type": [
+        "forms:FormComponent",
+        "forms:AutocompleteRequiredInputValidator"
+      ],
+      "http://vitro.mannlib.cornell.edu/ns/vitro/CustomFormConfiguration#labelInput": "title",
+      "http://vitro.mannlib.cornell.edu/ns/vitro/CustomFormConfiguration#uriReceiver": "pubUri"
+    },
+    {
+      "@id": "http://vitro.mannlib.cornell.edu/ns/vitro/CustomFormConfiguration#ap2p_nameValidator",
+      "@type": [
+        "forms:FirstAndLastNameValidator",
+        "forms:FormComponent"
+      ]
+    },
+    {
+      "@id": "http://vitro.mannlib.cornell.edu/ns/vitro/CustomFormConfiguration#ap2p_newResources",
+      "@type": [
+        "forms:FormComponent",
+        "forms:NewResource"
+      ],
+      "http://vitro.mannlib.cornell.edu/ns/vitro/CustomFormConfiguration#fieldName": [
+        "newBook",
+        "newConference",
+        "editorship",
+        "dateTimeNode",
+        "vcardEditor",
+        "newEvent",
+        "vcardName",
+        "authorshipUri",
+        "newPublisher",
+        "newEditor",
+        "newPublication",
+        "newCollection"
+      ]
+    },
+    {
+      "@id": "http://vitro.mannlib.cornell.edu/ns/vitro/CustomFormConfiguration#ap2p_sparqlQueryInfo",
+      "@type": [
+        "forms:TemplateFormSpecificData",
+        "forms:FormComponent"
+      ],
+      "http://vitro.mannlib.cornell.edu/ns/vitro/CustomFormConfiguration#fieldName": "sparqlForAcFilter",
+      "http://vitro.mannlib.cornell.edu/ns/vitro/CustomFormConfiguration#template": "\n      PREFIX core:<http://vivoweb.org/ontology/core#> \n      SELECT ?pubUri \n      WHERE { \n         ?subject core:relatedBy ?objectVar . \n         ?objectVar a core:Authorship . \n         ?objectVar core:relates ?pubUri . \n      }\n    "
+    }
+  ]
+}
+
