@@ -44,6 +44,7 @@ public class MinimalEditConfigurationGenerator  implements EditConfigurationGene
 	private String subjectUri = null;
 	private String predicateUri = null;
 	private String objectUri = null;	
+	private static String classURIParameter = "classURI";
 	
 	@Override	
 	 public EditConfigurationVTwo getEditConfiguration(VitroRequest vreq, HttpSession session) throws Exception {
@@ -119,9 +120,22 @@ public class MinimalEditConfigurationGenerator  implements EditConfigurationGene
 		  }
 		
 	}
+	  
+	  //if classURI is passed in
+	  private boolean isClassSpecificNewForm(VitroRequest vreq) {
+		  String classURI = vreq.getParameter(classURIParameter);
+		  return StringUtils.isNotEmpty(classURI);
+	  }
 
-
+	//This gets custom template file using value of the template property
 	private String getCustomTemplateFile(VitroRequest vreq) {
+		if(isClassSpecificNewForm(vreq)) {
+			return getClassSpecificCustomTemplateFile(vreq);
+		}
+		return getCustomTemplateFileResult(vreq);
+	}
+	
+	private String getCustomTemplateFileResult(VitroRequest vreq) {
 		String configFilePredicate = "http://vitro.mannlib.cornell.edu/ns/vitro/0.7#customTemplateFileAnnot";
 		
 		
@@ -146,6 +160,58 @@ public class MinimalEditConfigurationGenerator  implements EditConfigurationGene
 	        }
 		return null;
 	}
+	
+	//This gets custom template file for a particular class - e.g. for a new individual form as opposed to property-related form
+	public String getClassSpecificCustomTemplateFile(VitroRequest vreq) {
+	
+		String configFilePredicate = "http://vitro.mannlib.cornell.edu/ns/vitro/0.7#customTemplateFileAnnot";
+		String classURI = vreq.getParameter(classURIParameter);
+		
+		//Get everything really
+		String query = "SELECT ?templateFile WHERE {<" + classURI + ">  <" + configFilePredicate + "> ?templateFile .}";
+
+		 
+	        try {
+	        	ResultSet rs = QueryUtils.getQueryResults(query, vreq);
+	        	while(rs.hasNext()) {
+	        		QuerySolution qs = rs.nextSolution();
+	        		Literal configFileLiteral = qs.getLiteral("templateFile");
+	        		if(configFileLiteral != null && StringUtils.isNotEmpty(configFileLiteral.getString())) {
+	        			return configFileLiteral.getString();
+	        		}
+	        	}
+	        	
+	        } catch (Exception ex) {
+	        	log.error("Exception occurred in query retrieving information for this field", ex);
+	        }
+		return null;
+	}
+	
+	public String getClassSpecificCustomConfigFile(VitroRequest vreq) {
+		
+		String configFilePredicate = "http://vitro.mannlib.cornell.edu/ns/vitro/0.7#customConfigFileAnnot";
+		String classURI = vreq.getParameter(classURIParameter);
+		
+		//Get everything really
+		String query = "SELECT ?configFile WHERE {<" + classURI + ">  <" + configFilePredicate + "> ?configFile .}";
+	        try {
+	        	ResultSet rs = QueryUtils.getQueryResults(query, vreq);
+	        	while(rs.hasNext()) {
+	        		QuerySolution qs = rs.nextSolution();
+	        		Literal configFileLiteral = qs.getLiteral("configFile");
+	        		if(configFileLiteral != null && StringUtils.isNotEmpty(configFileLiteral.getString())) {
+	        			return configFileLiteral.getString();
+	        		}
+	        	}
+	        	
+	        } catch (Exception ex) {
+	        	log.error("Exception occurred in query retrieving information for this field", ex);
+	        }
+		
+	      // 
+	        return null;
+	}
+
 
 
 	//Form specific data
@@ -171,8 +237,15 @@ public class MinimalEditConfigurationGenerator  implements EditConfigurationGene
     }
 	 
 			
+    private String getConfigurationFile(VitroRequest vreq, EditConfigurationVTwo editConfiguration) {
+    	if(isClassSpecificNewForm(vreq)) {
+    		return getClassSpecificCustomConfigFile(vreq);
+    	} 
+    	return getConfigurationFileResult(vreq);
+    }
+    
     //Get the configuration file required
-	private String getConfigurationFile(VitroRequest vreq, EditConfigurationVTwo editConfiguration) {
+	private String getConfigurationFileResult(VitroRequest vreq) {
 		//Custom form entry predicate: http://vitro.mannlib.cornell.edu/ns/vitro/0.7#customEntryFormAnnot
 		String configFilePredicate = "http://vitro.mannlib.cornell.edu/ns/vitro/0.7#customConfigFileAnnot";
 		
@@ -190,7 +263,6 @@ public class MinimalEditConfigurationGenerator  implements EditConfigurationGene
 	        			return configFileLiteral.getString();
 	        		}
 	        	}
-	        	editConfiguration.addFormSpecificData("queryresult", rs);
 	        } catch (Exception ex) {
 	        	log.error("Exception occurred in query retrieving information for this field", ex);
 	        }
