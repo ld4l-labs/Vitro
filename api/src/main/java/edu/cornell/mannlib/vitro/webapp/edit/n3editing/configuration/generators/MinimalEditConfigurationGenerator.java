@@ -329,8 +329,11 @@ public class MinimalEditConfigurationGenerator  implements EditConfigurationGene
 	    		this.initObjectParameters(vreq);
 	    		this.processObjectPropForm(vreq, editConfiguration);
 	    	} else {
-	    		log.debug("This is a data property: " + predicateUri);
-	    		return;
+	    		//Data property ONLY if not object uri and not a class specific custom form
+	    		if(!isClassSpecificNewForm(vreq)) {
+	    			log.debug("This is a data property: " + predicateUri);
+	    			return;
+	    		}
 	    	}
 	    }    
 
@@ -352,10 +355,13 @@ public class MinimalEditConfigurationGenerator  implements EditConfigurationGene
 	    //Handles both object and data property    
 	    private List<String> generateN3Required(VitroRequest vreq) {
 	    	List<String> n3ForEdit = new ArrayList<String>();
-	    	String editString = "?subject ?predicate ";    	
-	    	editString += "?objectVar";    	
-	    	editString += " .";
-	    	n3ForEdit.add(editString);
+	    	//Use this if this isn't a new instance of a class form
+	    	if(!isClassSpecificNewForm(vreq)) {
+		    	String editString = "?subject ?predicate ";    	
+		    	editString += "?objectVar";    	
+		    	editString += " .";
+		    	n3ForEdit.add(editString);
+	    	}
 	    	return n3ForEdit;
 	    }
 
@@ -436,21 +442,24 @@ public class MinimalEditConfigurationGenerator  implements EditConfigurationGene
 	    }       
 
 		private void prepareForUpdate(VitroRequest vreq, HttpSession session, EditConfigurationVTwo editConfiguration) {
-	    	//Here, retrieve model from 
-			OntModel model = ModelAccess.on(session.getServletContext()).getOntModel();
-	    	//if object property
-	    	if(EditConfigurationUtils.isObjectProperty(EditConfigurationUtils.getPredicateUri(vreq), vreq)){
-		    	Individual objectIndividual = EditConfigurationUtils.getObjectIndividual(vreq);
-		    	if(objectIndividual != null) {
-		    		//update existing object
-		    		editConfiguration.prepareForObjPropUpdate(model);
-		    	}  else {
-		    		//new object to be created
-		            editConfiguration.prepareForNonUpdate( model );
-		        }
-	    	} else {
-	    	    throw new Error("DefaultObjectPropertyForm does not handle data properties.");
-	    	}
+	    	//If this is the creation of a new individual from a class URI, we don't need the regular preparation
+			if(!isClassSpecificNewForm(vreq)) {
+				//Here, retrieve model from 
+				OntModel model = ModelAccess.on(session.getServletContext()).getOntModel();
+		    	//if object property
+		    	if(EditConfigurationUtils.isObjectProperty(EditConfigurationUtils.getPredicateUri(vreq), vreq)){
+			    	Individual objectIndividual = EditConfigurationUtils.getObjectIndividual(vreq);
+			    	if(objectIndividual != null) {
+			    		//update existing object
+			    		editConfiguration.prepareForObjPropUpdate(model);
+			    	}  else {
+			    		//new object to be created
+			            editConfiguration.prepareForNonUpdate( model );
+			        }
+		    	} else {
+		    	    throw new Error("DefaultObjectPropertyForm does not handle data properties.");
+		    	}
+			}
 	    }
 	      
 

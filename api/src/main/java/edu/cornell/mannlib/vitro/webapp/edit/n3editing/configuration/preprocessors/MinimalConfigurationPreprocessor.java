@@ -288,48 +288,6 @@ public class MinimalConfigurationPreprocessor extends
 			}
 		}
 		
-	/*	
-	    String prefixes = "@prefix afn: <http://jena.hpl.hp.com/ARQ/function#> .        @prefix bibo: <http://purl.org/ontology/bibo/> .        @prefix core: <http://vivoweb.org/ontology/core#> .        @prefix foaf: <http://xmlns.com/foaf/0.1/> .      @prefix obo: <http://purl.obolibrary.org/obo/> .        @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .       @prefix vcard: <http://www.w3.org/2006/vcard/ns#> .    ";
-
-		List<String> additionalN3 = new ArrayList<String>();
-		//subject = person, objectVar = authorship
-		additionalN3.add(prefixes + "?objectVar a core:Authorship ;" + 
-        "core:relates ?subject .");
-		additionalN3.add(prefixes + "?objectVar core:relates ?newPublication . " + 
-				"?newPublication core:relatedBy ?objectVar . " + 
-				"?newPublication a ?pubType ;      rdfs:label ?title.");
-		this.editConfiguration.addN3Required(additionalN3);
-		*/
-		//New resource
-		/*
-		this.editConfiguration.addNewResource("newPublication", null);
-		//uris and literals on form
-		List<String> urisOnForm = new ArrayList<String>();
-		urisOnForm.add("pubType");
-		this.editConfiguration.addUrisOnForm(urisOnForm);
-		List<String> literalsOnForm = new ArrayList<String>();
-		literalsOnForm.add("title");
-		this.editConfiguration.addLiteralsOnForm(literalsOnForm);
-		//fields: newPublication, pubType, title
-		this.editConfiguration.addField(new FieldVTwo().setName("newPublication"));
-		this.editConfiguration.addField(new FieldVTwo().setName("pubType"));
-		this.editConfiguration.addField(new FieldVTwo().setName("title"));
-		*/
-		//Add inputs to submission
-		//pubtype and title should both come from parameter
-		/*
-		String pubType = vreq.getParameter("pubType");
-		String title = vreq.getParameter("title");
-		String[] pTypeVals = new String[1];
-		pTypeVals[0] = pubType;
-		String[] titleVals = new String[1];
-		titleVals[0] = title;
-		
-		this.submission.addUriToForm(this.editConfiguration, "pubType", pTypeVals);
-		FieldVTwo titleField = this.editConfiguration.getField("title");
-		this.submission.addLiteralToForm(this.editConfiguration, titleField, "title", titleVals);
-		*/
-		
 	}
 
 	private boolean isReservedVarName(String s) {
@@ -353,42 +311,46 @@ public class MinimalConfigurationPreprocessor extends
 	}
 
 	private String createN3WithFakeNS(String fakeNS) {
+		String uriizedAllN3 = null;
 		//Take the N3 strings, and then URI-ize them
 		//Need to check if empty or not
-		String n3Prefixes = optionalN3Component.getString("customform:prefixes");
-		JSONArray optionalN3Array = optionalN3Component.getJSONArray("customform:pattern");		//Do we need period at end?
-		
-		String fakeNSPrefix = "@prefix v: <" + fakeNS + "> .";
-		//For now we are going to pretend there are no ?s in the strings for now - 
-		List<String> uriizedN3 = new ArrayList<String>();
-		String allPrefixes = fakeNSPrefix + n3Prefixes;
-		uriizedN3.add(fakeNSPrefix);
-		uriizedN3.add(n3Prefixes);
-		int optArrayLength = optionalN3Array.size();
-		int on;
-		Model testModel = ModelFactory.createDefaultModel();
-		for(on = 0; on < optArrayLength; on++) {
-			String n3String = optionalN3Array.getString(on);
-			String substitutedN3String = n3String.replaceAll("[?]", "v:");
-			uriizedN3.add(substitutedN3String);
-			//one at a time so we can see which N3 statement might be a problem
-			try {
-				System.out.println(allPrefixes + substitutedN3String);
-				 StringReader reader = new StringReader(allPrefixes + substitutedN3String.replaceAll("\n", "").replaceAll("\r",""));
-				testModel.read(reader, "", "N3");
-			} catch(Exception ex) {
-				ex.printStackTrace();
-			}
+		if(optionalN3Component != null) {
+			String n3Prefixes = optionalN3Component.getString("customform:prefixes");
+			JSONArray optionalN3Array = optionalN3Component.getJSONArray("customform:pattern");		//Do we need period at end?
 			
+			String fakeNSPrefix = "@prefix v: <" + fakeNS + "> .";
+			//For now we are going to pretend there are no ?s in the strings for now - 
+			List<String> uriizedN3 = new ArrayList<String>();
+			String allPrefixes = fakeNSPrefix + n3Prefixes;
+			uriizedN3.add(fakeNSPrefix);
+			uriizedN3.add(n3Prefixes);
+			int optArrayLength = optionalN3Array.size();
+			int on;
+			Model testModel = ModelFactory.createDefaultModel();
+			for(on = 0; on < optArrayLength; on++) {
+				String n3String = optionalN3Array.getString(on);
+				String substitutedN3String = n3String.replaceAll("[?]", "v:");
+				uriizedN3.add(substitutedN3String);
+				//one at a time so we can see which N3 statement might be a problem
+				try {
+					System.out.println(allPrefixes + substitutedN3String);
+					 StringReader reader = new StringReader(allPrefixes + substitutedN3String.replaceAll("\n", "").replaceAll("\r",""));
+					testModel.read(reader, "", "N3");
+				} catch(Exception ex) {
+					ex.printStackTrace();
+				}
+				
+			}
+			uriizedAllN3 = StringUtils.join(uriizedN3, " ");
+			System.out.println("Pre carriage return removal");
+			System.out.println(uriizedAllN3);
+			//remove newline/carriage return characters
+			uriizedAllN3 = uriizedAllN3.replaceAll("\n", "").replaceAll("\r","");
+			System.out.println("N3 after newline removal");
+			System.out.println(uriizedAllN3);
 		}
-		String uriizedAllN3 = StringUtils.join(uriizedN3, " ");
-		System.out.println("Pre carriage return removal");
-		System.out.println(uriizedAllN3);
-		//remove newline/carriage return characters
-		uriizedAllN3 = uriizedAllN3.replaceAll("\n", "").replaceAll("\r","");
-		System.out.println("N3 after newline removal");
-		System.out.println(uriizedAllN3);
 		return uriizedAllN3;
+
 	}
 
 	//Given the values for the parameters, which varnames are satisfifed
@@ -433,45 +395,49 @@ public class MinimalConfigurationPreprocessor extends
 	}
 
 	private Model createAllowedModel(HashSet<String> satisfiedVarNames, String fakeNS, String uriizedAllN3) {
-		Model uriizedModel = ModelFactory.createDefaultModel();
-		StringReader modelReader = new StringReader(uriizedAllN3);
-		uriizedModel.read(modelReader, "", "N3");
-		//The "allowable" n3 bucket
 		Model allowedN3Model = ModelFactory.createDefaultModel();
-		allowedN3Model.setNsPrefix("v", fakeNS);
-
-		//iterate through the model, see if each variable is part of the satisifed varnames bucket
-		StmtIterator stmtIterator = uriizedModel.listStatements();
-		
-		while(stmtIterator.hasNext()) {
-			Statement stmt = stmtIterator.nextStatement();
-			//Get all the variables
-			//Subject, predicate, resource
-			Resource subject = stmt.getSubject();
-			Property predicate = stmt.getPredicate();
-			RDFNode object = stmt.getObject();
-			boolean disallowedStatement = false;
-			//if fakeNS variable but varname not in allowed set, disallow this statement
-			if(subject.getNameSpace().equals(fakeNS)) {
-				disallowedStatement = !(satisfiedVarNames.contains(subject.getLocalName()));
-			}
-			if(!disallowedStatement) {
-				if(predicate.getNameSpace().equals(fakeNS)) {
-					disallowedStatement = !(satisfiedVarNames.contains(predicate.getLocalName()));
-				}
-			}
-			if(!disallowedStatement) {
-				if(object.asResource().getNameSpace().equals(fakeNS)) {
-					disallowedStatement = !(satisfiedVarNames.contains(object.asResource().getLocalName()));
-				}
-			}
-			if(!disallowedStatement) {
-				allowedN3Model.add(stmt);
-			}
+		//this string may be null or empty if there are no optional N3 defined
+		if(StringUtils.isNotEmpty(uriizedAllN3)) {
+			Model uriizedModel = ModelFactory.createDefaultModel();
 			
+			StringReader modelReader = new StringReader(uriizedAllN3);
+			uriizedModel.read(modelReader, "", "N3");
+			//The "allowable" n3 bucket
+			allowedN3Model.setNsPrefix("v", fakeNS);
+	
+			//iterate through the model, see if each variable is part of the satisifed varnames bucket
+			StmtIterator stmtIterator = uriizedModel.listStatements();
+			
+			while(stmtIterator.hasNext()) {
+				Statement stmt = stmtIterator.nextStatement();
+				//Get all the variables
+				//Subject, predicate, resource
+				Resource subject = stmt.getSubject();
+				Property predicate = stmt.getPredicate();
+				RDFNode object = stmt.getObject();
+				boolean disallowedStatement = false;
+				//if fakeNS variable but varname not in allowed set, disallow this statement
+				if(subject.getNameSpace().equals(fakeNS)) {
+					disallowedStatement = !(satisfiedVarNames.contains(subject.getLocalName()));
+				}
+				if(!disallowedStatement) {
+					if(predicate.getNameSpace().equals(fakeNS)) {
+						disallowedStatement = !(satisfiedVarNames.contains(predicate.getLocalName()));
+					}
+				}
+				if(!disallowedStatement) {
+					if(object.asResource().getNameSpace().equals(fakeNS)) {
+						disallowedStatement = !(satisfiedVarNames.contains(object.asResource().getLocalName()));
+					}
+				}
+				if(!disallowedStatement) {
+					allowedN3Model.add(stmt);
+				}
+				
+			}
+			//Write out allowedN3Model
+			allowedN3Model.write(System.out, "ttl");
 		}
-		//Write out allowedN3Model
-		allowedN3Model.write(System.out, "ttl");
 		return allowedN3Model;
 	}
 	
