@@ -317,10 +317,14 @@ public class MinimalEditConfigurationGenerator  implements EditConfigurationGene
 	    	
 	    	editConfiguration.setVarNameForSubject("subject");
 	    	editConfiguration.setSubjectUri(subjectUri);
-	    	editConfiguration.setEntityToReturnTo(subjectUri);
 	    	editConfiguration.setVarNameForPredicate("predicate");
 	    	editConfiguration.setPredicateUri(predicateUri);
-	    	
+	    	if(isClassSpecificNewForm(vreq)) {
+	    		editConfiguration.setEntityToReturnTo("?subject"); //could also configure this in the json ld but default here
+	    		//Setting it to variable name enables it to be substituted with the new resource URI set for this variable
+	    	} else {
+	    		editConfiguration.setEntityToReturnTo(subjectUri);
+	    	}
 	    	//Don't expect custom data property forms, so defaulting to object property for now
 	    
 	    	//"object"       : [ "objectVar" ,  "${objectUriJson}" , "URI"],

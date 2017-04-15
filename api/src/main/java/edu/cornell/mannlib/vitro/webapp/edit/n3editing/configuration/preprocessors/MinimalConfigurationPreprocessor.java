@@ -242,6 +242,7 @@ public class MinimalConfigurationPreprocessor extends
 		//For each satisfiedVarName: get commponent and check if URI field, string field, or new resource and add accordingly
 		for(String s: satisfiedVarNames) {
 			//reserved names subject, predicate, objectVar do not need to be processed
+			//that said, we may need to override certain properties, so do process if element is present
 			if(!isReservedVarName(s)) {
 				//Get component 
 				JSONObject component = this.fieldNameToConfigurationComponent.get(s);
@@ -285,6 +286,13 @@ public class MinimalConfigurationPreprocessor extends
 				}
 				//Need a way to deal with Date Time separately - this will require separate implementation?
 				//Do we have date-time in VitroLib?
+			} else if(isReservedVarName(s) && this.fieldNameToConfigurationComponent.containsKey(s) ) {
+				//We may need to add some information even for reserved name, such as in the case of
+				//a create new individual form where the subject needs to be a new resource
+				if(this.newResourcesSet.contains(s)) {
+					//Add new resource field
+					this.editConfiguration.addNewResource(s, null);
+				}
 			}
 		}
 		
