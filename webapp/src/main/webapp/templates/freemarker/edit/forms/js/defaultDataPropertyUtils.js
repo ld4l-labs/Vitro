@@ -2,17 +2,17 @@
 
 function DefaultDataPropertyUtils() {
     var defaultDataPropertyUtils = {
+        onLoad: onLoad
+    };
+    return defaultDataPropertyUtils;
 
-        onLoad: function() {
-            initObjectReferences();
-            bindEventListeners();
-            if ( $('#literal').val().length > 0 ) {
-                parseLiteralValue();
-            }
+    function onLoad() {
+        initObjectReferences();
+        bindEventListeners();
+        if ( $('#literal').val().length > 0 ) {
+            parseLiteralValue();
         }
     }
-
-    return defaultDataPropertyUtils;
 
     function initObjectReferences() {
         this.form = $('form.editForm');

@@ -2,22 +2,24 @@
 
 function CustomFormWithAutocomplete() {
     var customForm = {
-
-        /* *** Initial page setup *** */
-        //Setting the default Concept class here
-        //This would need to change if we update the ontology, etc.
-        conceptClassURI: "http://www.w3.org/2004/02/skos/core#Concept",
-        onLoad: function() {
-
-            if (disableFormInUnsupportedBrowsers()) {
-                return;
-            }
-            mixIn();
-            initObjects();
-            initPage();
-        }
+        onLoad: onLoad
     };
     return customForm;
+    
+    
+    //Setting the default Concept class here
+    //This would need to change if we update the ontology, etc.
+    var conceptClassURI: "http://www.w3.org/2004/02/skos/core#Concept",
+
+    /* *** Initial page setup *** */
+    function onLoad() {
+        if (disableFormInUnsupportedBrowsers()) {
+            return;
+        }
+        mixIn();
+        initObjects();
+        initPage();
+    }
 
     function disableFormInUnsupportedBrowsers() {
         var disableWrapper = $('#ie67DisableWrapper');

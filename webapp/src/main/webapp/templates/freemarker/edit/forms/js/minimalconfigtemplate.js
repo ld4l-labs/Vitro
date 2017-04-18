@@ -2,31 +2,33 @@
 
 function MinimalConfigTemplate() {
     var minimalconfigtemplate = {
-
-        /* *** Initial page setup *** */
-        fieldNameProperty : "customform:varName",
-        configJSON:null,
-        onLoad: function() {
-            mixIn();
-            //Do ajax request to get config and only then trigger the rest
-            $.ajax(
-                {
-                    method: "GET",
-                    url: this.configFileURL
-                }
-            )
-            .done(function( content ) {
-                minimalconfigtemplate.configJSON = JSON.parse(content);
-                initPage();
-                //Bind event listeners only when everything on the page has been populated
-                //Putting in bind event listeners here - any autocomplete fields should already be setup
-                //As far as fields generated using AJAX requests - the event listeners should be attached
-                //in the done/success methods of the ajax requests
-                bindEventListeners();
-            });
-        };
+        onLoad: onLoad
     };
     return minimalconfigtemplate;
+
+    var fieldNameProperty : "customform:varName";
+    var configJSON:null;
+    
+    /* *** Initial page setup *** */
+    function onLoad() {
+        mixIn();
+        //Do ajax request to get config and only then trigger the rest
+        $.ajax(
+            {
+                method: "GET",
+                url: this.configFileURL
+            }
+        )
+        .done(function( content ) {
+            minimalconfigtemplate.configJSON = JSON.parse(content);
+            initPage();
+            //Bind event listeners only when everything on the page has been populated
+            //Putting in bind event listeners here - any autocomplete fields should already be setup
+            //As far as fields generated using AJAX requests - the event listeners should be attached
+            //in the done/success methods of the ajax requests
+            bindEventListeners();
+        });
+    }
 
     function mixIn() {
         // Get the custom form data from the page
