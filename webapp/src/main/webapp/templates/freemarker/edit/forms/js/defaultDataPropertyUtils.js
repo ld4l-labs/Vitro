@@ -1,5 +1,7 @@
 /* $This file is distributed under the terms of the license in /doc/license.txt$ */
 
+function DefaultDataPropertyUtils() {
+
 var defaultDataPropertyUtils = {
 
     onLoad: function() {
@@ -176,6 +178,10 @@ var defaultDataPropertyUtils = {
     }
 
 }
+
+return defaultDataPropertyUtils;
+}
+
 $(document).ready(function(){
-    defaultDataPropertyUtils.onLoad();
+    new DefaultDataPropertyUtils().onLoad();
 });

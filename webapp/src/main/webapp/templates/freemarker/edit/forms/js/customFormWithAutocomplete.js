@@ -1,5 +1,7 @@
 /* $This file is distributed under the terms of the license in /doc/license.txt$ */
 
+function CustomFormWithAutocomplete() {
+
 var customForm = {
 
     /* *** Initial page setup *** */
@@ -747,10 +749,13 @@ var customForm = {
 
 };
 
+return customForm;
+}
+
 $(document).ready(function() {
     //If undefined or set to false, load normally
     //If set to true, don't laod
     if(preventLoadFlag == undefined || !preventLoadFlag) {
-        customForm.onLoad();
+        new CustomFormWithAutocomplete().onLoad();
     }
 });

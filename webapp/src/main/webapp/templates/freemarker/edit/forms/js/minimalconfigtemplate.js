@@ -1,5 +1,7 @@
 /* $This file is distributed under the terms of the license in /doc/license.txt$ */
 
+function MinimalConfigTemplate() {
+
 var minimalconfigtemplate = {
 
     /* *** Initial page setup *** */
@@ -344,6 +346,9 @@ var minimalconfigtemplate = {
     }
 };
 
+return minimalconfigtemplate;
+}
+
 $(document).ready(function() {
-    minimalconfigtemplate.onLoad();
+    new MinimalConfigTemplate().onLoad();
 });
