@@ -7,7 +7,7 @@ function DefaultDataPropertyUtils() {
             this.initObjectReferences();
             this.bindEventListeners();
             if ( $('#literal').val().length > 0 ) {
-                this.parseLiteralValue();
+                parseLiteralValue();
             }
         },
 
@@ -138,46 +138,46 @@ function DefaultDataPropertyUtils() {
                 }
             }
             return true;
-        },
-
-        parseLiteralValue: function() {
-            var theType = datatype.substring(datatype.lastIndexOf("#") + 1);
-            var temp = $('#literal').val();
-
-            switch (theType) {
-                case 'date':
-                $('#dateTimeField-year').val(temp.substring(0, temp.indexOf("-")));
-                $('#dateTimeField-month').val(temp.substring(temp.indexOf("-")+1,temp.lastIndexOf("-")));
-                $('#dateTimeField-day').val(temp.substring(temp.lastIndexOf("-")+1));
-                break;
-                case 'dateTime':
-                $('#dateTimeField-year').val(temp.substring(0, temp.indexOf("-")));
-                $('#dateTimeField-month').val(temp.substring(temp.indexOf("-")+1,temp.lastIndexOf("-")));
-                $('#dateTimeField-day').val(temp.substring(temp.lastIndexOf("-")+1,temp.indexOf("T")));
-                $('#dateTimeField-hour').val(temp.substring(temp.indexOf("T")+1,temp.indexOf(":")));
-                $('#dateTimeField-minute').val(temp.substring(temp.indexOf(":")+1,temp.lastIndexOf(":")));
-                $('#dateTimeField-second').val(temp.substring(temp.lastIndexOf(":")+1));
-                break;
-                case 'time':
-                $('#dateTimeField-hour').val(temp.substring(0,temp.indexOf(":")));
-                $('#dateTimeField-minute').val(temp.substring(temp.indexOf(":")+1,temp.lastIndexOf(":")));
-                $('#dateTimeField-second').val(temp.substring(temp.lastIndexOf(":")+1));
-                break;
-                case 'gYear':
-                $('#dateTimeField-year').val(temp);
-                break;
-                case 'gYearMonth':
-                $('#dateTimeField-year').val(temp.substring(0, temp.indexOf("-")));
-                $('#dateTimeField-month').val(temp.substring(temp.indexOf("-")+1));
-                break;
-                case 'gMonth':
-                $('#dateTimeField-month').val(temp.substring(temp.lastIndexOf("-")+1));
-                break;
-            }
         }
 
     }
     return defaultDataPropertyUtils;
+
+    function parseLiteralValue() {
+        var theType = datatype.substring(datatype.lastIndexOf("#") + 1);
+        var temp = $('#literal').val();
+
+        switch (theType) {
+            case 'date':
+            $('#dateTimeField-year').val(temp.substring(0, temp.indexOf("-")));
+            $('#dateTimeField-month').val(temp.substring(temp.indexOf("-")+1,temp.lastIndexOf("-")));
+            $('#dateTimeField-day').val(temp.substring(temp.lastIndexOf("-")+1));
+            break;
+            case 'dateTime':
+            $('#dateTimeField-year').val(temp.substring(0, temp.indexOf("-")));
+            $('#dateTimeField-month').val(temp.substring(temp.indexOf("-")+1,temp.lastIndexOf("-")));
+            $('#dateTimeField-day').val(temp.substring(temp.lastIndexOf("-")+1,temp.indexOf("T")));
+            $('#dateTimeField-hour').val(temp.substring(temp.indexOf("T")+1,temp.indexOf(":")));
+            $('#dateTimeField-minute').val(temp.substring(temp.indexOf(":")+1,temp.lastIndexOf(":")));
+            $('#dateTimeField-second').val(temp.substring(temp.lastIndexOf(":")+1));
+            break;
+            case 'time':
+            $('#dateTimeField-hour').val(temp.substring(0,temp.indexOf(":")));
+            $('#dateTimeField-minute').val(temp.substring(temp.indexOf(":")+1,temp.lastIndexOf(":")));
+            $('#dateTimeField-second').val(temp.substring(temp.lastIndexOf(":")+1));
+            break;
+            case 'gYear':
+            $('#dateTimeField-year').val(temp);
+            break;
+            case 'gYearMonth':
+            $('#dateTimeField-year').val(temp.substring(0, temp.indexOf("-")));
+            $('#dateTimeField-month').val(temp.substring(temp.indexOf("-")+1));
+            break;
+            case 'gMonth':
+            $('#dateTimeField-month').val(temp.substring(temp.lastIndexOf("-")+1));
+            break;
+        }
+    }
 }
 
 $(document).ready(function(){
