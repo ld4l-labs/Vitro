@@ -9,15 +9,17 @@ function CustomFormWithAutocomplete() {
         conceptClassURI: "http://www.w3.org/2004/02/skos/core#Concept",
         onLoad: function() {
 
-            if (this.disableFormInUnsupportedBrowsers()) {
+            if (disableFormInUnsupportedBrowsers()) {
                 return;
             }
-            this.mixIn();
-            this.initObjects();
-            this.initPage();
-        },
+            mixIn();
+            initObjects();
+            initPage();
+        }
+    };
+    return customForm;
 
-        disableFormInUnsupportedBrowsers: function() {
+        function disableFormInUnsupportedBrowsers() {
             var disableWrapper = $('#ie67DisableWrapper');
 
             // Check for unsupported browsers only if the element exists on the page
@@ -29,21 +31,20 @@ function CustomFormWithAutocomplete() {
                 }
             }
             return false;
-        },
+        }
 
-        mixIn: function() {
+        function mixIn() {
             // Mix in the custom form utility methods
             $.extend(this, vitro.customFormUtils);
 
             // Get the custom form data from the page
             $.extend(this, customFormData);
             $.extend(this, i18nStrings);
-        },
+        }
 
         // On page load, create references for easy access to form elements.
         // NB These must be assigned after the elements have been loaded onto the page.
-        initObjects: function(){
-
+        function initObjects() {
             this.form = $('form.customForm');
             this.fullViewOnly = $('.fullViewOnly');
             this.button = $('#submit');
@@ -94,12 +95,10 @@ function CustomFormWithAutocomplete() {
             // Used with the cancel link. If the user cancels after a type selection, this check
             // ensures that any a/c fields (besides the one associated with the type) will be reset
             this.clearAcSelections = false;
-
-        },
+        }
 
         // Set up the form on page load
-        initPage: function() {
-
+        function initPage() {
             if (!this.editMode) {
                 this.editMode = 'add'; // edit vs add: default to add
             }
@@ -125,77 +124,74 @@ function CustomFormWithAutocomplete() {
                 this.doNotRemoveOriginalObject = false;
             }
 
-            this.bindEventListeners();
+            bindEventListeners();
 
             $.each(this.acSelectors, function() {
-                customForm.initAutocomplete($(this));
+                initAutocomplete($(this));
             });
 
-            this.initElementData();
+            initElementData();
 
-            this.initFormView();
+            initFormView();
 
             // Set the initial autocomplete help text in the acSelector fields.
             $.each(this.acSelectors, function() {
-                customForm.addAcHelpText($(this));
+                addAcHelpText($(this));
             });
-        },
+        }
 
-        initFormView: function() {
-
+        function initFormView() {
             var typeVal = this.typeSelector.val();
 
             // Put this case first, because in edit mode with
             // validation errors we just want initFormFullView.
             //        if ((!this.supportEdit) && (this.editMode == 'edit' || this.editMode == 'repair')) {
             if (this.editMode == 'edit' || this.editMode == 'repair' || this.editMode == 'error') {
-                this.initFormWithValidationErrors();
+                initFormWithValidationErrors();
             }
             else if (this.findValidationErrors()) {
-                this.initFormWithValidationErrors();
+                initFormWithValidationErrors();
             }
 
             // If type is already selected when the page loads (Firefox retains value
             // on a refresh), go directly to full view. Otherwise user has to reselect
             // twice to get to full view.
             else if ( this.formSteps == 1 || typeVal.length ) {
-                this.initFormFullView();
+                initFormFullView();
             }
             else {
-                this.initFormTypeView();
+                initFormTypeView();
             }
-        },
+        }
 
-        initFormTypeView: function() {
-
-            this.setType(); // empty any previous values (perhaps not needed)
+        function initFormTypeView() {
+            setType(); // empty any previous values (perhaps not needed)
             this.hideFields(this.fullViewOnly);
             this.button.hide();
             this.or.hide();
             this.requiredLegend.hide();
 
             this.cancel.unbind('click');
-        },
+        }
 
-        initFormFullView: function() {
-
-            this.setType();
+        function initFormFullView() {
+            setType();
             this.fullViewOnly.show();
             this.or.show();
             this.requiredLegend.show();
             this.button.show();
-            this.setLabels();
+            setLabels();
 
             // Set the initial autocomplete help text in the acSelector fields.
             $.each(this.acSelectors, function() {
-                customForm.addAcHelpText($(this));
+                addAcHelpText($(this));
             });
 
             this.cancel.unbind('click');
             if (this.formSteps > 1) {
                 this.cancel.click(function() {
                     customForm.clearFormData(); // clear any input and validation errors
-                    customForm.initFormTypeView();
+                    initFormTypeView();
                     customForm.clearAcSelections = true;
                     return false;
                 });
@@ -207,30 +203,29 @@ function CustomFormWithAutocomplete() {
                 this.typeSelector.val() ? this.fullViewOnly.show() : this.hideFields(this.fullViewOnly);
             }
             if ( this.acSelectOnly ) {
-                this.disableSubmit();
+                disableSubmit();
             }
-        },
+        }
 
-        initFormWithValidationErrors: function() {
+        function initFormWithValidationErrors() {
             // Call initFormFullView first, because showAutocompleteSelection needs
             // acType, which is set in initFormFullView.
-            this.initFormFullView();
+            initFormFullView();
 
             $.each(this.acSelectors, function() {
                 var $acSelection = customForm.acSelections[$(this).attr('acGroupName')];
                 var uri   = $acSelection.find('input.acUriReceiver').val(),
                 label = $(this).val();
                 if (uri && uri != ">SUBMITTED VALUE WAS BLANK<") {
-                    customForm.showAutocompleteSelection(label, uri, $(this));
+                    showAutocompleteSelection(label, uri, $(this));
                 }
             });
 
-        },
+        }
 
         // Bind event listeners that persist over the life of the page. Event listeners
         // that depend on the view should be initialized in the view setup method.
-        bindEventListeners: function() {
-
+        function bindEventListeners() {
             this.typeSelector.change(function() {
                 var typeVal = $(this).val();
                 this.acCache = {};
@@ -241,15 +236,15 @@ function CustomFormWithAutocomplete() {
                 // THE SPECIAL "acGroupName" ATTRIBUTE WHICH IS SHARED AMONG THE SELECT AND
                 // THE INPUT AND THE AC SELECTION DIV.
                 if (customForm.editMode != "edit") {
-                    customForm.undoAutocompleteSelection($(this));
+                    undoAutocompleteSelection($(this));
                 }
                 // Reinitialize view. If no type selection in a two-step form, go back to type view;
                 // otherwise, reinitialize full view.
                 if (!typeVal.length && customForm.formSteps > 1) {
-                    customForm.initFormTypeView();
+                    initFormTypeView();
                 }
                 else {
-                    customForm.initFormFullView();
+                    initFormFullView();
                 }
             });
 
@@ -261,10 +256,10 @@ function CustomFormWithAutocomplete() {
             // loop through all the acSelectors
             $.each(this.acSelectors, function() {
                 $(this).focus(function() {
-                    customForm.deleteAcHelpText($(this));
+                    deleteAcHelpText($(this));
                 });
                 $(this).blur(function() {
-                    customForm.addAcHelpText($(this));
+                    addAcHelpText($(this));
                 });
             });
 
@@ -291,15 +286,15 @@ function CustomFormWithAutocomplete() {
                     });
                 }
 
-                customForm.deleteAcHelpText();
+                deleteAcHelpText();
             });
-        },
+        }
 
-        initAutocomplete: function(selectedObj) {
-            this.getAcFilter();
+        function initAutocomplete(selectedObj) {
+            getAcFilter();
             //If specific individuals are to be filtered out, add them here
             //to the filtering list
-            this.getAcFilterForIndividuals();
+            getAcFilterForIndividuals();
             this.acCache = {};
 
             $(selectedObj).autocomplete({
@@ -308,7 +303,7 @@ function CustomFormWithAutocomplete() {
                     //Reset the URI of the input to one that says new uri required
                     //That will be overwritten if value selected from autocomplete
                     //We do this everytime the user types anything in the autocomplete box
-                    customForm.initDefaultBlankURI(selectedObj);
+                    initDefaultBlankURI(selectedObj);
                     if (request.term in customForm.acCache) {
                         // console.log('found term in cache');
                         response(customForm.acCache[request.term]);
@@ -327,12 +322,12 @@ function CustomFormWithAutocomplete() {
                             complete: function(xhr, status) {
                                 // Not sure why, but we need an explicit json parse here.
                                 var results = $.parseJSON(xhr.responseText);
-                                var filteredResults = customForm.filterAcResults(results);
+                                var filteredResults = filterAcResults(results);
                                 /*
                                 if ( customForm.acTypes[$(selectedObj).attr('acGroupName')] == customForm.conceptClassURI ) {
                                 filteredResults = customForm.removeConceptSubclasses(filteredResults);
                             }*/
-                            if(customForm.doRemoveConceptSubclasses()) {
+                            if(doRemoveConceptSubclasses()) {
                                 filteredResults = customForm.removeConceptSubclasses(filteredResults);
                             }
 
@@ -342,29 +337,28 @@ function CustomFormWithAutocomplete() {
                     });
                 },
                 select: function(event, ui) {
-                    customForm.showAutocompleteSelection(ui.item.label, ui.item.uri, $(selectedObj));
+                    showAutocompleteSelection(ui.item.label, ui.item.uri, $(selectedObj));
                     if ( $(selectedObj).attr('acGroupName') == customForm.typeSelector.attr('acGroupName') ) {
                         customForm.typeSelector.val(ui.item.msType);
                     }
                 }
             });
-        },
+        }
 
         //Method to check whether we need to filter to individuals with a most specific type = Concept or other allowed subclasses
-        doRemoveConceptSubclasses:function() {
+        function doRemoveConceptSubclasses() {
             //if this array of allowable subclasses was declared annd there is at least one element in it
             if(customForm.limitToConceptClasses && customForm.limitToConceptClasses.length) {
                 return true;
             }
             return false;
-        },
+        }
 
         // Store original or base text with elements that will have text substitutions.
         // Generally the substitution cannot be made on the current value, since that value
         // may have changed from the original. So we store the original text with the element to
         // use as a base for substitutions.
-        initElementData: function() {
-
+        function initElementData() {
             this.placeholderText = '###';
             this.labelsWithPlaceholders = this.form.find('label, .label').filter(function() {
                 return $(this).html().match(customForm.placeholderText);
@@ -374,11 +368,10 @@ function CustomFormWithAutocomplete() {
             });
 
             this.button.data('baseText', this.button.val());
+        }
 
-        },
         //get autocomplete filter with sparql query
-        getAcFilter: function() {
-
+        function getAcFilter() {
             if (!this.sparqlForAcFilter) {
                 //console.log('autocomplete filtering turned off');
                 this.acFilter = null;
@@ -398,22 +391,21 @@ function CustomFormWithAutocomplete() {
                         query: customForm.sparqlForAcFilter
                     },
                     success: function(data, status, xhr) {
-                        customForm.setAcFilter(data);
+                        setAcFilter(data);
                     }
                 }
             );
-        },
+        }
 
-        setAcFilter: function(data) {
-
+        function setAcFilter(data) {
             var key = data.head.vars[0];
 
             $.each(data.results.bindings, function() {
                 customForm.acFilter.push(this[key].value);
             });
-        },
+        }
 
-        filterAcResults: function(results) {
+        function filterAcResults(results) {
             var filteredResults;
 
             if (!this.acFilter || !this.acFilter.length) {
@@ -432,11 +424,11 @@ function CustomFormWithAutocomplete() {
                 }
             });
             return filteredResults;
-        },
+        }
+        
         //To filter out specific individuals, not part of a query
         //Pass in list of individuals to be filtered out
-        getAcFilterForIndividuals: function() {
-
+        function getAcFilterForIndividuals() {
             if (!this.acFilterForIndividuals || !this.acFilterForIndividuals.length) {
                 this.acFilterForIndividuals = null;
                 return;
@@ -444,7 +436,7 @@ function CustomFormWithAutocomplete() {
             //add this list to the ac filter list
             customForm.acFilter = customForm.acFilter.concat(this.acFilterForIndividuals);
 
-        },
+        }
 
         //Updating this code to utilize an array to
         removeConceptSubclasses: function(array) {
@@ -452,7 +444,7 @@ function CustomFormWithAutocomplete() {
             array = jQuery.map(array, function(arrayValue, i) {
                 var allMsTypes = arrayValue["allMsTypes"];
                 var removeElement = false;
-                if(allMsTypes.length == 1 && !customForm.isAllowedConceptSubclass(arrayValue["msType"])) {
+                if(allMsTypes.length == 1 && !isAllowedConceptSubclass(arrayValue["msType"])) {
                     //Remove from array
                     removeElement = true;
                 }  else if(allMsTypes.length > 1) {
@@ -462,7 +454,7 @@ function CustomFormWithAutocomplete() {
 
                     for(j = 0; j < allMsTypes.length; j++) {
                         //this refers to the element itself
-                        if(customForm.isAllowedConceptSubclass(allMsTypes[j])) {
+                        if(isAllowedConceptSubclass(allMsTypes[j])) {
                             //don't remove this element if one of the most specific types is a concept
                             removeElement = false;
                             break;
@@ -478,8 +470,9 @@ function CustomFormWithAutocomplete() {
 
 
             return array;
-        },
-        isAllowedConceptSubclass:function(classURI) {
+        }
+        
+        function isAllowedConceptSubclass(classURI) {
             if(customForm.limitToConceptClasses && customForm.limitToConceptClasses.length) {
                 var len = customForm.limitToConceptClasses.length;
                 var i;
@@ -490,9 +483,9 @@ function CustomFormWithAutocomplete() {
                 }
             }
             return false;
-        },
+        }
 
-        showAutocompleteSelection: function(label, uri, selectedObj) {
+        function showAutocompleteSelection(label, uri, selectedObj) {
             // hide the acSelector field and set it's value to the selected ac item
             this.hideFields($(selectedObj).parent());
             $(selectedObj).val(label);
@@ -529,16 +522,16 @@ function CustomFormWithAutocomplete() {
 
             $changeLink = $acDiv.find('a.changeSelection');
             $changeLink.click(function() {
-                customForm.undoAutocompleteSelection($acDiv);
+                undoAutocompleteSelection($acDiv);
             });
 
             if ( this.acSelectOnly ) {
                 //On initialization in this mode, submit button is disabled
-                this.enableSubmit();
+                enableSubmit();
             }
-        },
+        }
 
-        undoAutocompleteSelection: function(selectedObj) {
+        function undoAutocompleteSelection(selectedObj) {
             // The test is not just for efficiency: undoAutocompleteSelection empties the acSelector value,
             // which we don't want to do if user has manually entered a value, since he may intend to
             // change the type but keep the value. If no new value has been selected, form initialization
@@ -566,8 +559,8 @@ function CustomFormWithAutocomplete() {
                     $.each(customForm.acSelections, function(i, acS) {
                         var $checkSelection = customForm.acSelections[i];
                         if ( $checkSelection.is(':hidden') && $checkSelection.attr('acGroupName') != $acSelectionObj.attr('acGroupName') ) {
-                            customForm.resetAcSelection($checkSelection);
-                            $acSelector = customForm.getAcSelector($checkSelection);
+                            resetAcSelection($checkSelection);
+                            $acSelector = getAcSelector($checkSelection);
                             $acSelector.parent('p').show();
                         }
                     });
@@ -578,34 +571,34 @@ function CustomFormWithAutocomplete() {
                 customForm.typeSelector.val('');
             }
 
-            $acSelector = this.getAcSelector($acSelectionObj);
+            $acSelector = getAcSelector($acSelectionObj);
             $acSelector.parent('p').show();
-            this.resetAcSelection($acSelectionObj);
+            resetAcSelection($acSelectionObj);
             if ( clearAcSelectorVal == true ) {
                 $acSelector.val('');
                 $("input.display[acGroupName='" + $acSelectionObj.attr('acGroupName') + "']").val("");
             }
-            customForm.addAcHelpText($acSelector);
+            addAcHelpText($acSelector);
 
             //Resetting so disable submit button again for object property autocomplete
             if ( this.acSelectOnly ) {
-                this.disableSubmit();
+                disableSubmit();
             }
             this.clearAcSelections = false;
-        },
+        }
 
         // this is essentially a subtask of undoAutocompleteSelection
-        resetAcSelection: function(selectedObj) {
+        function resetAcSelection(selectedObj) {
             this.hideFields($(selectedObj));
             $(selectedObj).removeClass('userSelected');
             $(selectedObj).find("input.acUriReceiver").val(this.blankSentinel);
             $(selectedObj).find("span").text('');
             $(selectedObj).find("a.verifyMatch").attr('href', this.baseHref);
-        },
+        }
 
         // loops through the array of acSelector fields and returns the one
         // associated with the selected object
-        getAcSelector: function(selectedObj){
+        function getAcSelector(selectedObj){
             var $selector = null
             $.each(this.acSelectors, function() {
                 if ( $(this).attr('acGroupName') == $(selectedObj).attr('acGroupName') ) {
@@ -613,11 +606,11 @@ function CustomFormWithAutocomplete() {
                 }
             });
             return $selector;
-        },
+        }
 
         // Set type uri for autocomplete, and type name for labels and button text.
         // Note: we still need this in edit mode, to set the text values.
-        setType: function() {
+        function setType() {
             var selectedType;
             // If there's no type selector, these values have been specified in customFormData,
             // and will not change over the life of the form.
@@ -653,21 +646,21 @@ function CustomFormWithAutocomplete() {
                 }
                 this.typeName = this.defaultTypeName;
             }
-        },
+        }
 
         // Set field labels based on type selection. Although these won't change in edit
         // mode, it's easier to specify the text here than in the ftl.
-        setLabels: function() {
-            var typeName = this.getTypeNameForLabels();
+        function setLabels() {
+            var typeName = getTypeNameForLabels();
 
             this.labelsWithPlaceholders.each(function() {
                 var newLabel = $(this).data('baseText').replace(customForm.placeholderText, typeName);
                 $(this).html(newLabel);
             });
 
-        },
+        }
 
-        getTypeNameForLabels: function(selectedObj) {
+        function getTypeNameForLabels(selectedObj) {
             // If this.acType is empty, we are either in a one-step form with no type yet selected,
             // or in repair mode in a two-step form with no type selected. Use the default type
             // name specified in the form data.
@@ -691,15 +684,15 @@ function CustomFormWithAutocomplete() {
                 var name = customForm.multipleTypeNames[$(selectedObj).attr('id')];
                 return this.capitalize(name);
             }
-        },
+        }
 
         // Set the initial help text that appears in the autocomplete field and change the class name
-        addAcHelpText: function(selectedObj) {
+        function addAcHelpText(selectedObj) {
             var typeText;
             // First case applies on page load; second case applies when the type gets changed. With multiple
             // ac fields there are cases where we also have to check if the help text is already there
             if (!$(selectedObj).val() || $(selectedObj).hasClass(this.acHelpTextClass) || $(selectedObj).val().substring(0, 18) == customForm.selectAnExisting ) {
-                typeText = this.getTypeNameForLabels($(selectedObj));
+                typeText = getTypeNameForLabels($(selectedObj));
                 var helpText = customForm.selectAnExisting + " " + typeText + " " + customForm.orCreateNewOne ;
                 //Different for object property autocomplete
                 if ( this.acSelectOnly ) {
@@ -708,10 +701,9 @@ function CustomFormWithAutocomplete() {
                 $(selectedObj).val(helpText)
                 .addClass(this.acHelpTextClass);
             }
-        },
+        }
 
-
-        deleteAcHelpText: function(selectedObj) {
+        function deleteAcHelpText(selectedObj) {
             // on submit, no selectedObj gets passed, so we need to check for this
             if ( selectedObj ) {
                 if ($(selectedObj).hasClass(this.acHelpTextClass)) {
@@ -727,17 +719,20 @@ function CustomFormWithAutocomplete() {
                     }
                 });
             }
-        },
-        disableSubmit: function() {
+        }
+        
+        function disableSubmit() {
             //Disable submit button until selection made
             this.button.attr('disabled', 'disabled');
             this.button.addClass('disabledSubmit');
-        },
-        enableSubmit:function() {
+        }
+        
+        function enableSubmit() {
             this.button.removeAttr('disabled');
             this.button.removeClass('disabledSubmit');
-        },
-        initDefaultBlankURI:function(selectedObj) {
+        }
+        
+        function initDefaultBlankURI(selectedObj) {
             //get uri input for selected object and set to value specified as "blank sentinel"
             //If blank sentinel is neither null nor an empty string, this means if the user edits an
             //existing relationship to an object and does not select anything from autocomplete
@@ -745,9 +740,6 @@ function CustomFormWithAutocomplete() {
             var $acDiv = this.acSelections[$(selectedObj).attr('acGroupName')];
             $acDiv.find("input").val(customForm.blankSentinel);
         }
-
-    };
-    return customForm;
 }
 
 $(document).ready(function() {

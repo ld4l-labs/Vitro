@@ -4,22 +4,25 @@ function DefaultDataPropertyUtils() {
     var defaultDataPropertyUtils = {
 
         onLoad: function() {
-            this.initObjectReferences();
-            this.bindEventListeners();
+            initObjectReferences();
+            bindEventListeners();
             if ( $('#literal').val().length > 0 ) {
                 parseLiteralValue();
             }
-        },
+        }
+    }
+    
+    return defaultDataPropertyUtils;
 
-        initObjectReferences: function() {
+        function initObjectReferences() {
             this.form = $('form.editForm');
             this.textArea = $('textarea.useTinyMce');
 
             $.extend(this, datatype);
             $.extend(this, i18nStrings);
-        },
+        }
 
-        bindEventListeners: function() {
+       function bindEventListeners() {
             this.form.submit(function() {
                 if ( defaultDataPropertyUtils.textArea.length ) {
                     var theText = tinyMCE.get('literal').getContent();
@@ -40,13 +43,13 @@ function DefaultDataPropertyUtils() {
                     }
                 }
                 else {
-                    return defaultDataPropertyUtils.createAndValidateLiteralValue();
+                    return createAndValidateLiteralValue();
                 }
                 return true;
             });
-        },
+        }
 
-        createAndValidateLiteralValue: function() {
+        function createAndValidateLiteralValue() {
             var theType = datatype.substring(datatype.lastIndexOf("#") + 1);
             var temp = "";
             if ( $('#literal').attr("type") == "hidden" ) {
@@ -139,9 +142,6 @@ function DefaultDataPropertyUtils() {
             }
             return true;
         }
-
-    }
-    return defaultDataPropertyUtils;
 
     function parseLiteralValue() {
         var theType = datatype.substring(datatype.lastIndexOf("#") + 1);
