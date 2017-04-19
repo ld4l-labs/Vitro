@@ -12,7 +12,7 @@ function MinimalConfigTemplate(formData, displayData) {
     var allConfigComponents;
     var fieldOrder;
     var fieldDisplayProperties;
-    
+
     /* *** Initial page setup *** */
     function onLoad() {
         //Do ajax request to get config and only then trigger the rest
@@ -22,15 +22,17 @@ function MinimalConfigTemplate(formData, displayData) {
                 url: formData.configFileURL
             }
         )
-        .done(function( content ) {
-            configJSON = JSON.parse(content);
-            initPage();
-            //Bind event listeners only when everything on the page has been populated
-            //Putting in bind event listeners here - any autocomplete fields should already be setup
-            //As far as fields generated using AJAX requests - the event listeners should be attached
-            //in the done/success methods of the ajax requests
-            bindEventListeners();
-        });
+        .done(gotConfigFile);
+
+	    function gotConfigFile(content) {
+	        configJSON = JSON.parse(content);
+	        initPage();
+	        //Bind event listeners only when everything on the page has been populated
+	        //Putting in bind event listeners here - any autocomplete fields should already be setup
+	        //As far as fields generated using AJAX requests - the event listeners should be attached
+	        //in the done/success methods of the ajax requests
+	        bindEventListeners();
+	    }
     }
 
     // Initial page setup. Called only at page load.
@@ -51,7 +53,6 @@ function MinimalConfigTemplate(formData, displayData) {
 
     //get existing values
     function retrieveExistingValueRequests() {
-        var fieldName;
         var existingValueRequests = [];
         for(fieldName in formFields) {
             var configComponent = formFields[fieldName];
@@ -72,13 +73,13 @@ function MinimalConfigTemplate(formData, displayData) {
                 "action":"existingValues"
             }
         })
-        .done(function( content ) {
-            //templateclone is from URI Field, so make this work better
-            //Should retrieve a hash with var name to existing value
-            //and those can be used to populate the form
+        .done(gotExistingValues);
 
-        });
-
+	    function gotExistingValues(content) {
+	        //templateclone is from URI Field, so make this work better
+	        //Should retrieve a hash with var name to existing value
+	        //and those can be used to populate the form
+	    }
     }
 
     function bindEventListeners() {
@@ -201,13 +202,14 @@ function MinimalConfigTemplate(formData, displayData) {
                     "action": "dropdown"
                 }
             })
-            .done(function( content ) {
-                //templateclone is from URI Field, so make this work better
-                //templateClone = createURIField(configComponent);
-                createDropdownField(fieldName, content);
-
-            });
+            .done(gotDropDownContents);
         }
+
+	    function gotDropDownContents(content) {
+	        //templateclone is from URI Field, so make this work better
+	        //templateClone = createURIField(configComponent);
+	        createDropdownField(fieldName, content);
+	    }
     }
 
     function createLiteralField(configComponent, displayInfo) {
@@ -292,7 +294,6 @@ function MinimalConfigTemplate(formData, displayData) {
         var htmlList = "";
         $.each(content, function(key, value) {
             htmlList += "<option value='" + key + "'>" + value + "</option>";
-
         });
         dropdownElement.empty().append(htmlList);
     }

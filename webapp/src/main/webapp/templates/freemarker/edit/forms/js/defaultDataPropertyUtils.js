@@ -8,7 +8,7 @@ function DefaultDataPropertyUtils(i18n, dtype) {
     var form;
     var textArea;
     var theType;
-    
+
     function onLoad() {
         initObjectReferences();
         bindEventListeners();
@@ -24,30 +24,32 @@ function DefaultDataPropertyUtils(i18n, dtype) {
     }
 
     function bindEventListeners() {
-        form.submit(function() {
-            if ( textArea.length ) {
-                var theText = tinyMCE.get('literal').getContent();
+        form.submit(submitHandler);
+    }
 
-                if ( theText.indexOf("<!--") > -1 && theText.indexOf("-->") > -1 ) {
-                    var start = theText.indexOf("<p><!--");
-                    var end = (theText.indexOf("--></p>") + 10);
-                    var removeText = theText.slice(start,end);
-                    var newText = theText.replace(removeText,"");
-                    tinyMCE.get('literal').setContent(newText);
-                }
-                else if ( theText.indexOf("&lt;!--") > -1 && theText.indexOf("--&gt;") > -1 ) {
-                    var start = theText.indexOf("<p>&lt;!--");
-                    var end = (theText.indexOf("--&gt;</p>") + 10);
-                    var removeText = theText.slice(start,end);
-                    var newText = theText.replace(removeText,"");
-                    tinyMCE.get('literal').setContent(newText);
-                }
+    function submitHandler() {
+        if ( textArea.length ) {
+            var theText = tinyMCE.get('literal').getContent();
+
+            if ( theText.indexOf("<!--") > -1 && theText.indexOf("-->") > -1 ) {
+                var start = theText.indexOf("<p><!--");
+                var end = (theText.indexOf("--></p>") + 10);
+                var removeText = theText.slice(start,end);
+                var newText = theText.replace(removeText,"");
+                tinyMCE.get('literal').setContent(newText);
             }
-            else {
-                return createAndValidateLiteralValue();
+            else if ( theText.indexOf("&lt;!--") > -1 && theText.indexOf("--&gt;") > -1 ) {
+                var start = theText.indexOf("<p>&lt;!--");
+                var end = (theText.indexOf("--&gt;</p>") + 10);
+                var removeText = theText.slice(start,end);
+                var newText = theText.replace(removeText,"");
+                tinyMCE.get('literal').setContent(newText);
             }
-            return true;
-        });
+        }
+        else {
+            return createAndValidateLiteralValue();
+        }
+        return true;
     }
 
     function createAndValidateLiteralValue() {
