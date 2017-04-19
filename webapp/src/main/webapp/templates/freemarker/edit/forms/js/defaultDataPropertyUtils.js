@@ -1,11 +1,14 @@
 /* $This file is distributed under the terms of the license in /doc/license.txt$ */
 
-function DefaultDataPropertyUtils() {
-    var defaultDataPropertyUtils = {
+function DefaultDataPropertyUtils(i18n, dtype) {
+    return {
         onLoad: onLoad
     };
-    return defaultDataPropertyUtils;
 
+    var form;
+    var textArea;
+    var theType;
+    
     function onLoad() {
         initObjectReferences();
         bindEventListeners();
@@ -15,16 +18,14 @@ function DefaultDataPropertyUtils() {
     }
 
     function initObjectReferences() {
-        this.form = $('form.editForm');
-        this.textArea = $('textarea.useTinyMce');
-
-        $.extend(this, datatype);
-        $.extend(this, i18nStrings);
+        form = $('form.editForm');
+        textArea = $('textarea.useTinyMce');
+        theType = dtype.substring(dtype.lastIndexOf("#") + 1);
     }
 
     function bindEventListeners() {
-        this.form.submit(function() {
-            if ( defaultDataPropertyUtils.textArea.length ) {
+        form.submit(function() {
+            if ( textArea.length ) {
                 var theText = tinyMCE.get('literal').getContent();
 
                 if ( theText.indexOf("<!--") > -1 && theText.indexOf("-->") > -1 ) {
@@ -50,17 +51,16 @@ function DefaultDataPropertyUtils() {
     }
 
     function createAndValidateLiteralValue() {
-        var theType = datatype.substring(datatype.lastIndexOf("#") + 1);
         var temp = "";
         if ( $('#literal').attr("type") == "hidden" ) {
             if ( $('#dateTimeField-year').length ) {
                 if ( $('#dateTimeField-year').val().length < 4 ) {
-                    alert(defaultDataPropertyUtils.four_digit_year);
+                    alert(i18n.four_digit_year);
                     return false;
                 }
                 var reg = /^\d+$/;
                 if ( !reg.test($('#dateTimeField-year').val()) ) {
-                    alert(defaultDataPropertyUtils.year_numeric);
+                    alert(i18n.year_numeric);
                     return false;
                 }
             }
@@ -70,7 +70,7 @@ function DefaultDataPropertyUtils() {
                 + $('#dateTimeField-month').val() + "-"
                 + $('#dateTimeField-day').val();
                 if ( temp.indexOf("-") == 0 || temp.lastIndexOf("-") == (temp.length - 1) || temp.indexOf("--") > 0 ) {
-                    alert(defaultDataPropertyUtils.year_month_day);
+                    alert(i18n.year_month_day);
                     return false;
                 }
                 $('#literal').val(temp);
@@ -83,7 +83,7 @@ function DefaultDataPropertyUtils() {
                 + ($('#dateTimeField-minute').val().length == 0 ? "00" : $('#dateTimeField-minute').val()) + ":"
                 + ($('#dateTimeField-second').val().length == 0 ? "00" : $('#dateTimeField-second').val());
                 if ( temp.indexOf("-") == 0 || temp.indexOf("-T") > 0 || temp.indexOf("--") > 0 ) {
-                    alert(defaultDataPropertyUtils.minimum_ymd);
+                    alert(i18n.minimum_ymd);
                     return false;
                 }
                 $('#literal').val(temp);
@@ -93,7 +93,7 @@ function DefaultDataPropertyUtils() {
                 + ($('#dateTimeField-minute').val().length == 0 ? "00" : $('#dateTimeField-minute').val()) + ":"
                 + ($('#dateTimeField-second').val().length == 0 ? "00" : $('#dateTimeField-second').val());
                 if ( temp.indexOf(":") == 0 ) {
-                    alert(defaultDataPropertyUtils.minimum_hour);
+                    alert(i18n.minimum_hour);
                     return false;
                 }
                 $('#literal').val(temp);
@@ -104,7 +104,7 @@ function DefaultDataPropertyUtils() {
                 case 'gYearMonth':
                 temp = $('#dateTimeField-year').val() + "-" + $('#dateTimeField-month').val();
                 if ( temp.indexOf("-") == 0 || temp.lastIndexOf("-") == (temp.length - 1) ) {
-                    alert(defaultDataPropertyUtils.year_month);
+                    alert(i18n.year_month);
                     return false;
                 }
                 $('#literal').val(temp);
@@ -121,20 +121,20 @@ function DefaultDataPropertyUtils() {
             switch (theType) {
                 case 'float':
                 if ( $('#literal').val().indexOf(",") > -1 ) {
-                    alert(defaultDataPropertyUtils.decimal_only);
+                    alert(i18n.decimal_only);
                     return false;
                 }
                 $('#literal').val($('#literal').val().replace(",",""));
                 break;
                 case 'integer':
                 if ( $('#literal').val().indexOf(".") > -1 || $('#literal').val().indexOf(",") > 0 ) {
-                    alert(defaultDataPropertyUtils.whole_number);
+                    alert(i18n.whole_number);
                     return false;
                 }
                 break;
                 case 'int':
                 if ( $('#literal').val().indexOf(".") > -1 || $('#literal').val().indexOf(",") > 0 ) {
-                    alert(defaultDataPropertyUtils.whole_number);
+                    alert(i18n.whole_number);
                     return false;
                 }
                 break;
@@ -144,7 +144,6 @@ function DefaultDataPropertyUtils() {
     }
 
     function parseLiteralValue() {
-        var theType = datatype.substring(datatype.lastIndexOf("#") + 1);
         var temp = $('#literal').val();
 
         switch (theType) {
@@ -181,5 +180,5 @@ function DefaultDataPropertyUtils() {
 }
 
 $(document).ready(function(){
-    new DefaultDataPropertyUtils().onLoad();
+    new DefaultDataPropertyUtils(i18nStrings, datatype).onLoad();
 });

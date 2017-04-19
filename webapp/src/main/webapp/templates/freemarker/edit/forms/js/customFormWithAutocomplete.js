@@ -1,11 +1,29 @@
 /* $This file is distributed under the terms of the license in /doc/license.txt$ */
 
-function CustomFormWithAutocomplete() {
+function CustomFormWithAutocomplete(formData, i18n) {
     var customForm = {
         onLoad: onLoad
     };
     return customForm;
     
+    var acFilterForIndividuals = formData.acFilterForIndividuals;
+    var acMultipleTypes = formData.acMultipleTypes;
+    var acSelectOnly = formData.acSelectOnly;
+    var acTypes = formData.acTypes;
+    var acUrl = formData.acUrl;
+    var baseHref = formData.baseHref;
+    var blankSentinel = formData.blankSentinel;
+    var defaultTypeName = formData.defaultTypeName;
+    var editMode = formData.editMode;
+    var flagClearLabelForExisting = formData.flagClearLabelForExisting;
+    var formSteps = formData.formSteps;
+    var multipleTypeNames = formData.multipleTypeNames;
+    var sparqlForAcFilter = formData.sparqlForAcFilter;
+    var sparqlQueryUrl = formData.sparqlQueryUrl;
+    var typeName = formData.typeName;
+    
+    ver placeholderText;
+    var labelsWithPlaceholders;
     
     //Setting the default Concept class here
     //This would need to change if we update the ontology, etc.
@@ -34,101 +52,111 @@ function CustomFormWithAutocomplete() {
         }
         return false;
     }
-
+    
     function mixIn() {
         // Mix in the custom form utility methods
         $.extend(this, vitro.customFormUtils);
-
-        // Get the custom form data from the page
-        $.extend(this, customFormData);
-        $.extend(this, i18nStrings);
     }
-
+    
+    var form;
+    var fullViewOnly;
+    var button;
+    var requiredLegend;
+    var typeSelector;
+    var typeSelectorInput;
+    var typeSelectorSpan;
+    var or;
+    var cancel;
+    var acHelpTextClass;
+    var verifyMatch;
+    var defaultAcType;
+    var templateDefinedAcTypes;
+    var acSelectors;
+    var acSelections;
+    var hasMultipleTypeNames;
+    var clearAcSelections;
+    
     // On page load, create references for easy access to form elements.
     // NB These must be assigned after the elements have been loaded onto the page.
     function initObjects() {
-        this.form = $('form.customForm');
-        this.fullViewOnly = $('.fullViewOnly');
-        this.button = $('#submit');
-        this.requiredLegend = $('#requiredLegend');
-        this.typeSelector = this.form.find('select#typeSelector');
-        this.typeSelectorInput = this.form.find('input#typeSelectorInput');
-        this.typeSelectorSpan = this.form.find('span#typeSelectorSpan');
-        this.or = $('span.or');
-        this.cancel = this.form.find('.cancel');
-        this.acHelpTextClass = 'acSelectorWithHelpText';
-        // this.verifyMatch is referenced in bindEventListeners to size and open
+        form = $('form.customForm');
+        this.form = form // --- For compatibility with customFormUtils.
+        fullViewOnly = $('.fullViewOnly');
+        button = $('#submit');
+        requiredLegend = $('#requiredLegend');
+        typeSelector = form.find('select#typeSelector');
+        typeSelectorInput = form.find('input#typeSelectorInput');
+        typeSelectorSpan = form.find('span#typeSelectorSpan');
+        or = $('span.or');
+        cancel = form.find('.cancel');
+        acHelpTextClass = 'acSelectorWithHelpText';
+        // verifyMatch is referenced in bindEventListeners to size and open
         // the verify popup window. Although there could be multiple verifyMatch objects
         // selecting one and binding the event works for all of them
-        this.verifyMatch = this.form.find('.verifyMatch');
-        this.defaultAcType = ""; // will be set in setType() first time through
-        this.templateDefinedAcTypes = false;
-        if ( this.acTypes != undefined ) {
-            this.templateDefinedAcTypes = true;
+        verifyMatch = form.find('.verifyMatch');
+        defaultAcType = ""; // will be set in setType() first time through
+        templateDefinedAcTypes = false;
+        if ( acTypes != undefined ) {
+            templateDefinedAcTypes = true;
         }
 
         // find all the acSelector input elements
-        this.acSelectors = [] ;
+        acSelectors = [] ;
 
-        this.form.find('.acSelector').each(function() {
-            customForm.acSelectors.push($(this));
+        form.find('.acSelector').each(function() {
+            acSelectors.push($(this));
         });
 
         // find all the acSelection div elements
-        this.acSelections = new Object();
-
-        this.form.find('.acSelection').each(function() {
+        acSelections = new Object();
+        form.find('.acSelection').each(function() {
             var groupName  = $(this).attr('acGroupName');
-            customForm.acSelections[groupName] = $(this);
+            acSelections[groupName] = $(this);
         });
 
         // 2-stage forms with only one ac field will not have the acTypes defined
         // so create an object for when the user selects a type via the typeSelector
-        if ( this.acTypes == undefined || this.acTypes == null ) {
-            this.acTypes = new Object();
+        if ( acTypes == undefined || acTypes == null ) {
+            acTypes = new Object();
         }
 
         // forms with multi ac fields will have this defined in customFormData
         // this is helpful when the type to display is not a single word, like "Subject Area"
-        this.hasMultipleTypeNames = false;
-        if ( this.multipleTypeNames != undefined || this.multipleTypeNames != null ) {
-            this.hasMultipleTypeNames = true;
+        hasMultipleTypeNames = false;
+        if ( multipleTypeNames != undefined || multipleTypeNames != null ) {
+            hasMultipleTypeNames = true;
         }
         // Used with the cancel link. If the user cancels after a type selection, this check
         // ensures that any a/c fields (besides the one associated with the type) will be reset
-        this.clearAcSelections = false;
+        clearAcSelections = false;
     }
 
     // Set up the form on page load
     function initPage() {
-        if (!this.editMode) {
-            this.editMode = 'add'; // edit vs add: default to add
+        if (!editMode) {
+            editMode = 'add'; // edit vs add: default to add
         }
 
         //Flag to clear label of selected object from autocomplete on submission
         //This is used in the case where the label field is submitted only when a new object is being created
-        if(!this.flagClearLabelForExisting) {
-            this.flagClearLabelForExisting = null;
+        if(!flagClearLabelForExisting) {
+            flagClearLabelForExisting = null;
         }
 
-        if (!this.formSteps) {
+        if (!formSteps) {
             // Don't override formSteps specified in form data
-            if ( !this.fullViewOnly.length || this.editMode === 'edit' || this.editMode === 'repair' ) {
-                this.formSteps = 1;
+            if ( !fullViewOnly.length || editMode === 'edit' || editMode === 'repair' ) {
+                formSteps = 1;
                 // there may also be a 3-step form - look for this.subTypeSelector
             }
             else {
-                this.formSteps = 2;
+                formSteps = 2;
             }
-        }
-
-        if(!this.doNotRemoveOriginalObject) {
-            this.doNotRemoveOriginalObject = false;
         }
 
         bindEventListeners();
 
-        $.each(this.acSelectors, function() {
+        $.each(acSelectors, function() {
             initAutocomplete($(this));
         });
 
@@ -137,28 +165,28 @@ function CustomFormWithAutocomplete() {
         initFormView();
 
         // Set the initial autocomplete help text in the acSelector fields.
-        $.each(this.acSelectors, function() {
+        $.each(acSelectors, function() {
             addAcHelpText($(this));
         });
     }
 
     function initFormView() {
-        var typeVal = this.typeSelector.val();
+        var typeVal = typeSelector.val();
 
         // Put this case first, because in edit mode with
         // validation errors we just want initFormFullView.
-        //        if ((!this.supportEdit) && (this.editMode == 'edit' || this.editMode == 'repair')) {
-        if (this.editMode == 'edit' || this.editMode == 'repair' || this.editMode == 'error') {
+        //        if ((!supportEdit) && (editMode == 'edit' || editMode == 'repair')) {
+        if (editMode == 'edit' || editMode == 'repair' || editMode == 'error') {
             initFormWithValidationErrors();
         }
-        else if (this.findValidationErrors()) {
+        else if (this.findValidationErrors()) {  // --- customFormUtils
             initFormWithValidationErrors();
         }
 
         // If type is already selected when the page loads (Firefox retains value
         // on a refresh), go directly to full view. Otherwise user has to reselect
         // twice to get to full view.
-        else if ( this.formSteps == 1 || typeVal.length ) {
+        else if ( formSteps == 1 || typeVal.length ) {
             initFormFullView();
         }
         else {
@@ -168,43 +196,43 @@ function CustomFormWithAutocomplete() {
 
     function initFormTypeView() {
         setType(); // empty any previous values (perhaps not needed)
-        this.hideFields(this.fullViewOnly);
-        this.button.hide();
-        this.or.hide();
-        this.requiredLegend.hide();
+        this.hideFields(fullViewOnly); // --- customFormUtils
+        button.hide();
+        or.hide();
+        requiredLegend.hide();
 
         this.cancel.unbind('click');
     }
 
     function initFormFullView() {
         setType();
-        this.fullViewOnly.show();
-        this.or.show();
-        this.requiredLegend.show();
-        this.button.show();
+        fullViewOnly.show();
+        or.show();
+        requiredLegend.show();
+        button.show();
         setLabels();
 
         // Set the initial autocomplete help text in the acSelector fields.
-        $.each(this.acSelectors, function() {
+        $.each(acSelectors, function() {
             addAcHelpText($(this));
         });
 
         this.cancel.unbind('click');
-        if (this.formSteps > 1) {
+        if (formSteps > 1) {
             this.cancel.click(function() {
                 customForm.clearFormData(); // clear any input and validation errors
                 initFormTypeView();
-                customForm.clearAcSelections = true;
+                clearAcSelections = true;
                 return false;
             });
             // In one-step forms, if there is a type selection field, but no value is selected,
             // hide the acSelector field. The type selection must be made first so that the
             // autocomplete type can be determined. If a type selection has been made,
             // unhide the acSelector field.
-        } else if (this.typeSelector.length) {
-            this.typeSelector.val() ? this.fullViewOnly.show() : this.hideFields(this.fullViewOnly);
+        } else if (typeSelector.length) {
+            typeSelector.val() ? fullViewOnly.show() : this.hideFields(fullViewOnly);
         }
-        if ( this.acSelectOnly ) {
+        if ( acSelectOnly ) {
             disableSubmit();
         }
     }
@@ -214,8 +242,8 @@ function CustomFormWithAutocomplete() {
         // acType, which is set in initFormFullView.
         initFormFullView();
 
-        $.each(this.acSelectors, function() {
-            var $acSelection = customForm.acSelections[$(this).attr('acGroupName')];
+        $.each(acSelectors, function() {
+            var $acSelection = acSelections[$(this).attr('acGroupName')];
             var uri   = $acSelection.find('input.acUriReceiver').val(),
             label = $(this).val();
             if (uri && uri != ">SUBMITTED VALUE WAS BLANK<") {
@@ -228,21 +256,20 @@ function CustomFormWithAutocomplete() {
     // Bind event listeners that persist over the life of the page. Event listeners
     // that depend on the view should be initialized in the view setup method.
     function bindEventListeners() {
-        this.typeSelector.change(function() {
+        typeSelector.change(function() {
             var typeVal = $(this).val();
-            this.acCache = {};
 
             // If an autocomplete selection has been made, undo it.
             // NEED TO LINK THE TYPE SELECTOR TO THE ACSELECTOR IT'S ASSOCIATED WITH
             // BECAUSE THERE COULD BE MORE THAN ONE AC FIELD. ASSOCIATION IS MADE VIA
             // THE SPECIAL "acGroupName" ATTRIBUTE WHICH IS SHARED AMONG THE SELECT AND
             // THE INPUT AND THE AC SELECTION DIV.
-            if (customForm.editMode != "edit") {
+            if (editMode != "edit") {
                 undoAutocompleteSelection($(this));
             }
             // Reinitialize view. If no type selection in a two-step form, go back to type view;
             // otherwise, reinitialize full view.
-            if (!typeVal.length && customForm.formSteps > 1) {
+            if (!typeVal.length && formSteps > 1) {
                 initFormTypeView();
             }
             else {
@@ -250,13 +277,13 @@ function CustomFormWithAutocomplete() {
             }
         });
 
-        this.verifyMatch.click(function() {
+        verifyMatch.click(function() {
             window.open($(this).attr('href'), 'verifyMatchWindow', 'width=640,height=640,scrollbars=yes,resizable=yes,status=yes,toolbar=no,menubar=no,location=no');
             return false;
         });
 
         // loop through all the acSelectors
-        $.each(this.acSelectors, function() {
+        $.each(acSelectors, function() {
             $(this).focus(function() {
                 deleteAcHelpText($(this));
             });
@@ -265,21 +292,21 @@ function CustomFormWithAutocomplete() {
             });
         });
 
-        this.form.submit(function() {
+        form.submit(function() {
             //TODO: update the following
             //custom submission for edit mode in case where existing object should not remove original object
             //if edit mode and custom flag and original uri not equivalent to new uri, then
             //clear out label field entirely
             //originally checked edit mode but want to add to work the same way in case an existing object
             //is selected since the n3 now governs how labels
-            if(customForm.flagClearLabelForExisting != null) {
+            if(flagClearLabelForExisting != null) {
                 //Find the elements that have had autocomplete executed, tagged by class "userSelected"
-                customForm.form.find('.acSelection.userSelected').each(function() {
+                form.find('.acSelection.userSelected').each(function() {
                     var groupName = $(this).attr("acGroupName");
                     var inputs = $(this).find("input.acUriReceiver");
                     //if user selected, then clear out the label since we only
                     //want to submit the label as value on form if it's a new label
-                    if(inputs.length && $(inputs.eq(0)).attr(customForm.flagClearLabelForExisting)) {
+                    if(inputs.length && $(inputs.eq(0)).attr(flagClearLabelForExisting)) {
                         var $selectorInput = $("input.acSelector[acGroupName='" + groupName + "']");
                         var $displayInput = $("input.display[acGroupName='" + groupName + "']");
                         $displayInput.val($selectorInput.val());
@@ -293,11 +320,12 @@ function CustomFormWithAutocomplete() {
     }
 
     function initAutocomplete(selectedObj) {
+        var acCache = {};
+
         getAcFilter();
         //If specific individuals are to be filtered out, add them here
         //to the filtering list
         getAcFilterForIndividuals();
-        this.acCache = {};
 
         $(selectedObj).autocomplete({
             minLength: 3,
@@ -306,42 +334,42 @@ function CustomFormWithAutocomplete() {
                 //That will be overwritten if value selected from autocomplete
                 //We do this everytime the user types anything in the autocomplete box
                 initDefaultBlankURI(selectedObj);
-                if (request.term in customForm.acCache) {
+                if (request.term in acCache) {
                     // console.log('found term in cache');
-                    response(customForm.acCache[request.term]);
+                    response(acCache[request.term]);
                     return;
                 }
                 // console.log('not getting term from cache');
                 $.ajax(
                     {
-                        url: customForm.acUrl,
+                        url: acUrl,
                         dataType: 'json',
                         data: {
                             term: request.term,
-                            type: customForm.acTypes[$(selectedObj).attr('acGroupName')],
-                            multipleTypes:(customForm.acMultipleTypes == undefined || customForm.acMultipleTypes == null)? null: customForm.acMultipleTypes
+                            type: acTypes[$(selectedObj).attr('acGroupName')],
+                            multipleTypes:(acMultipleTypes == undefined || acMultipleTypes == null)? null: acMultipleTypes
                         },
                         complete: function(xhr, status) {
                             // Not sure why, but we need an explicit json parse here.
                             var results = $.parseJSON(xhr.responseText);
                             var filteredResults = filterAcResults(results);
                             /*
-                            if ( customForm.acTypes[$(selectedObj).attr('acGroupName')] == customForm.conceptClassURI ) {
+                            if ( acTypes[$(selectedObj).attr('acGroupName')] == conceptClassURI ) {
                             filteredResults = customForm.removeConceptSubclasses(filteredResults);
                         }*/
                         if(doRemoveConceptSubclasses()) {
                             filteredResults = customForm.removeConceptSubclasses(filteredResults);
                         }
 
-                        customForm.acCache[request.term] = filteredResults;
+                        acCache[request.term] = filteredResults;
                         response(filteredResults);
                     }
                 });
             },
             select: function(event, ui) {
                 showAutocompleteSelection(ui.item.label, ui.item.uri, $(selectedObj));
-                if ( $(selectedObj).attr('acGroupName') == customForm.typeSelector.attr('acGroupName') ) {
-                    customForm.typeSelector.val(ui.item.msType);
+                if ( $(selectedObj).attr('acGroupName') == typeSelector.attr('acGroupName') ) {
+                    typeSelector.val(ui.item.msType);
                 }
             }
         });
@@ -361,36 +389,38 @@ function CustomFormWithAutocomplete() {
     // may have changed from the original. So we store the original text with the element to
     // use as a base for substitutions.
     function initElementData() {
-        this.placeholderText = '###';
-        this.labelsWithPlaceholders = this.form.find('label, .label').filter(function() {
-            return $(this).html().match(customForm.placeholderText);
+        placeholderText = '###';
+        labelsWithPlaceholders = form.find('label, .label').filter(function() {
+            return $(this).html().match(placeholderText);
         });
-        this.labelsWithPlaceholders.each(function(){
+        labelsWithPlaceholders.each(function(){
             $(this).data('baseText', $(this).html());
         });
 
-        this.button.data('baseText', this.button.val());
+        button.data('baseText', button.val());
     }
 
+    var acFilter;
+    
     //get autocomplete filter with sparql query
     function getAcFilter() {
-        if (!this.sparqlForAcFilter) {
+        if (!sparqlForAcFilter) {
             //console.log('autocomplete filtering turned off');
-            this.acFilter = null;
+            acFilter = null;
             return;
         }
 
-        //console.log("sparql for autocomplete filter: " + this.sparqlForAcFilter);
+        //console.log("sparql for autocomplete filter: " + sparqlForAcFilter);
 
-        // Define this.acFilter here, so in case the sparql query fails
+        // Define acFilter here, so in case the sparql query fails
         // we don't get an error when referencing it later.
-        this.acFilter = [];
+        acFilter = [];
         $.ajax(
             {
-                url: customForm.sparqlQueryUrl,
+                url: sparqlQueryUrl,
                 dataType: "json",
                 data: {
-                    query: customForm.sparqlForAcFilter
+                    query: sparqlForAcFilter
                 },
                 success: function(data, status, xhr) {
                     setAcFilter(data);
@@ -403,21 +433,21 @@ function CustomFormWithAutocomplete() {
         var key = data.head.vars[0];
 
         $.each(data.results.bindings, function() {
-            customForm.acFilter.push(this[key].value);
+            acFilter.push(this[key].value);
         });
     }
 
     function filterAcResults(results) {
         var filteredResults;
 
-        if (!this.acFilter || !this.acFilter.length) {
+        if (!acFilter || !acFilter.length) {
             //console.log('no autocomplete filtering applied');
             return results;
         }
 
         filteredResults = [];
         $.each(results, function() {
-            if ($.inArray(this.uri, customForm.acFilter) == -1) {
+            if ($.inArray(this.uri, acFilter) == -1) {
                 //console.log('adding ' + this.label + ' to filtered results');
                 filteredResults.push(this);
             }
@@ -431,12 +461,12 @@ function CustomFormWithAutocomplete() {
     //To filter out specific individuals, not part of a query
     //Pass in list of individuals to be filtered out
     function getAcFilterForIndividuals() {
-        if (!this.acFilterForIndividuals || !this.acFilterForIndividuals.length) {
-            this.acFilterForIndividuals = null;
+        if (!acFilterForIndividuals || !acFilterForIndividuals.length) {
+            acFilterForIndividuals = null;
             return;
         }
         //add this list to the ac filter list
-        customForm.acFilter = customForm.acFilter.concat(this.acFilterForIndividuals);
+        acFilter = acFilter.concat(acFilterForIndividuals);
 
     }
 
@@ -492,7 +522,7 @@ function CustomFormWithAutocomplete() {
         this.hideFields($(selectedObj).parent());
         $(selectedObj).val(label);
 
-        var $acDiv = this.acSelections[$(selectedObj).attr('acGroupName')];
+        var $acDiv = acSelections[$(selectedObj).attr('acGroupName')];
 
         // provides a way to monitor selection in other js files, e.g. to hide fields upon selection
         $acDiv.addClass("userSelected");
@@ -506,28 +536,28 @@ function CustomFormWithAutocomplete() {
 
         if ( $acDiv.find('label').html().length === 0 ) {
 
-            if ( this.typeSelector.length && ($acDiv.attr('acGroupName') == this.typeSelector.attr('acGroupName')) ) {
-                $acDiv.find('label').html('Selected ' + this.typeName + ':');
+            if ( typeSelector.length && ($acDiv.attr('acGroupName') == typeSelector.attr('acGroupName')) ) {
+                $acDiv.find('label').html('Selected ' + typeName + ':');
             }
-            else if ( this.typeSelectorSpan.html() && ($acDiv.attr('acGroupName') == this.typeSelectorInput.attr('acGroupName')) ) {
-                $acDiv.find('label').html('Selected ' + this.typeSelectorSpan.html() + ':');
+            else if ( typeSelectorSpan.html() && ($acDiv.attr('acGroupName') == typeSelectorInput.attr('acGroupName')) ) {
+                $acDiv.find('label').html('Selected ' + typeSelectorSpan.html() + ':');
             }
             else if ( $acDiv.find('label').html() == '' ) {
-                $acDiv.find('label').html('Selected ' + this.multipleTypeNames[$(selectedObj).attr('acGroupName')] + ':');
+                $acDiv.find('label').html('Selected ' + multipleTypeNames[$(selectedObj).attr('acGroupName')] + ':');
             }
         }
 
         $acDiv.show();
         $acDiv.find("input").val(uri);
         $acDiv.find("span").html(label);
-        $acDiv.find("a.verifyMatch").attr('href', this.baseHref + uri);
+        $acDiv.find("a.verifyMatch").attr('href', baseHref + uri);
 
         $changeLink = $acDiv.find('a.changeSelection');
         $changeLink.click(function() {
             undoAutocompleteSelection($acDiv);
         });
 
-        if ( this.acSelectOnly ) {
+        if ( acSelectOnly ) {
             //On initialization in this mode, submit button is disabled
             enableSubmit();
         }
@@ -551,15 +581,15 @@ function CustomFormWithAutocomplete() {
         var clearAcSelectorVal = true;
 
         if ( $(selectedObj).attr('id') == "typeSelector" ) {
-            $acSelectionObj = customForm.acSelections[$(selectedObj).attr('acGroupName')];
+            $acSelectionObj = acSelections[$(selectedObj).attr('acGroupName')];
             if ( $acSelectionObj.is(':hidden') ) {
                 clearAcSelectorVal = false;
             }
             // if the type is being changed after a cancel, any additional a/c fields that may have been set
             // by the user should be "undone". Only loop through these if this is not the initial type selection
-            if ( customForm.clearAcSelections ) {
-                $.each(customForm.acSelections, function(i, acS) {
-                    var $checkSelection = customForm.acSelections[i];
+            if ( clearAcSelections ) {
+                $.each(acSelections, function(i, acS) {
+                    var $checkSelection = acSelections[i];
                     if ( $checkSelection.is(':hidden') && $checkSelection.attr('acGroupName') != $acSelectionObj.attr('acGroupName') ) {
                         resetAcSelection($checkSelection);
                         $acSelector = getAcSelector($checkSelection);
@@ -570,7 +600,7 @@ function CustomFormWithAutocomplete() {
         }
         else {
             $acSelectionObj = $(selectedObj);
-            customForm.typeSelector.val('');
+            typeSelector.val('');
         }
 
         $acSelector = getAcSelector($acSelectionObj);
@@ -583,26 +613,26 @@ function CustomFormWithAutocomplete() {
         addAcHelpText($acSelector);
 
         //Resetting so disable submit button again for object property autocomplete
-        if ( this.acSelectOnly ) {
+        if ( acSelectOnly ) {
             disableSubmit();
         }
-        this.clearAcSelections = false;
+        clearAcSelections = false;
     }
 
     // this is essentially a subtask of undoAutocompleteSelection
     function resetAcSelection(selectedObj) {
         this.hideFields($(selectedObj));
         $(selectedObj).removeClass('userSelected');
-        $(selectedObj).find("input.acUriReceiver").val(this.blankSentinel);
+        $(selectedObj).find("input.acUriReceiver").val(blankSentinel);
         $(selectedObj).find("span").text('');
-        $(selectedObj).find("a.verifyMatch").attr('href', this.baseHref);
+        $(selectedObj).find("a.verifyMatch").attr('href', baseHref);
     }
 
     // loops through the array of acSelector fields and returns the one
     // associated with the selected object
     function getAcSelector(selectedObj){
         var $selector = null
-        $.each(this.acSelectors, function() {
+        $.each(acSelectors, function() {
             if ( $(this).attr('acGroupName') == $(selectedObj).attr('acGroupName') ) {
                 $selector = $(this);
             }
@@ -616,37 +646,37 @@ function CustomFormWithAutocomplete() {
         var selectedType;
         // If there's no type selector, these values have been specified in customFormData,
         // and will not change over the life of the form.
-        if (!this.typeSelector.length) {
-            if ( this.editMode == 'edit' && (this.typeSelectorSpan.html() != null && this.typeSelectorInput.val() != null) ) {
-                this.typeName = this.typeSelectorSpan.html();
-                this.acTypes[this.typeSelectorInput.attr('acGroupName')] = this.typeSelectorInput.val();
+        if (!typeSelector.length) {
+            if ( editMode == 'edit' && (typeSelectorSpan.html() != null && typeSelectorInput.val() != null) ) {
+                typeName = typeSelectorSpan.html();
+                acTypes[typeSelectorInput.attr('acGroupName')] = typeSelectorInput.val();
             }
             return;
         }
 
-        selectedType = this.typeSelector.find(':selected');
-        var acTypeKey = this.typeSelector.attr('acGroupName');
+        selectedType = typeSelector.find(':selected');
+        var acTypeKey = typeSelector.attr('acGroupName');
 
-        if ( this.templateDefinedAcTypes && !this.defaultAcType.length ) {
-            this.defaultAcType = this.acTypes[acTypeKey];
+        if ( templateDefinedAcTypes && !defaultAcType.length ) {
+            defaultAcType = acTypes[acTypeKey];
         }
         if (selectedType.val().length) {
-            this.acTypes[acTypeKey] = selectedType.val();
-            this.typeName = selectedType.html();
-            if ( this.editMode == 'edit' ) {
-                var $acSelect = this.acSelections[acTypeKey];
-                $acSelect.find('label').html( customForm.selectedString + ' ' + this.typeName + ':');
+            acTypes[acTypeKey] = selectedType.val();
+            typeName = selectedType.html();
+            if ( editMode == 'edit' ) {
+                var $acSelect = acSelections[acTypeKey];
+                $acSelect.find('label').html( i18n.selectedString + ' ' + typeName + ':');
             }
         }
         // reset to empty values;
         else {
-            if ( this.templateDefinedAcTypes ) {
-                this.acTypes[acTypeKey] = this.defaultAcType;
+            if ( templateDefinedAcTypes ) {
+                acTypes[acTypeKey] = defaultAcType;
             }
             else {
-                this.acTypes = new Object();
+                acTypes = new Object();
             }
-            this.typeName = this.defaultTypeName;
+            typeName = defaultTypeName;
         }
     }
 
@@ -655,8 +685,8 @@ function CustomFormWithAutocomplete() {
     function setLabels() {
         var typeName = getTypeNameForLabels();
 
-        this.labelsWithPlaceholders.each(function() {
-            var newLabel = $(this).data('baseText').replace(customForm.placeholderText, typeName);
+        labelsWithPlaceholders.each(function() {
+            var newLabel = $(this).data('baseText').replace(placeholderText, typeName);
             $(this).html(newLabel);
         });
 
@@ -666,25 +696,25 @@ function CustomFormWithAutocomplete() {
         // If this.acType is empty, we are either in a one-step form with no type yet selected,
         // or in repair mode in a two-step form with no type selected. Use the default type
         // name specified in the form data.
-        if ( !selectedObj || !this.hasMultipleTypeNames ) {
-            if ( this.acTypes && this.typeName ) {
-                return this.typeName;
+        if ( !selectedObj || !hasMultipleTypeNames ) {
+            if ( acTypes && typeName ) {
+                return typeName;
             }
             else {
-                return this.capitalize(this.defaultTypeName);
+                return this.capitalize(defaultTypeName); // --- customFormUtils
             }
         }
-        else if ( selectedObj && ( $(selectedObj).attr('acGroupName') == this.typeSelector.attr('acGroupName') ) ) {
-            if ( this.acTypes && this.typeName ) {
-                return this.typeName;
+        else if ( selectedObj && ( $(selectedObj).attr('acGroupName') == typeSelector.attr('acGroupName') ) ) {
+            if ( acTypes && typeName ) {
+                return typeName;
             }
             else {
-                return this.capitalize(this.defaultTypeName);
+                return this.capitalize(defaultTypeName); // --- customFormUtils
             }
         }
         else {
-            var name = customForm.multipleTypeNames[$(selectedObj).attr('id')];
-            return this.capitalize(name);
+            var name = multipleTypeNames[$(selectedObj).attr('id')];
+            return this.capitalize(name); // --- customFormUtils
         }
     }
 
@@ -693,31 +723,31 @@ function CustomFormWithAutocomplete() {
         var typeText;
         // First case applies on page load; second case applies when the type gets changed. With multiple
         // ac fields there are cases where we also have to check if the help text is already there
-        if (!$(selectedObj).val() || $(selectedObj).hasClass(this.acHelpTextClass) || $(selectedObj).val().substring(0, 18) == customForm.selectAnExisting ) {
+        if (!$(selectedObj).val() || $(selectedObj).hasClass(acHelpTextClass) || $(selectedObj).val().substring(0, 18) == i18n.selectAnExisting ) {
             typeText = getTypeNameForLabels($(selectedObj));
-            var helpText = customForm.selectAnExisting + " " + typeText + " " + customForm.orCreateNewOne ;
+            var helpText = i18n.selectAnExisting + " " + typeText + " " + i18n.orCreateNewOne ;
             //Different for object property autocomplete
-            if ( this.acSelectOnly ) {
-                helpText = customForm.selectAnExisting + " " + typeText;
+            if ( acSelectOnly ) {
+                helpText = i18n.selectAnExisting + " " + typeText;
             }
             $(selectedObj).val(helpText)
-            .addClass(this.acHelpTextClass);
+            .addClass(acHelpTextClass);
         }
     }
 
     function deleteAcHelpText(selectedObj) {
         // on submit, no selectedObj gets passed, so we need to check for this
         if ( selectedObj ) {
-            if ($(selectedObj).hasClass(this.acHelpTextClass)) {
+            if ($(selectedObj).hasClass(acHelpTextClass)) {
                 $(selectedObj).val('')
-                .removeClass(this.acHelpTextClass);
+                .removeClass(acHelpTextClass);
             }
         }
         else {
-            $.each(this.acSelectors, function() {
-                if ($(this).hasClass(customForm.acHelpTextClass)) {
+            $.each(acSelectors, function() {
+                if ($(this).hasClass(acHelpTextClass)) {
                     $(this).val('')
-                    .removeClass(customForm.acHelpTextClass);
+                    .removeClass(acHelpTextClass);
                 }
             });
         }
@@ -725,13 +755,13 @@ function CustomFormWithAutocomplete() {
 
     function disableSubmit() {
         //Disable submit button until selection made
-        this.button.attr('disabled', 'disabled');
-        this.button.addClass('disabledSubmit');
+        button.attr('disabled', 'disabled');
+        button.addClass('disabledSubmit');
     }
 
     function enableSubmit() {
-        this.button.removeAttr('disabled');
-        this.button.removeClass('disabledSubmit');
+        button.removeAttr('disabled');
+        button.removeClass('disabledSubmit');
     }
 
     function initDefaultBlankURI(selectedObj) {
@@ -739,8 +769,8 @@ function CustomFormWithAutocomplete() {
         //If blank sentinel is neither null nor an empty string, this means if the user edits an
         //existing relationship to an object and does not select anything from autocomplete
         //from that object, the old relationship will be removed in n3 processing
-        var $acDiv = this.acSelections[$(selectedObj).attr('acGroupName')];
-        $acDiv.find("input").val(customForm.blankSentinel);
+        var $acDiv = acSelections[$(selectedObj).attr('acGroupName')];
+        $acDiv.find("input").val(blankSentinel);
     }
 }
 
@@ -748,6 +778,6 @@ $(document).ready(function() {
     //If undefined or set to false, load normally
     //If set to true, don't laod
     if(preventLoadFlag == undefined || !preventLoadFlag) {
-        new CustomFormWithAutocomplete().onLoad();
+        new CustomFormWithAutocomplete(customFormData, i18nStrings).onLoad();
     }
 });
