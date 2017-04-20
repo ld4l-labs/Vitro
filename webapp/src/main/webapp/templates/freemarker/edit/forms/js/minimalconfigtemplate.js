@@ -98,9 +98,7 @@ function MinimalConfigTemplate(formData, displayData) {
         fieldDisplayProperties = displayData.fieldDisplayProperties;
         //Are these ALL fields?
         fieldOrder = displayData.fieldOrder;
-        var len = fieldOrder.length;
-        for(f = 0; f < len; f++) {
-            var fieldName = fieldOrder[f];
+        fieldOrder.forEach(function(fieldName) {
             var configComponent = getConfigurationComponent(fieldName);
             if(configComponent != null) {
                 formFields[fieldName] = configComponent;
@@ -110,20 +108,15 @@ function MinimalConfigTemplate(formData, displayData) {
                     formFieldsToOptions[fieldName] = fieldOptions;
                 }
             }
-        }
+        });
     }
 
     function generateConfigHash() {
-        //Load configjson
         var graph = configJSON["@graph"];
-        var numberComponents = graph.length;
-        var n;
-        var fieldNameProperty = "customform:varName";
-        for(n = 0; n < numberComponents; n++) {
-            var component = graph[n];
+		graph.forEach(function(component) {
             var id = component["@id"];
             allConfigComponents[id] = component;
-        }
+		});
     }
 
     function getFieldOptions(configComponent) {
@@ -312,11 +305,7 @@ function MinimalConfigTemplate(formData, displayData) {
 
     function getConfigurationComponent(componentName) {
         var graph = configJSON["@graph"];
-        var numberComponents = graph.length;
-        var n;
-        var fieldNameProperty = "customform:varName";
-        for(n = 0; n < numberComponents; n++) {
-            var component = graph[n];
+        graph.forEach(function(component) {
             //if field name property is contained within component
             //Does this fall under massaging everything into a common format instead?
             if(fieldNameProperty in component) {
@@ -327,22 +316,14 @@ function MinimalConfigTemplate(formData, displayData) {
                     return component;
                 }
             }
-
-        }
+        });
         return null;
     }
 
     function componentHasType(component, componentType) {
         //returns array of types
         var types = component["@type"];
-        var len = types.length;
-        var l;
-        for(l = 0; l < len; l++) {
-            var type = types[l];
-            if(type == componentType)
-            return true;
-        }
-        return false;
+        return types && types.indexOf(componentType) >= 0;
     }
 }
 
