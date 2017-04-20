@@ -164,48 +164,14 @@ Set this flag on the input acUriReceiver where you would like this behavior to o
             	</select>
         </p>
   		</div>
-
-<#assign sparqlQueryUrl = "${urls.base}/ajax/sparqlQuery" >
-
-    <script type="text/javascript">
-    var urisInScope = {};
-    var literalsInScope = {};
-    <#list editConfiguration.pageData.urisInScope?keys as uriKey>
-    	urisInScope["${uriKey}"]=[];
-    	<#assign uriValue = editConfiguration.pageData.urisInScope[uriKey] />
-    	<#list uriValue as val>
-    		urisInScope["${uriKey}"].push("${val}");
-    	</#list>
-    	
-    </#list>
-         
-	//TODO: Handle multiple autocompletes on the same page?
-    var customFormData  = {
-        sparqlQueryUrl: '${sparqlQueryUrl}',
-        acUrl: '${urls.base}/autocomplete?tokenize=true',
-        customFormAJAXUrl:'${urls.base}/ajax/customForm',
-        editMode: '${editMode}',
-        baseHref: '${urls.base}/individual?uri=',
-        blankSentinel: '${blankSentinel}',
-        flagClearLabelForExisting: '${flagClearLabelForExisting}',
-        defaultTypeName: 'entity', //REPLACE with type name for specific auto complete
-        acTypes: {},
-        configFileURL:"${urls.base}/templates/freemarker/edit/forms/js/jsonconfig/${configFile}",
-        urisInScope:urisInScope,
-        literalsInScope:literalsInScope
-    };
-    var i18nStrings = {
-        selectAnExisting: '${i18n().select_an_existing}',
-        orCreateNewOne: '${i18n().or_create_new_one}',
-        selectedString: '${i18n().selected}'
-    };
-    //Prevent custom form on load on document ready so these event listeners can be associated AFTER form is loaded
-    preventLoadFlag = true;
-    </script>
-    
-   
 </section>
 </#if>
+
+<script>
+    // Don't load the autocomplete before we are ready.
+    // Still need this because other pages use customFormWithAutocomplete.js
+    preventLoadFlag = true
+</script>
 
 <#-- Common section -->
 ${stylesheets.add('<link rel="stylesheet" href="${urls.base}/js/jquery-ui/css/smoothness/jquery-ui-1.12.1.css" />')}
@@ -220,3 +186,45 @@ ${stylesheets.add('<link rel="stylesheet" href="${urls.base}/js/jquery-ui/css/sm
               '<script type="application/ld+json" id="configjsonscript" src="${urls.base}/templates/freemarker/edit/forms/js/jsonconfig/${configFile}"></script>', 
                '<script type="text/javascript" src="${urls.base}/templates/freemarker/edit/forms/js/jsonconfig/${configDisplayFile}"></script>', 
               '<script type="text/javascript" src="${urls.base}/templates/freemarker/edit/forms/js/minimalconfigtemplate.js"></script>')}
+
+<script>
+$(document).ready(function() {
+    if ("${editMode}" != "error") {
+        new CustomFormWithAutocomplete( {
+		        sparqlQueryUrl: '${urls.base}/ajax/sparqlQuery',
+		        acUrl: '${urls.base}/autocomplete?tokenize=true',
+		        editMode: '${editMode}',
+		        baseHref: '${urls.base}/individual?uri=',
+		        blankSentinel: '${blankSentinel}',
+		        flagClearLabelForExisting: '${flagClearLabelForExisting}',
+		        defaultTypeName: 'entity', //REPLACE with type name for specific auto complete
+		        acTypes: {},
+            }, {
+		        selectAnExisting: '${i18n().select_an_existing}',
+		        orCreateNewOne: '${i18n().or_create_new_one}',
+		        selectedString: '${i18n().selected}'
+            }).onLoad();
+
+	    var urisInScope = {};
+	    <#list editConfiguration.pageData.urisInScope?keys as uriKey>
+	    	urisInScope["${uriKey}"]=[];
+	    	<#assign uriValue = editConfiguration.pageData.urisInScope[uriKey] />
+	    	<#list uriValue as val>
+	    		urisInScope["${uriKey}"].push("${val}");
+	    	</#list>
+	    </#list>
+	         
+	    var literalsInScope = {};
+   
+	    new MinimalConfigTemplate( {
+		        customFormAJAXUrl:'${urls.base}/ajax/customForm',
+		        editMode: '${editMode}',
+		        configFileURL: "${urls.base}/templates/freemarker/edit/forms/js/jsonconfig/${configFile}",
+		        urisInScope: urisInScope,
+		        literalsInScope: literalsInScope
+		    },
+	    	displayConfig).onLoad();
+	}
+	    	
+});
+</script>

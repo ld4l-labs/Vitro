@@ -327,6 +327,3 @@ function MinimalConfigTemplate(formData, displayData) {
     }
 }
 
-$(document).ready(function() {
-    new MinimalConfigTemplate(customFormData, displayConfig).onLoad();
-});
