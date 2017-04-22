@@ -419,7 +419,7 @@ public class MinimalConfigurationPreprocessor extends
 			while(stmtIterator.hasNext()) {
 				Statement stmt = stmtIterator.nextStatement();
 				//Get all the variables
-				//Subject, predicate, resource
+				//Subject, predicate, resource or literal
 				Resource subject = stmt.getSubject();
 				Property predicate = stmt.getPredicate();
 				RDFNode object = stmt.getObject();
@@ -434,9 +434,11 @@ public class MinimalConfigurationPreprocessor extends
 					}
 				}
 				if(!disallowedStatement) {
-					if(object.asResource().getNameSpace().equals(fakeNS)) {
+					if(object.isResource() 
+						&& object.asResource().getNameSpace().equals(fakeNS)) {
 						disallowedStatement = !(satisfiedVarNames.contains(object.asResource().getLocalName()));
 					}
+					//if actual literal value, then pass along
 				}
 				if(!disallowedStatement) {
 					allowedN3Model.add(stmt);
