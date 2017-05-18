@@ -1,11 +1,6 @@
 /* $This file is distributed under the terms of the license in /doc/license.txt$ */
 
 function CustomFormWithAutocomplete(formData, i18n) {
-    var customForm = {
-        onLoad: onLoad
-    };
-    return customForm;
-    
     var acFilterForIndividuals = formData.acFilterForIndividuals;
     var acMultipleTypes = formData.acMultipleTypes;
     var acSelectOnly = formData.acSelectOnly;
@@ -22,12 +17,17 @@ function CustomFormWithAutocomplete(formData, i18n) {
     var sparqlQueryUrl = formData.sparqlQueryUrl;
     var typeName = formData.typeName;
     
-    ver placeholderText;
+    var customForm = {
+        onLoad: onLoad
+    };
+    return customForm;
+    
+    var placeholderText;
     var labelsWithPlaceholders;
     
     //Setting the default Concept class here
     //This would need to change if we update the ontology, etc.
-    var conceptClassURI: "http://www.w3.org/2004/02/skos/core#Concept",
+    var conceptClassURI = "http://www.w3.org/2004/02/skos/core#Concept";
 
     /* *** Initial page setup *** */
     function onLoad() {
@@ -201,7 +201,7 @@ function CustomFormWithAutocomplete(formData, i18n) {
         or.hide();
         requiredLegend.hide();
 
-        this.cancel.unbind('click');
+        cancel.unbind('click');
     }
 
     function initFormFullView() {
@@ -217,9 +217,9 @@ function CustomFormWithAutocomplete(formData, i18n) {
             addAcHelpText($(this));
         });
 
-        this.cancel.unbind('click');
+        cancel.unbind('click');
         if (formSteps > 1) {
-            this.cancel.click(function() {
+            cancel.click(function() {
                 customForm.clearFormData(); // clear any input and validation errors
                 initFormTypeView();
                 clearAcSelections = true;
@@ -355,10 +355,10 @@ function CustomFormWithAutocomplete(formData, i18n) {
                             var filteredResults = filterAcResults(results);
                             /*
                             if ( acTypes[$(selectedObj).attr('acGroupName')] == conceptClassURI ) {
-                            filteredResults = customForm.removeConceptSubclasses(filteredResults);
+                            filteredResults = removeConceptSubclasses(filteredResults);
                         }*/
                         if(doRemoveConceptSubclasses()) {
-                            filteredResults = customForm.removeConceptSubclasses(filteredResults);
+                            filteredResults = removeConceptSubclasses(filteredResults);
                         }
 
                         acCache[request.term] = filteredResults;
@@ -471,7 +471,7 @@ function CustomFormWithAutocomplete(formData, i18n) {
     }
 
     //Updating this code to utilize an array to
-    removeConceptSubclasses: function(array) {
+    function removeConceptSubclasses(array) {
         //Using map because the resulting array might be different from the original
         array = jQuery.map(array, function(arrayValue, i) {
             var allMsTypes = arrayValue["allMsTypes"];

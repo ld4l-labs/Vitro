@@ -27,11 +27,6 @@ function MinimalConfigTemplate(formData, displayData) {
 	    function gotConfigFile(content) {
 	        configJSON = JSON.parse(content);
 	        initPage();
-	        //Bind event listeners only when everything on the page has been populated
-	        //Putting in bind event listeners here - any autocomplete fields should already be setup
-	        //As far as fields generated using AJAX requests - the event listeners should be attached
-	        //in the done/success methods of the ajax requests
-	        bindEventListeners();
 	    }
     }
 
@@ -80,14 +75,6 @@ function MinimalConfigTemplate(formData, displayData) {
 	        //Should retrieve a hash with var name to existing value
 	        //and those can be used to populate the form
 	    }
-    }
-
-    function bindEventListeners() {
-        //This relies on the custom form with autocomplete file
-        //TODO: Find a better way to do this
-        if(customForm) {
-            customForm.onLoad();
-        }
     }
 
     //process the json and create a hash by varname/fieldname
