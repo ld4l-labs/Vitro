@@ -1,6 +1,6 @@
 /* $This file is distributed under the terms of the license in /doc/license.txt$ */
 
-function MinimalConfigTemplate() {
+function MinimalConfigTemplate(formData, displayData) {
     var minimalconfigtemplate = {
             /* *** Initial page setup *** */
             fieldNameProperty : "customform:varName",
@@ -12,11 +12,10 @@ function MinimalConfigTemplate() {
     }
 
     function onLoad() {
-        mixIn();
         //Do ajax request to get config and only then trigger the rest
         $.ajax({
             method: "GET",
-            url: minimalconfigtemplate.configFileURL
+            url: formData.configFileURL
         })
         .done(function( content ) {
             minimalconfigtemplate.configJSON = JSON.parse(content);
@@ -30,12 +29,6 @@ function MinimalConfigTemplate() {
 
     }
 
-    function mixIn() {
-        // Get the custom form data from the page
-        $.extend(minimalconfigtemplate, customFormData);
-        $.extend(minimalconfigtemplate, i18nStrings);
-    }
-
     // Initial page setup. Called only at page load.
     function initPage() {
         //hash to store form fields
@@ -46,7 +39,7 @@ function MinimalConfigTemplate() {
         processConfigJSON();
         generateFields();
         //If this is an EDITING operation, need to get existing values
-        if(minimalconfigtemplate.editMode == "edit") {
+        if(formData.editMode == "edit") {
             //Retrieve existing values if edit operation
             retrieveExistingValueRequests();
         }
@@ -69,10 +62,10 @@ function MinimalConfigTemplate() {
         $.ajax(
             {
                 method: "GET",
-                url: minimalconfigtemplate.customFormAJAXUrl,
+                url: formData.customFormAJAXUrl,
                 data: { "configComponentsExistingValues": JSON.stringify(existingValueRequests),
-                "urisInScope":JSON.stringify(urisInScope),
-                "literalsInScope":JSON.stringify(literalsInScope),
+                "urisInScope":JSON.stringify(formData.urisInScope),
+                "literalsInScope":JSON.stringify(formData.literalsInScope),
                 "action":"existingValues"
             }
         })
@@ -89,13 +82,11 @@ function MinimalConfigTemplate() {
     function processConfigJSON() {
         //Process the entire JSON to save all components by @id in hash
         generateConfigHash();
-        //Get fields from the displayconfig
-        minimalconfigtemplate.fieldDisplayProperties = displayConfig.fieldDisplayProperties;
+        //Get fields from the displayData
         //Are these ALL fields?
-        minimalconfigtemplate.fieldOrder = displayConfig.fieldOrder;
-        var len = minimalconfigtemplate.fieldOrder.length;
+        var len = displayData.fieldOrder.length;
         for(f = 0; f < len; f++) {
-            var fieldName = minimalconfigtemplate.fieldOrder[f];
+            var fieldName = displayData.fieldOrder[f];
             var configComponent = getConfigurationComponent(fieldName);
             if(configComponent != null) {
                 minimalconfigtemplate.formFields[fieldName] = configComponent;
@@ -149,11 +140,11 @@ function MinimalConfigTemplate() {
         //activityType, agentType
 
         var f;
-        var len = minimalconfigtemplate.fieldOrder.length;
+        var len = displayData.fieldOrder.length;
         //TODO: Generic form id/name required
         var form = $("#addpublicationToPerson");
         for(f = 0; f < len; f++) {
-            var fieldName = minimalconfigtemplate.fieldOrder[f];
+            var fieldName = displayData.fieldOrder[f];
             if(fieldName in minimalconfigtemplate.formFields) {
                 var configComponent = minimalconfigtemplate.formFields[fieldName];
                 displayConfigComponent(configComponent);
@@ -165,7 +156,7 @@ function MinimalConfigTemplate() {
         //Get fieldName
         var fieldName = configComponent[minimalconfigtemplate.fieldNameProperty];
         //TODO: Check if this key exists
-        var displayInfo = minimalconfigtemplate.fieldDisplayProperties[fieldName];
+        var displayInfo = displayData.fieldDisplayProperties[fieldName];
         var templateClone = "";
         if(componentHasType(configComponent, "forms:LiteralField")) {
             //Either autocomplete or regular field
@@ -201,7 +192,7 @@ function MinimalConfigTemplate() {
             $.ajax(
                 {
                     method: "GET",
-                    url: minimalconfigtemplate.customFormAJAXUrl,
+                    url: formData.customFormAJAXUrl,
                     data: { "configComponent": JSON.stringify(fieldOptionComponent),
                     "fieldName": fieldName,
                     "action": "dropdown"
@@ -351,7 +342,3 @@ function MinimalConfigTemplate() {
         return false;
     }
 };
-
-$(document).ready(function() {
-    new MinimalConfigTemplate().onLoad();
-});
