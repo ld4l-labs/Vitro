@@ -15,11 +15,7 @@ var minimalconfigtemplate = {
 			  .done(function( content ) {
 				  minimalconfigtemplate.configJSON = JSON.parse(content);
 				  minimalconfigtemplate.initPage();
-				//Bind event listeners only when everything on the page has been populated
-		            //Putting in bind event listeners here - any autocomplete fields should already be setup
-		            //As far as fields generated using AJAX requests - the event listeners should be attached
-		            //in the done/success methods of the ajax requests
-				  minimalconfigtemplate.bindEventListeners();
+				
 			  });      
             
         },
@@ -44,15 +40,26 @@ var minimalconfigtemplate = {
         if(this.editMode == "edit") {
         	//Retrieve existing values if edit operation
         	this.retrieveExistingValueRequests();
+        } else {
+        	//Bind event listeners only when everything on the page has been populated
+            //Putting in bind event listeners here - any autocomplete fields should already be setup
+            //As far as fields generated using AJAX requests - the event listeners should be attached
+            //in the done/success methods of the ajax requests
+        	//If we ARE retrieving existing values, then event listeners need to be bound there instead
+        	minimalconfigtemplate.bindEventListeners();
         }
                        
     },
     //get existing values
     retrieveExistingValueRequests:function() {
-    	var fieldName;
+    	var id;
     	var existingValueRequests = [];
-    	for(fieldName in this.formFields) {
-    		var configComponent = this.formFields[fieldName];
+    	//Form fields populated with the fields in display config, may not include
+    	//for instance, receiver URI for autocomplete - and perhaps other fields that are not
+    	//displayed directly
+    	//so checking all config components instead
+    	for(id in this.allConfigComponents) {
+    		var configComponent = this.allConfigComponents[id];
     		//See if existing URI
     		if("customform:queryForExistingValue" in configComponent) {
     			existingValueRequests.push(configComponent);
@@ -73,10 +80,39 @@ var minimalconfigtemplate = {
 				  //templateclone is from URI Field, so make this work better
 				  //Should retrieve a hash with var name to existing value
 				  //and those can be used to populate the form
-				  
+				  minimalconfigtemplate.populateExistingContent(content);
+				  //Existing value requests comprise another ajax request that will affect autocomplete selection
+				  minimalconfigtemplate.bindEventListeners();
 			  });
     	
     },
+    //Hash with variable name to array of existing content values
+    populateExistingContent:function(content) {
+    	//Does this have to parsed into JSON?
+    	
+    	var fieldName;
+    	for(fieldName in content) {
+    		minimalconfigtemplate.updateFieldWithExistingContent(fieldName, content[fieldName]);
+    	}
+    	//Create a hidden input with Stringified version 
+    	$("form").append("<input type='hidden' name='existingValuesRetrieved' id='existingValuesRetrieved' value='" + JSON.stringify(content)  + "'>");
+    },
+    updateFieldWithExistingContent(fieldName, existingValue) {
+    	//Get form field
+    	//TODO: review how info is hashed and how we need to retrieve it
+    	var configComponent = minimalconfigtemplate.getConfigurationComponent(fieldName);
+    	if(configComponent != null && configComponent != undefined) {
+    		//Doesn't appear to matter whether URI or literal field, select or input, as val() will set all of them
+    		var fieldName = configComponent["customform:varName"];
+        	var fieldElement = $("[name='" + fieldName + "']");
+        	//This really should be just ONE value
+        	//TODO: Check if we would ever want this to be more than one value
+        	if(fieldElement != null & fieldElement != undefined && existingValue.length > 0) {
+        		fieldElement.val(existingValue[0]);
+        	}
+    	}
+    },
+    
     bindEventListeners:function() {
     	//This relies on the custom form with autocomplete file
     	//TODO: Find a better way to do this
@@ -141,8 +177,7 @@ var minimalconfigtemplate = {
     	
     	var f;
     	var len = this.fieldOrder.length;
-    	//TODO: Generic form id/name required
-		var form = $("#addpublicationToPerson");
+		var form = $("#minimalForm");
     	for(f = 0; f < len; f++) {
     		var fieldName = this.fieldOrder[f];
     		if(fieldName in this.formFields) {

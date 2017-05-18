@@ -94,7 +94,7 @@ public class CustomFormAJAXController extends VitroAjaxController {
 		//Parse as JSON Array
 		JSONArray jsonArray = (JSONArray) JSONSerializer.toJSON(existingValues);
 		int length = jsonArray.size();
-		List<String> returnValues = new ArrayList<String>();
+		HashMap<String, List<String>> returnValues = new HashMap<String, List<String>>();
 		//URIs in scope
 		HashMap<String, List<String>> uriScope = getURIsInScope(vreq);
 		//This will be empty for now - as it is in the 
@@ -102,6 +102,7 @@ public class CustomFormAJAXController extends VitroAjaxController {
 		int i;
 		for(i = 0; i < length; i++) {
 			JSONObject configComponent = jsonArray.getJSONObject(i);
+			String varName = configComponent.getString("customform:varName");
 			String sparqlQuery = configComponent.getString( "customform:queryForExistingValue");
 			//How to execute the code
 			//Check if URI or Literal
@@ -112,24 +113,33 @@ public class CustomFormAJAXController extends VitroAjaxController {
 	        if(isURIField(configComponent)) {
 	            List<String> uriFromQuery = sparqlEvaluate.sparqlEvaluateForURIQuery(editN3Generator, uriScope, literalScope, sparqlQuery);
 	            if(uriFromQuery != null && uriFromQuery.size() > 0) {
-	            	returnValues = uriFromQuery;
+	      
+	            	returnValues.put(varName, uriFromQuery);
 	            }
 
 	        }
 	        else if(isLiteralField(configComponent)) {
 	        	List<Literal> literalVars = sparqlEvaluate.sparqlEvaluateForLiteralQuery(editN3Generator, uriScope, literalScope, sparqlQuery);
+	        	List<String> literalValues = new ArrayList<String>();
 	        	if(literalVars != null && literalVars.size() > 0) {
 		        	for(Literal literal: literalVars) {
-		        		returnValues.add(literal.getString());
+		        		literalValues.add(literal.getString());
 		        	}
+		        	returnValues.put(varName, literalValues);
 	        	}
 	        }
 
 		}
 		//Output return values as json
-		JSONArray jArray = new JSONArray();
-		jArray.addAll(returnValues);
-		writeOutput(jArray.toString(), response);
+		JSONObject returnObject = new JSONObject();
+		Set<String> keys = returnValues.keySet();
+		for(String key: keys) {
+			JSONArray jArray = new JSONArray();
+			jArray.addAll(returnValues.get(key));
+			returnObject.put(key, jArray);
+		}
+		
+		writeOutput(returnObject.toString(), response);
 	}
 
 	private HashMap<String, List<Literal>> getLiteralsInScope(VitroRequest vreq) {
