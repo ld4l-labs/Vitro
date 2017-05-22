@@ -1,11 +1,12 @@
 /* $This file is distributed under the terms of the license in /doc/license.txt$ */
 
 function MinimalConfigTemplate(formData, displayData) {
-    var minimalconfigtemplate = {
-            /* *** Initial page setup *** */
-            fieldNameProperty : "customform:varName",
-            configJSON:null
-    }
+    var fieldNameProperty = "customform:varName";
+
+    var configJSON;
+    var formFields;
+    var formFieldsToOptions;
+    var allConfigComponents;
     
     return {
         onLoad: onLoad
@@ -18,7 +19,7 @@ function MinimalConfigTemplate(formData, displayData) {
             url: formData.configFileURL
         })
         .done(function( content ) {
-            minimalconfigtemplate.configJSON = JSON.parse(content);
+            configJSON = JSON.parse(content);
             initPage();
         });
 
@@ -27,9 +28,9 @@ function MinimalConfigTemplate(formData, displayData) {
     // Initial page setup. Called only at page load.
     function initPage() {
         //hash to store form fields
-        minimalconfigtemplate.formFields = {};
-        minimalconfigtemplate.formFieldsToOptions = {};//Key is field name, but options saved as component
-        minimalconfigtemplate.allConfigComponents = {}; //Hash where key is @id
+        formFields = {};
+        formFieldsToOptions = {};//Key is field name, but options saved as component
+        allConfigComponents = {}; //Hash where key is @id
 
         processConfigJSON();
         generateFields();
@@ -54,8 +55,8 @@ function MinimalConfigTemplate(formData, displayData) {
         //for instance, receiver URI for autocomplete - and perhaps other fields that are not
         //displayed directly
         //so checking all config components instead
-        for(id in this.allConfigComponents) {
-            var configComponent = this.allConfigComponents[id];
+        for(id in allConfigComponents) {
+            var configComponent = allConfigComponents[id];
             //See if existing URI
             if("customform:queryForExistingValue" in configComponent) {
                 existingValueRequests.push(configComponent);
@@ -122,11 +123,11 @@ function MinimalConfigTemplate(formData, displayData) {
             var fieldName = displayData.fieldOrder[f];
             var configComponent = getConfigurationComponent(fieldName);
             if(configComponent != null) {
-                minimalconfigtemplate.formFields[fieldName] = configComponent;
+                formFields[fieldName] = configComponent;
                 //if form field has associated field options, store within formFieldsToFieldOptions hash
                 var fieldOptions = getFieldOptions(configComponent);
                 if(fieldOptions != null) {
-                    minimalconfigtemplate.formFieldsToOptions[fieldName] = fieldOptions;
+                    formFieldsToOptions[fieldName] = fieldOptions;
                 }
             }
         }
@@ -142,14 +143,13 @@ function MinimalConfigTemplate(formData, displayData) {
 
     function generateConfigHash() {
         //Load configjson
-        var graph = minimalconfigtemplate.configJSON["@graph"];
+        var graph = configJSON["@graph"];
         var numberComponents = graph.length;
         var n;
-        var fieldNameProperty = "customform:varName";
         for(n = 0; n < numberComponents; n++) {
             var component = graph[n];
             var id = component["@id"];
-            minimalconfigtemplate.allConfigComponents[id] = component;
+            allConfigComponents[id] = component;
         }
     }
 
@@ -157,7 +157,7 @@ function MinimalConfigTemplate(formData, displayData) {
         var fieldOptionsFieldName = "customform:fieldOptions";
         if(fieldOptionsFieldName in configComponent) {
             var configId = configComponent[fieldOptionsFieldName]["@id"];
-            var configComponent = minimalconfigtemplate.allConfigComponents[configId];
+            var configComponent = allConfigComponents[configId];
             //TODO: Include check - whether this id even exists, etc.
             return configComponent;
         }
@@ -177,8 +177,8 @@ function MinimalConfigTemplate(formData, displayData) {
         var form = $("#minimalForm");
         for(f = 0; f < len; f++) {
             var fieldName = displayData.fieldOrder[f];
-            if(fieldName in minimalconfigtemplate.formFields) {
-                var configComponent = minimalconfigtemplate.formFields[fieldName];
+            if(fieldName in formFields) {
+                var configComponent = formFields[fieldName];
                 displayConfigComponent(configComponent);
             }
         }
@@ -186,7 +186,7 @@ function MinimalConfigTemplate(formData, displayData) {
 
     function displayConfigComponent(configComponent) {
         //Get fieldName
-        var fieldName = configComponent[minimalconfigtemplate.fieldNameProperty];
+        var fieldName = configComponent[fieldNameProperty];
         //TODO: Check if this key exists
         var displayInfo = displayData.fieldDisplayProperties[fieldName];
         var templateClone = "";
@@ -200,9 +200,9 @@ function MinimalConfigTemplate(formData, displayData) {
             //} else if(componentHasType(configComponent, "forms:FieldOptions")) {
 
             //dropdown needed - since field options are always drop-downs of some sort
-            //if(fieldName in minimalconfigtemplate.formFieldsToOptions) {
+            //if(fieldName in formFieldsToOptions) {
             //  templateClone = createURIField(configComponent);
-            if(fieldName in minimalconfigtemplate.formFieldsToOptions) {
+            if(fieldName in formFieldsToOptions) {
                 templateClone = createDropdownFieldContainer(configComponent, displayInfo);
             }
         }
@@ -218,8 +218,8 @@ function MinimalConfigTemplate(formData, displayData) {
         //If options associated, then use an AJAX request to populate the drop-down
         //How to do this then? Create drop-down and THEN display?
         //First, just see if this even works
-        if(fieldName in minimalconfigtemplate.formFieldsToOptions) {
-            var fieldOptionComponent = minimalconfigtemplate.formFieldsToOptions[fieldName];
+        if(fieldName in formFieldsToOptions) {
+            var fieldOptionComponent = formFieldsToOptions[fieldName];
             //Just pass the entire JSON object to the servlet and let the servlet parse it
             $.ajax(
                 {
@@ -340,10 +340,9 @@ function MinimalConfigTemplate(formData, displayData) {
     }
     
     function getConfigurationComponent(componentName) {
-        var graph = minimalconfigtemplate.configJSON["@graph"];
+        var graph = configJSON["@graph"];
         var numberComponents = graph.length;
         var n;
-        var fieldNameProperty = "customform:varName";
         for(n = 0; n < numberComponents; n++) {
             var component = graph[n];
             //if field name property is contained within component
