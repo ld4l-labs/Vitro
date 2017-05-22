@@ -108,7 +108,7 @@ Set this flag on the input acUriReceiver where you would like this behavior to o
 <section id="addPublicationToPerson" role="region">        
     
 <@lvf.unsupportedBrowser urls.base/>
-<form id="addpublicationToPerson" class="customForm noIE67" action="${submitUrl}"  role="add/edit publication" >
+<form id="minimalForm" class="customForm noIE67" action="${submitUrl}"  role="add/edit" >
         
     <div id="formcontent">
     </div>

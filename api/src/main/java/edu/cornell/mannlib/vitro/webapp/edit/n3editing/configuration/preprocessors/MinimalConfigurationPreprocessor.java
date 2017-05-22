@@ -14,6 +14,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import net.sf.json.JSON;
 import net.sf.json.JSONArray;
@@ -37,6 +38,7 @@ import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdf.model.StmtIterator;
 import org.apache.jena.vocabulary.OWL;
@@ -101,6 +103,7 @@ public class MinimalConfigurationPreprocessor extends
 			JSONObject contentsJSON = (JSONObject) JSONSerializer.toJSON(contents);
 			processConfigurationJSONFields(contentsJSON);
 			updateConfiguration(vreq, contentsJSON);
+			handleExistingValues(vreq);
 			
 		}catch (Exception ex) {
 			log.error("Exception occurred reading in file", ex);
@@ -111,6 +114,38 @@ public class MinimalConfigurationPreprocessor extends
 	}
 	
 	
+	private void handleExistingValues(VitroRequest vreq) {
+		String existingValues = vreq.getParameter("existingValuesRetrieved");
+		if(StringUtils.isNotEmpty(existingValues)) {
+			//Convert to JSON object
+			JSONObject existingValuesObject = (JSONObject) JSONSerializer.toJSON(existingValues);
+			Set<String> keys = existingValuesObject.keySet();
+			for(String key: keys) {
+				if(fieldNameToConfigurationComponent.containsKey(key)) {
+					JSONObject configurationComponent = fieldNameToConfigurationComponent.get(key);
+					JSONArray values = existingValuesObject.getJSONArray(key);
+					int valuesLength = values.size();
+					int v;
+					JSONArray types = configurationComponent.getJSONArray("@type");
+					if(types.contains("forms:UriField")) {
+						List<String> urisInScope = new ArrayList<String>();
+						for(v = 0; v < valuesLength; v++) {
+							urisInScope.add(values.getString(v));
+						}
+						this.editConfiguration.addUrisInScope(key, urisInScope);
+					} else if(types.contains("forms:LiteralField")) {
+						for(v = 0; v < valuesLength; v++) {
+							String value = values.getString(v);
+							Literal valueLiteral = ResourceFactory.createPlainLiteral(value);
+							this.editConfiguration.addLiteralInScope(key,valueLiteral);
+						}
+						
+					}
+				}
+			}
+		}
+	}
+
 	private void processConfigurationJSONFields(JSONObject contentsJSON) {
 		String fieldNameProperty =  "customform:varName";
 		JSONArray graph = contentsJSON.getJSONArray("@graph");

@@ -20,11 +20,6 @@ function MinimalConfigTemplate(formData, displayData) {
         .done(function( content ) {
             minimalconfigtemplate.configJSON = JSON.parse(content);
             initPage();
-            //Bind event listeners only when everything on the page has been populated
-            //Putting in bind event listeners here - any autocomplete fields should already be setup
-            //As far as fields generated using AJAX requests - the event listeners should be attached
-            //in the done/success methods of the ajax requests
-            bindEventListeners();
         });
 
     }
@@ -42,16 +37,25 @@ function MinimalConfigTemplate(formData, displayData) {
         if(formData.editMode == "edit") {
             //Retrieve existing values if edit operation
             retrieveExistingValueRequests();
+        } else {
+            //Bind event listeners only when everything on the page has been populated
+            //Putting in bind event listeners here - any autocomplete fields should already be setup
+            //As far as fields generated using AJAX requests - the event listeners should be attached
+            //in the done/success methods of the ajax requests
+            bindEventListeners();
         }
-
     }
     
     // get existing values
     function retrieveExistingValueRequests() {
-        var fieldName;
+        var id;
         var existingValueRequests = [];
-        for(fieldName in minimalconfigtemplate.formFields) {
-            var configComponent = minimalconfigtemplate.formFields[fieldName];
+        //Form fields populated with the fields in display config, may not include
+        //for instance, receiver URI for autocomplete - and perhaps other fields that are not
+        //displayed directly
+        //so checking all config components instead
+        for(id in this.allConfigComponents) {
+            var configComponent = this.allConfigComponents[id];
             //See if existing URI
             if("customform:queryForExistingValue" in configComponent) {
                 existingValueRequests.push(configComponent);
@@ -73,9 +77,38 @@ function MinimalConfigTemplate(formData, displayData) {
             //templateclone is from URI Field, so make this work better
             //Should retrieve a hash with var name to existing value
             //and those can be used to populate the form
-
+            populateExistingContent(content);
+            //Existing value requests comprise another ajax request that will affect autocomplete selection
+            bindEventListeners();
         });
+    }
 
+    //Hash with variable name to array of existing content values
+    function populateExistingContent(content) {
+        //Does this have to parsed into JSON?
+        
+        var fieldName;
+        for(fieldName in content) {
+            updateFieldWithExistingContent(fieldName, content[fieldName]);
+        }
+        //Create a hidden input with Stringified version 
+        $("form").append("<input type='hidden' name='existingValuesRetrieved' id='existingValuesRetrieved' value='" + JSON.stringify(content)  + "'>");
+    }
+    
+    function updateFieldWithExistingContent(fieldName, existingValue) {
+        //Get form field
+        //TODO: review how info is hashed and how we need to retrieve it
+        var configComponent = getConfigurationComponent(fieldName);
+        if(configComponent != null && configComponent != undefined) {
+            //Doesn't appear to matter whether URI or literal field, select or input, as val() will set all of them
+            var fieldName = configComponent["customform:varName"];
+            var fieldElement = $("[name='" + fieldName + "']");
+            //This really should be just ONE value
+            //TODO: Check if we would ever want this to be more than one value
+            if(fieldElement != null & fieldElement != undefined && existingValue.length > 0) {
+                fieldElement.val(existingValue[0]);
+            }
+        }
     }
 
     //process the json and create a hash by varname/fieldname
@@ -141,8 +174,7 @@ function MinimalConfigTemplate(formData, displayData) {
 
         var f;
         var len = displayData.fieldOrder.length;
-        //TODO: Generic form id/name required
-        var form = $("#addpublicationToPerson");
+        var form = $("#minimalForm");
         for(f = 0; f < len; f++) {
             var fieldName = displayData.fieldOrder[f];
             if(fieldName in minimalconfigtemplate.formFields) {
