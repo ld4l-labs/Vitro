@@ -44,6 +44,7 @@ public class MinimalEditConfigurationGenerator  implements EditConfigurationGene
 	private String subjectUri = null;
 	private String predicateUri = null;
 	private String objectUri = null;	
+	private static String classURIParameter = "classURI";
 	
 	@Override	
 	 public EditConfigurationVTwo getEditConfiguration(VitroRequest vreq, HttpSession session) throws Exception {
@@ -119,9 +120,22 @@ public class MinimalEditConfigurationGenerator  implements EditConfigurationGene
 		  }
 		
 	}
+	  
+	  //if classURI is passed in
+	  private boolean isClassSpecificNewForm(VitroRequest vreq) {
+		  String classURI = vreq.getParameter(classURIParameter);
+		  return StringUtils.isNotEmpty(classURI);
+	  }
 
-
+	//This gets custom template file using value of the template property
 	private String getCustomTemplateFile(VitroRequest vreq) {
+		if(isClassSpecificNewForm(vreq)) {
+			return getClassSpecificCustomTemplateFile(vreq);
+		}
+		return getCustomTemplateFileResult(vreq);
+	}
+	
+	private String getCustomTemplateFileResult(VitroRequest vreq) {
 		String configFilePredicate = "http://vitro.mannlib.cornell.edu/ns/vitro/0.7#customTemplateFileAnnot";
 		
 		
@@ -146,6 +160,58 @@ public class MinimalEditConfigurationGenerator  implements EditConfigurationGene
 	        }
 		return null;
 	}
+	
+	//This gets custom template file for a particular class - e.g. for a new individual form as opposed to property-related form
+	public String getClassSpecificCustomTemplateFile(VitroRequest vreq) {
+	
+		String configFilePredicate = "http://vitro.mannlib.cornell.edu/ns/vitro/0.7#customTemplateFileAnnot";
+		String classURI = vreq.getParameter(classURIParameter);
+		
+		//Get everything really
+		String query = "SELECT ?templateFile WHERE {<" + classURI + ">  <" + configFilePredicate + "> ?templateFile .}";
+
+		 
+	        try {
+	        	ResultSet rs = QueryUtils.getQueryResults(query, vreq);
+	        	while(rs.hasNext()) {
+	        		QuerySolution qs = rs.nextSolution();
+	        		Literal configFileLiteral = qs.getLiteral("templateFile");
+	        		if(configFileLiteral != null && StringUtils.isNotEmpty(configFileLiteral.getString())) {
+	        			return configFileLiteral.getString();
+	        		}
+	        	}
+	        	
+	        } catch (Exception ex) {
+	        	log.error("Exception occurred in query retrieving information for this field", ex);
+	        }
+		return null;
+	}
+	
+	public String getClassSpecificCustomConfigFile(VitroRequest vreq) {
+		
+		String configFilePredicate = "http://vitro.mannlib.cornell.edu/ns/vitro/0.7#customConfigFileAnnot";
+		String classURI = vreq.getParameter(classURIParameter);
+		
+		//Get everything really
+		String query = "SELECT ?configFile WHERE {<" + classURI + ">  <" + configFilePredicate + "> ?configFile .}";
+	        try {
+	        	ResultSet rs = QueryUtils.getQueryResults(query, vreq);
+	        	while(rs.hasNext()) {
+	        		QuerySolution qs = rs.nextSolution();
+	        		Literal configFileLiteral = qs.getLiteral("configFile");
+	        		if(configFileLiteral != null && StringUtils.isNotEmpty(configFileLiteral.getString())) {
+	        			return configFileLiteral.getString();
+	        		}
+	        	}
+	        	
+	        } catch (Exception ex) {
+	        	log.error("Exception occurred in query retrieving information for this field", ex);
+	        }
+		
+	      // 
+	        return null;
+	}
+
 
 
 	//Form specific data
@@ -171,8 +237,15 @@ public class MinimalEditConfigurationGenerator  implements EditConfigurationGene
     }
 	 
 			
+    private String getConfigurationFile(VitroRequest vreq, EditConfigurationVTwo editConfiguration) {
+    	if(isClassSpecificNewForm(vreq)) {
+    		return getClassSpecificCustomConfigFile(vreq);
+    	} 
+    	return getConfigurationFileResult(vreq);
+    }
+    
     //Get the configuration file required
-	private String getConfigurationFile(VitroRequest vreq, EditConfigurationVTwo editConfiguration) {
+	private String getConfigurationFileResult(VitroRequest vreq) {
 		//Custom form entry predicate: http://vitro.mannlib.cornell.edu/ns/vitro/0.7#customEntryFormAnnot
 		String configFilePredicate = "http://vitro.mannlib.cornell.edu/ns/vitro/0.7#customConfigFileAnnot";
 		
@@ -190,7 +263,6 @@ public class MinimalEditConfigurationGenerator  implements EditConfigurationGene
 	        			return configFileLiteral.getString();
 	        		}
 	        	}
-	        	editConfiguration.addFormSpecificData("queryresult", rs);
 	        } catch (Exception ex) {
 	        	log.error("Exception occurred in query retrieving information for this field", ex);
 	        }
@@ -245,10 +317,14 @@ public class MinimalEditConfigurationGenerator  implements EditConfigurationGene
 	    	
 	    	editConfiguration.setVarNameForSubject("subject");
 	    	editConfiguration.setSubjectUri(subjectUri);
-	    	editConfiguration.setEntityToReturnTo(subjectUri);
 	    	editConfiguration.setVarNameForPredicate("predicate");
 	    	editConfiguration.setPredicateUri(predicateUri);
-	    	
+	    	if(isClassSpecificNewForm(vreq)) {
+	    		editConfiguration.setEntityToReturnTo("?subject"); //could also configure this in the json ld but default here
+	    		//Setting it to variable name enables it to be substituted with the new resource URI set for this variable
+	    	} else {
+	    		editConfiguration.setEntityToReturnTo(subjectUri);
+	    	}
 	    	//Don't expect custom data property forms, so defaulting to object property for now
 	    
 	    	//"object"       : [ "objectVar" ,  "${objectUriJson}" , "URI"],
@@ -257,8 +333,11 @@ public class MinimalEditConfigurationGenerator  implements EditConfigurationGene
 	    		this.initObjectParameters(vreq);
 	    		this.processObjectPropForm(vreq, editConfiguration);
 	    	} else {
-	    		log.debug("This is a data property: " + predicateUri);
-	    		return;
+	    		//Data property ONLY if not object uri and not a class specific custom form
+	    		if(!isClassSpecificNewForm(vreq)) {
+	    			log.debug("This is a data property: " + predicateUri);
+	    			return;
+	    		}
 	    	}
 	    }    
 
@@ -280,10 +359,13 @@ public class MinimalEditConfigurationGenerator  implements EditConfigurationGene
 	    //Handles both object and data property    
 	    private List<String> generateN3Required(VitroRequest vreq) {
 	    	List<String> n3ForEdit = new ArrayList<String>();
-	    	String editString = "?subject ?predicate ";    	
-	    	editString += "?objectVar";    	
-	    	editString += " .";
-	    	n3ForEdit.add(editString);
+	    	//Use this if this isn't a new instance of a class form
+	    	if(!isClassSpecificNewForm(vreq)) {
+		    	String editString = "?subject ?predicate ";    	
+		    	editString += "?objectVar";    	
+		    	editString += " .";
+		    	n3ForEdit.add(editString);
+	    	}
 	    	return n3ForEdit;
 	    }
 
@@ -364,21 +446,24 @@ public class MinimalEditConfigurationGenerator  implements EditConfigurationGene
 	    }       
 
 		private void prepareForUpdate(VitroRequest vreq, HttpSession session, EditConfigurationVTwo editConfiguration) {
-	    	//Here, retrieve model from 
-			OntModel model = ModelAccess.on(session.getServletContext()).getOntModel();
-	    	//if object property
-	    	if(EditConfigurationUtils.isObjectProperty(EditConfigurationUtils.getPredicateUri(vreq), vreq)){
-		    	Individual objectIndividual = EditConfigurationUtils.getObjectIndividual(vreq);
-		    	if(objectIndividual != null) {
-		    		//update existing object
-		    		editConfiguration.prepareForObjPropUpdate(model);
-		    	}  else {
-		    		//new object to be created
-		            editConfiguration.prepareForNonUpdate( model );
-		        }
-	    	} else {
-	    	    throw new Error("DefaultObjectPropertyForm does not handle data properties.");
-	    	}
+	    	//If this is the creation of a new individual from a class URI, we don't need the regular preparation
+			if(!isClassSpecificNewForm(vreq)) {
+				//Here, retrieve model from 
+				OntModel model = ModelAccess.on(session.getServletContext()).getOntModel();
+		    	//if object property
+		    	if(EditConfigurationUtils.isObjectProperty(EditConfigurationUtils.getPredicateUri(vreq), vreq)){
+			    	Individual objectIndividual = EditConfigurationUtils.getObjectIndividual(vreq);
+			    	if(objectIndividual != null) {
+			    		//update existing object
+			    		editConfiguration.prepareForObjPropUpdate(model);
+			    	}  else {
+			    		//new object to be created
+			            editConfiguration.prepareForNonUpdate( model );
+			        }
+		    	} else {
+		    	    throw new Error("DefaultObjectPropertyForm does not handle data properties.");
+		    	}
+			}
 	    }
 	      
 

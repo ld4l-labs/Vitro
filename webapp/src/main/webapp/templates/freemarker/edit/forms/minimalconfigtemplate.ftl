@@ -108,7 +108,7 @@ Set this flag on the input acUriReceiver where you would like this behavior to o
 <section id="addPublicationToPerson" role="region">        
     
 <@lvf.unsupportedBrowser urls.base/>
-<form id="addpublicationToPerson" class="customForm noIE67" action="${submitUrl}"  role="add/edit publication" >
+<form id="minimalForm" class="customForm noIE67" action="${submitUrl}"  role="add/edit" >
         
     <div id="formcontent">
     </div>
@@ -183,16 +183,12 @@ Set this flag on the input acUriReceiver where you would like this behavior to o
     var customFormData  = {
         sparqlQueryUrl: '${sparqlQueryUrl}',
         acUrl: '${urls.base}/autocomplete?tokenize=true',
-        customFormAJAXUrl:'${urls.base}/ajax/customForm',
         editMode: '${editMode}',
         baseHref: '${urls.base}/individual?uri=',
         blankSentinel: '${blankSentinel}',
         flagClearLabelForExisting: '${flagClearLabelForExisting}',
         defaultTypeName: 'entity', //REPLACE with type name for specific auto complete
-        acTypes: {},
-        configFileURL:"${urls.base}/templates/freemarker/edit/forms/js/jsonconfig/${configFile}",
-        urisInScope:urisInScope,
-        literalsInScope:literalsInScope
+        acTypes: {}
     };
     var i18nStrings = {
         selectAnExisting: '${i18n().select_an_existing}',
@@ -220,3 +216,15 @@ ${stylesheets.add('<link rel="stylesheet" href="${urls.base}/js/jquery-ui/css/sm
               '<script type="application/ld+json" id="configjsonscript" src="${urls.base}/templates/freemarker/edit/forms/js/jsonconfig/${configFile}"></script>', 
                '<script type="text/javascript" src="${urls.base}/templates/freemarker/edit/forms/js/jsonconfig/${configDisplayFile}"></script>', 
               '<script type="text/javascript" src="${urls.base}/templates/freemarker/edit/forms/js/minimalconfigtemplate.js"></script>')}
+
+<script type="text/javascript">
+	$(document).ready(function() {
+	    new MinimalConfigTemplate({
+	        customFormAJAXUrl : '${urls.base}/ajax/customForm',
+	        editMode : '${editMode}',
+	        configFileURL : "${urls.base}/templates/freemarker/edit/forms/js/jsonconfig/${configFile}",
+	        urisInScope : urisInScope,
+	        literalsInScope : literalsInScope
+	    }, displayConfig).onLoad();
+	});
+</script>
