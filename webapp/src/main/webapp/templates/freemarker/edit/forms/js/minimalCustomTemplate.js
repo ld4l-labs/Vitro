@@ -198,10 +198,20 @@ var minimalCustomTemplate = {
 		  var htmlList = "";
 		  //Sort content
 		  //Get correct order of keys based on value
+		  //TODO: Make this sort occur at the data level, not here
+		  var keysSortedByValue = Object.keys(content).sort(function(a, b) {
+	        	
+	        	return content[a].localeCompare(content[b]);
+	        });
+	        $.each(keysSortedByValue, function(index, keyvalue) {
+	            htmlList += "<option value='" + keyvalue + "'>" + content[keyvalue] + "</option>";
+
+	        });
+	        /*
 		  $.each(content, function(key, value) {
 			  htmlList += "<option value='" + key + "'>" + value + "</option>";
 			 
-		  });
+		  });*/
 		  dropdownElement.empty().append(htmlList);
     },
     getVarName:function(configComponent) {
