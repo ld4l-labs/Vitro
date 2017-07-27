@@ -3,7 +3,9 @@
 package edu.cornell.mannlib.semservices.bo;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class Concept {
 
@@ -20,6 +22,8 @@ public class Concept {
    private List<String> exactMatchURIList;
    private List<String> closeMatchURIList;
    private List<String> altLabelList;
+   /** Additional information to be stored here **/
+   private Map<String, String> additionalInformation;
    
    /**
     * default constructor
@@ -29,6 +33,7 @@ public class Concept {
       this.narrowerURIList = new ArrayList<String>();
       this.exactMatchURIList = new ArrayList<String>();
       this.closeMatchURIList = new ArrayList<String>();
+      this.additionalInformation = new HashMap<String, String>();
    }
    
    /**
@@ -158,6 +163,14 @@ public List<String> getAltLabelList() {
 
 public void setAltLabelList(List<String> altLabelList) {
 	this.altLabelList = altLabelList;
+}
+
+public void setAdditionalInformation(HashMap<String, String> info) {
+	this.additionalInformation = info;
+}
+
+public Map<String, String> getAdditionalInformation() {
+	return this.additionalInformation;
 }
 
 }
