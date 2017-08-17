@@ -30,9 +30,11 @@ import edu.cornell.mannlib.vitro.webapp.edit.n3editing.configuration.IdModelSele
 import edu.cornell.mannlib.vitro.webapp.edit.n3editing.configuration.StandardModelSelector;
 import edu.cornell.mannlib.vitro.webapp.edit.n3editing.configuration.preprocessors.MinimalConfigurationPreprocessor;
 import edu.cornell.mannlib.vitro.webapp.modelaccess.ModelAccess;
+import edu.cornell.mannlib.vitro.webapp.modelaccess.ModelNames;
 import edu.cornell.mannlib.vitro.webapp.rdfservice.RDFService;
 import edu.cornell.mannlib.vitro.webapp.rdfservice.RDFService.ResultFormat;
 import edu.cornell.mannlib.vitro.webapp.utils.FrontEndEditingUtils.EditMode;
+import static edu.cornell.mannlib.vitro.webapp.utils.sparqlrunner.SparqlQueryRunner.createSelectQueryContext;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -241,7 +243,13 @@ public class MinimalEditConfigurationGenerator  implements EditConfigurationGene
     	if(isClassSpecificNewForm(vreq)) {
     		return getClassSpecificCustomConfigFile(vreq);
     	} 
-    	return getConfigurationFileResult(vreq);
+    	//if config file at base uri, return that, otherwise check for faux property
+    	//TODO: revisit htis flow
+    	String configFile =  getConfigurationFileResult(vreq);
+    	if(StringUtils.isEmpty(configFile)) {
+    		configFile = getConfigurationFileResultFromDisplayModel(vreq);
+    	}
+    	return configFile;
     }
     
     //Get the configuration file required
@@ -251,9 +259,11 @@ public class MinimalEditConfigurationGenerator  implements EditConfigurationGene
 		
 		
     	String predicateUri = EditConfigurationUtils.getPredicateUri(vreq);
-		
+    	
 		//Get everything really
-		String query = "SELECT ?configFile WHERE {<" + predicateUri + ">  <" + configFilePredicate + "> ?configFile .}";
+		String query = "SELECT ?configFile WHERE {";
+		query += "<" + predicateUri + ">  <" + configFilePredicate + "> ?configFile .";
+		query += "}";
 	        try {
 	        	ResultSet rs = QueryUtils.getQueryResults(query, vreq);
 	        	while(rs.hasNext()) {
@@ -272,6 +282,43 @@ public class MinimalEditConfigurationGenerator  implements EditConfigurationGene
 		
 	}
 
+	
+	private String getConfigurationFileResultFromDisplayModel(VitroRequest vreq) {
+		//Custom form entry predicate: http://vitro.mannlib.cornell.edu/ns/vitro/0.7#customEntryFormAnnot
+		String configFilePredicate = "http://vitro.mannlib.cornell.edu/ns/vitro/0.7#customConfigFileAnnot";
+		
+		
+    	String predicateUri = EditConfigurationUtils.getPredicateUri(vreq);
+    	//Check and see if domain/range exist, if so, then this may be a faux property
+    	String rangeUri = EditConfigurationUtils.getRangeUri(vreq);
+    	String domainUri = EditConfigurationUtils.getDomainUri(vreq);
+		//Get everything really
+		
+		//Do we need BOTH for a faux property or just one?
+		if(StringUtils.isNotEmpty(domainUri) && StringUtils.isNotEmpty(rangeUri)) {
+			String query = "SELECT ?configFile WHERE ";
+			query += "{ ?fauxProperty <http://vitro.mannlib.cornell.edu/ns/vitro/ApplicationConfiguration#configContextFor> <" + predicateUri + "> ." + 
+					" ?fauxProperty <http://vitro.mannlib.cornell.edu/ns/vitro/ApplicationConfiguration#hasConfiguration> ?fauxConfig ." + 
+					"?fauxConfig <" + configFilePredicate + "> ?configFile . " + 
+					"?fauxProperty <http://vitro.mannlib.cornell.edu/ns/vitro/ApplicationConfiguration#qualifiedByDomain> <" + domainUri + "> ." + 
+					"?fauxProperty <http://vitro.mannlib.cornell.edu/ns/vitro/ApplicationConfiguration#qualifiedBy> <" + rangeUri + "> . }" ;
+	        try {
+	        	List<String> configFiles = createSelectQueryContext(ModelAccess.on(vreq).getOntModel(ModelNames.DISPLAY),query).execute().toStringFields("configFile").flatten();
+	        	if(configFiles.size() > 0) {
+	        		return configFiles.get(0);
+	        	}
+	        
+	        
+
+	        } catch (Exception ex) {
+	        	log.error("Exception occurred in query retrieving information for this field", ex);
+	        }
+		}
+	      // 
+	        return null;
+		
+	}
+	
 
 		//We only need enough for the error message to show up
 		private EditConfigurationVTwo getCustomErrorEditConfiguration(VitroRequest vreq, HttpSession session) {
