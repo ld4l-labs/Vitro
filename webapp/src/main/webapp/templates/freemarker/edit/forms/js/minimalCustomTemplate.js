@@ -23,7 +23,8 @@ var minimalCustomTemplate = {
 		            //Putting in bind event listeners here - any autocomplete fields should already be setup
 		            //As far as fields generated using AJAX requests - the event listeners should be attached
 		            //in the done/success methods of the ajax requests
-				  minimalCustomTemplate.bindEventListeners();
+				  //minimalCustomTemplate.bindEventListeners();
+				  //event listeners after existing content now
 			  });      
             
         },
@@ -49,6 +50,12 @@ var minimalCustomTemplate = {
         if(this.editMode == "edit") {
         	//Retrieve existing values if edit operation
         	this.retrieveExistingValueRequests();
+        } else {
+            //Bind event listeners only when everything on the page has been populated
+            //Putting in bind event listeners here - any autocomplete fields should already be setup
+            //As far as fields generated using AJAX requests - the event listeners should be attached
+            //in the done/success methods of the ajax requests
+            bindEventListeners();
         }
                        
     },
@@ -76,12 +83,45 @@ var minimalCustomTemplate = {
 			})
 			  .done(function( content ) {
 				  //templateclone is from URI Field, so make this work better
-				  //Should retrieve a hash with var name to existing value
-				  //and those can be used to populate the form
+		            //Should retrieve a hash with var name to existing value
+		            //and those can be used to populate the form
+				  minimalCustomTemplate.populateExistingContent(content);
+		            //Existing value requests comprise another ajax request that will affect autocomplete selection
+				  minimalCustomTemplate.bindEventListeners();
 				  
 			  });
     	
     },
+    //Hash with variable name to array of existing content values
+   populateExistingContent: function(content) {
+        //Does this have to parsed into JSON?
+        
+        var fieldName;
+        for(fieldName in content) {
+        	minimalCustomTemplate.updateFieldWithExistingContent(fieldName, content[fieldName]);
+        }
+        //Create a hidden input with Stringified version 
+        $("form").append("<input type='hidden' name='existingValuesRetrieved' id='existingValuesRetrieved' value='" + JSON.stringify(content)  + "'>");
+    },
+    
+    updateFieldWithExistingContent:function(fieldName, existingValue) {
+        //Get form field
+        //TODO: review how info is hashed and how we need to retrieve it
+        var configComponent = minimalCustomTemplate.getConfigurationComponent(fieldName);
+        if(configComponent != null && configComponent != undefined) {
+            //Doesn't appear to matter whether URI or literal field, select or input, as val() will set all of them
+            var fieldName = configComponent["customform:varName"];
+            var fieldElement = $("[name='" + fieldName + "']");
+            //This really should be just ONE value
+            //TODO: Check if we would ever want this to be more than one value
+            if(fieldElement != null & fieldElement != undefined && existingValue.length > 0) {
+                fieldElement.val(existingValue[0]);
+            }
+        }
+    },
+
+
+    
     bindEventListeners:function() {
     	//This relies on the custom form with autocomplete file
     	//TODO: Find a better way to do this

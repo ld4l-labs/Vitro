@@ -136,8 +136,18 @@ public class MinimalEditConfigurationGenerator  implements EditConfigurationGene
 		}
 		return getCustomTemplateFileResult(vreq);
 	}
-	
+	//This needs to work for both faux properties as well as regular properties
 	private String getCustomTemplateFileResult(VitroRequest vreq) {
+		//TODO: The logic here should be fixed - from simply checking if one is null to checking
+		//whether it's a faux property
+		String templateFile = getCustomTemplateForProperty(vreq);
+		if(StringUtils.isEmpty(templateFile)) {
+			templateFile = getCustomTemplateForFauxProperty(vreq);
+		}
+		return templateFile;
+	}
+	
+	private String getCustomTemplateForProperty(VitroRequest vreq) {
 		String configFilePredicate = "http://vitro.mannlib.cornell.edu/ns/vitro/0.7#customTemplateFileAnnot";
 		
 		
@@ -161,6 +171,38 @@ public class MinimalEditConfigurationGenerator  implements EditConfigurationGene
 	        	log.error("Exception occurred in query retrieving information for this field", ex);
 	        }
 		return null;
+	}
+	
+	private String getCustomTemplateForFauxProperty(VitroRequest vreq) {
+		String configTemplatePredicate = "http://vitro.mannlib.cornell.edu/ns/vitro/0.7#customTemplateFileAnnot";
+		
+		
+    	String predicateUri = EditConfigurationUtils.getPredicateUri(vreq);
+    	//Check and see if domain/range exist, if so, then this may be a faux property
+    	String rangeUri = EditConfigurationUtils.getRangeUri(vreq);
+    	String domainUri = EditConfigurationUtils.getDomainUri(vreq);
+		//Get everything really
+		
+		//Do we need BOTH for a faux property or just one?
+		if(StringUtils.isNotEmpty(domainUri) && StringUtils.isNotEmpty(rangeUri)) {
+			String query = "SELECT ?configTemplateFile WHERE ";
+			query += "{ ?fauxProperty <http://vitro.mannlib.cornell.edu/ns/vitro/ApplicationConfiguration#configContextFor> <" + predicateUri + "> ." + 
+					" ?fauxProperty <http://vitro.mannlib.cornell.edu/ns/vitro/ApplicationConfiguration#hasConfiguration> ?fauxConfig ." + 
+					"?fauxConfig <" + configTemplatePredicate + "> ?configTemplateFile . " + 
+					"?fauxProperty <http://vitro.mannlib.cornell.edu/ns/vitro/ApplicationConfiguration#qualifiedByDomain> <" + domainUri + "> ." + 
+					"?fauxProperty <http://vitro.mannlib.cornell.edu/ns/vitro/ApplicationConfiguration#qualifiedBy> <" + rangeUri + "> . }" ;
+	        try {
+	        	List<String> configFiles = createSelectQueryContext(ModelAccess.on(vreq).getOntModel(ModelNames.DISPLAY),query).execute().toStringFields("configTemplateFile").flatten();
+	        	if(configFiles.size() > 0) {
+	        		return configFiles.get(0);
+	        	}
+	        	
+	        } catch(Exception ex) {
+	        	log.error("Error occurred in retrieving template file", ex);
+	        }
+	        
+		}
+		return null;		
 	}
 	
 	//This gets custom template file for a particular class - e.g. for a new individual form as opposed to property-related form
