@@ -55,7 +55,7 @@ var minimalCustomTemplate = {
             //Putting in bind event listeners here - any autocomplete fields should already be setup
             //As far as fields generated using AJAX requests - the event listeners should be attached
             //in the done/success methods of the ajax requests
-            bindEventListeners();
+            this.bindEventListeners();
         }
                        
     },
