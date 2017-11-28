@@ -125,7 +125,7 @@ var minimalCustomTemplate = {
     bindEventListeners:function() {
     	//This relies on the custom form with autocomplete file
     	//TODO: Find a better way to do this
-    	if(customForm) {
+    	if((typeof customForm != 'undefined') && customForm) {
     		customForm.onLoad();
     	}
     },
