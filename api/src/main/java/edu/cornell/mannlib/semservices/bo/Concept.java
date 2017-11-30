@@ -17,10 +17,10 @@ public class Concept {
    private String definition;
    private String uri;
    private String schemeURI;
-   private List<String> broaderURIList;
-   private List<String> narrowerURIList;
-   private List<String> exactMatchURIList;
-   private List<String> closeMatchURIList;
+   private List<RelatedTermInfo> broaderURIList;
+   private List<RelatedTermInfo> narrowerURIList;
+   private List<RelatedTermInfo> exactMatchURIList;
+   private List<RelatedTermInfo> closeMatchURIList;
    private List<String> altLabelList;
    /** Additional information to be stored here **/
    private Map<String, String> additionalInformation;
@@ -29,10 +29,10 @@ public class Concept {
     * default constructor
     */
    public Concept() {
-      this.broaderURIList = new ArrayList<String>();
-      this.narrowerURIList = new ArrayList<String>();
-      this.exactMatchURIList = new ArrayList<String>();
-      this.closeMatchURIList = new ArrayList<String>();
+      this.broaderURIList = new ArrayList<RelatedTermInfo>();
+      this.narrowerURIList = new ArrayList<RelatedTermInfo>();
+      this.exactMatchURIList = new ArrayList<RelatedTermInfo>();
+      this.closeMatchURIList = new ArrayList<RelatedTermInfo>();
       this.additionalInformation = new HashMap<String, String>();
    }
    
@@ -132,28 +132,28 @@ public class Concept {
    public void setBestMatch(String bestMatch) {
       this.bestMatch = bestMatch;
    }
-public List<String> getBroaderURIList() {
+public List<RelatedTermInfo> getBroaderURIList() {
 	return broaderURIList;
 }
-public void setBroaderURIList(List<String> broaderURIList) {
+public void setBroaderURIList(List<RelatedTermInfo> broaderURIList) {
 	this.broaderURIList = broaderURIList;
 }
-public List<String> getNarrowerURIList() {
+public List<RelatedTermInfo> getNarrowerURIList() {
 	return narrowerURIList;
 }
-public void setNarrowerURIList(List<String> narrowerURIList) {
+public void setNarrowerURIList(List<RelatedTermInfo> narrowerURIList) {
 	this.narrowerURIList = narrowerURIList;
 }
-public List<String> getExactMatchURIList() {
+public List<RelatedTermInfo> getExactMatchURIList() {
 	return exactMatchURIList;
 }
-public void setExactMatchURIList(List<String> exactMatchURIList) {
+public void setExactMatchURIList(List<RelatedTermInfo> exactMatchURIList) {
 	this.exactMatchURIList = exactMatchURIList;
 }
-public List<String> getCloseMatchURIList() {
+public List<RelatedTermInfo> getCloseMatchURIList() {
 	return closeMatchURIList;
 }
-public void setCloseMatchURIList(List<String> closeMatchURIList) {
+public void setCloseMatchURIList(List<RelatedTermInfo> closeMatchURIList) {
 	this.closeMatchURIList = closeMatchURIList;
 }
 
@@ -173,4 +173,7 @@ public Map<String, String> getAdditionalInformation() {
 	return this.additionalInformation;
 }
 
+
+
 }
+

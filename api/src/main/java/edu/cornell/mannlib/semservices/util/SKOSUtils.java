@@ -27,6 +27,7 @@ import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdf.model.StmtIterator;
 
 import edu.cornell.mannlib.semservices.bo.Concept;
+import edu.cornell.mannlib.semservices.bo.RelatedTermInfo;
 
 public class SKOSUtils {
 	protected final static Log log = LogFactory.getLog(SKOSUtils.class);
@@ -138,23 +139,23 @@ public class SKOSUtils {
 
 			// Broder, narrower, exact match, and close match properties
 
-			List<String> broaderURIList = getBroaderURIsFromModel(conceptURI,
+			List<RelatedTermInfo> broaderURIList = getBroaderURIsFromModel(conceptURI,
 					model);
 			// broaderURIList = removeConceptURIFromList(broaderURIList,
 			// conceptURI);
 			concept.setBroaderURIList(broaderURIList);
-			List<String> narrowerURIList = getNarrowerURIsFromModel(conceptURI,
+			List<RelatedTermInfo> narrowerURIList = getNarrowerURIsFromModel(conceptURI,
 					model);
 			// narrowerURIList = removeConceptURIFromList(narrowerURIList,
 			// conceptURI);
 			concept.setNarrowerURIList(narrowerURIList);
 
-			List<String> exactMatchURIList = getExactMatchURIsFromModel(
+			List<RelatedTermInfo> exactMatchURIList = getExactMatchURIsFromModel(
 					conceptURI, model);
 			// exactMatchURIList = removeConceptURIFromList(exactMatchURIList,
 			// conceptURI);
 			concept.setExactMatchURIList(exactMatchURIList);
-			List<String> closeMatchURIList = getCloseMatchURIsFromModel(
+			List<RelatedTermInfo> closeMatchURIList = getCloseMatchURIsFromModel(
 					conceptURI, model);
 			// closeMatchURIList = removeConceptURIFromList(closeMatchURIList,
 			// conceptURI);
@@ -220,34 +221,34 @@ public class SKOSUtils {
 		return getLabelsFromModel(conceptURI, propertyURI, model, langTagValue);
 	}
 
-	private static List<String> getCloseMatchURIsFromModel(String conceptURI,
+	private static List<RelatedTermInfo> getCloseMatchURIsFromModel(String conceptURI,
 			Model model) {
 		String propertyURI = "http://www.w3.org/2004/02/skos/core#closeMatch";
 		return getRelatedURIsFromModel(conceptURI, propertyURI, model);
 
 	}
 
-	private static List<String> getExactMatchURIsFromModel(String conceptURI,
+	private static List<RelatedTermInfo> getExactMatchURIsFromModel(String conceptURI,
 			Model model) {
 		String propertyURI = "http://www.w3.org/2004/02/skos/core#exactMatch";
 		return getRelatedURIsFromModel(conceptURI, propertyURI, model);
 	}
 
-	private static List<String> getNarrowerURIsFromModel(String conceptURI,
+	private static List<RelatedTermInfo> getNarrowerURIsFromModel(String conceptURI,
 			Model model) {
 		String propertyURI = "http://www.w3.org/2004/02/skos/core#narrower";
 		return getRelatedURIsFromModel(conceptURI, propertyURI, model);
 	}
 
-	private static List<String> getBroaderURIsFromModel(String conceptURI,
+	private static List<RelatedTermInfo> getBroaderURIsFromModel(String conceptURI,
 			Model model) {
 		String propertyURI = "http://www.w3.org/2004/02/skos/core#broader";
 		return getRelatedURIsFromModel(conceptURI, propertyURI, model);
 	}
 
-	private static List<String> getRelatedURIsFromModel(String conceptURI,
+	private static List<RelatedTermInfo> getRelatedURIsFromModel(String conceptURI,
 			String propertyURI, Model model) {
-		List<String> URIs = new ArrayList<String>();
+		List<RelatedTermInfo> URIs = new ArrayList<RelatedTermInfo>();
 		NodeIterator nodeIterator = model.listObjectsOfProperty(
 				ResourceFactory.createResource(conceptURI),
 				ResourceFactory.createProperty(propertyURI));
@@ -256,7 +257,7 @@ public class SKOSUtils {
 			RDFNode node = nodeIterator.nextNode();
 			if (node.isResource() && node.asResource().getURI() != null) {
 				String URI = node.asResource().getURI();
-				URIs.add(URI);
+				URIs.add(new RelatedTermInfo(null,URI));
 			}
 		}
 
