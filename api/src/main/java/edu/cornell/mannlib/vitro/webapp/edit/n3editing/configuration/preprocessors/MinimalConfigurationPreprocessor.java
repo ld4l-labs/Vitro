@@ -419,25 +419,27 @@ public class MinimalConfigurationPreprocessor extends
 	 * @throws FormConfigurationException 
 	 */
 	void validateDynamicN3Component(JSONObject dynamicN3Component) throws FormConfigurationException {
-
-		JSONArray dynamicN3Array = null;
+		
+		// Check that the first element of the graph defines a non-empty pattern array.
+		JSONArray pattern = null;
 		try {
-			dynamicN3Array = dynamicN3Component.getJSONArray("customform:pattern");
+			pattern = dynamicN3Component.getJSONArray("customform:pattern");
 		} catch (JSONException e) {
-			throw new FormConfigurationException("No custom form pattern defined.", e);
-		}
-				
-		if (dynamicN3Array.size() == 0) {
+			throw new FormConfigurationException("Custom form pattern not defined or not a JSON array.", e);
+		}				
+		if (pattern.size() == 0) {
 			throw new FormConfigurationException("Custom form pattern is empty.");
 		}
-
-	    // Get dynamic variables
-		if (! dynamicN3Component.containsKey("customform:dynamic_variables")) {
-			throw new FormConfigurationException("No dynamic variables specified.");
-		}	
 		
-	    if (dynamicN3Component.getJSONArray("customform:dynamic_variables").size() == 0) {
-			throw new FormConfigurationException("Custom form dynamic variable array is empty.");
+		// Check that the first element of the graph defines a non-empty dynamic variables array. 
+		JSONArray dynamicVars = null;
+		try {
+			dynamicVars = dynamicN3Component.getJSONArray("customform:dynamic_variables");
+		} catch (JSONException e) {
+			throw new FormConfigurationException("Dynamic variables not defined or not a JSON array.", e);
+		}				
+		if (dynamicVars.size() == 0) {
+			throw new FormConfigurationException("Dynamic variables array is empty.");
 		}
 	}
 

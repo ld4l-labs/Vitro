@@ -1,5 +1,6 @@
 package edu.cornell.mannlib.vitro.webapp.edit.n3editing.configuration.preprocessors;
 
+import org.apache.commons.lang.ArrayUtils;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -62,7 +63,7 @@ import net.sf.json.JSONSerializer;
  *
  */
 public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
-	
+			
 	private final static String BASE_DYNAMIC_N3_COMPONENT = 
 	    "{" +
 	    		"'@context': { " +
@@ -145,11 +146,17 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
 		      	"]" +
 		    "}";
 	
-//	private final static String[] N3_PATTERN = {
-//		"?subject bibframe:genreForm ?lcsh .",
-//		"?lcsh rdfs:label ?lcshTerm .",
-//		"?lcsh rdf:type owl:Thing ."
-//	};
+//	* JSON manipulation for unit tests (ask Jim)
+//    * See JSONObject.remove(), JSONObject.put(), JSONArray.add()
+//	* See JSONObject.remove(), JSONObject.put(), JSONArray.add()
+//    * So: create the base object, get the @graph array, add to the array, remove @graph from the base and add new @graph
+    
+    
+	private final static String[] N3_PATTERN = {
+		"?subject bibframe:genreForm ?lcsh .",
+		"?lcsh rdfs:label ?lcshTerm .",
+		"?lcsh rdf:type owl:Thing ."
+	};
 			
 	
 	private MinimalConfigurationPreprocessor preprocessor;
@@ -163,28 +170,35 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
     // The tests
     // ---------------------------------------------------------------------
 	
-	
 	@Test
 	public void dynamicN3ComponentWithoutPattern_ThrowsException() throws Exception {
-		expectException(FormConfigurationException.class, "No custom form pattern");
+		expectException(FormConfigurationException.class, "Custom form pattern not defined or not a JSON array");
 		validateDynamicN3Component(BASE_DYNAMIC_N3_COMPONENT);
 	}
 	
 	@Test
 	public void dynamicN3ComponentWithEmptyPattern_ThrowsException() throws Exception {
-		expectException(FormConfigurationException.class, "Custom form pattern is empty");
-		validateDynamicN3Component(DYNAMIC_N3_COMPONENT_WITH_EMPTY_PATTERN);		
+		expectException(FormConfigurationException.class, "Custom form pattern is empty");		
+//		JSONObject jsonObject = (JSONObject) JSONSerializer.toJSON(BASE_DYNAMIC_N3_COMPONENT);
+//		JSONArray graph = jsonObject.getJSONArray("@graph");
+//		JSONObject first = graph.getJSONObject(0);	
+//		first.put("customform:pattern", ArrayUtils.EMPTY_STRING_ARRAY);
+//		graph.remove(0);
+//		graph.add(0, first);
+//		validateDynamicN3Component(jsonObject);	
+		validateDynamicN3Component(DYNAMIC_N3_COMPONENT_WITH_EMPTY_PATTERN);
+	
 	}
 	
 	@Test 
 	public void dynamicN3ComponentWithoutDynamicVariables_ThrowsException() throws Exception {
-		expectException(FormConfigurationException.class, "No dynamic variables");
+		expectException(FormConfigurationException.class, "Dynamic variables not defined or not a JSON array");
 		validateDynamicN3Component(DYNAMIC_N3_COMPONENT_WITHOUT_DYNAMIC_VARIABLES);
 	}
 	
 	@Test 
 	public void dynamicN3ComponentWithEmptyDynamicVariables_ThrowsException() throws Exception {
-		expectException(FormConfigurationException.class, "Custom form dynamic variable array is empty");
+		expectException(FormConfigurationException.class, "Dynamic variables array is empty");
 		validateDynamicN3Component(DYNAMIC_N3_COMPONENT_WITH_EMPTY_DYNAMIC_VARIABLES);
 	}
 	
@@ -194,6 +208,10 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
 
 	private void validateDynamicN3Component(String jsonString) throws Exception {
 		preprocessor.validateDynamicN3Component(getComponent(jsonString));		
+	}
+	
+	private void validateDynamicN3Component(JSONObject component) throws Exception {
+		preprocessor.validateDynamicN3Component(component);
 	}
 
 	private JSONObject getComponent(String jsonString) {
