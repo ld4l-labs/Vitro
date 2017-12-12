@@ -80,7 +80,26 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
 	      	"]" +
 	    "}";
 	
-	private final static String DYNAMIC_N3_COMPONENT_WITH_PATTERN = 
+	private final static String DYNAMIC_N3_COMPONENT_WITH_EMPTY_PATTERN = 
+		    "{" +
+		    		"'@context': { " +
+		    			"'forms': 'java:edu.cornell.mannlib.vitro.webapp.edit.n3editing.configuration.forms#'," +
+		    			"'customform': 'http://vitro.mannlib.cornell.edu/ns/vitro/CustomFormConfiguration#'" +
+		    		"}," +
+		    		"'@graph': [" +
+		    			"{" +
+		    				"'@id': 'customform:addWork_dynamicN3'," +
+		    				"'@type': [" +
+		    					"'forms:DynamicN3Pattern'," +
+		    					"'forms:FormComponent'" +
+	    					"]," +
+		    			    "'customform:pattern': [" +
+		    				"]" +
+		      		"}" +
+		      	"]" +
+		    "}";
+	
+	private final static String DYNAMIC_N3_COMPONENT_WITHOUT_DYNAMIC_VARIABLES = 
 		    "{" +
 		    		"'@context': { " +
 		    			"'forms': 'java:edu.cornell.mannlib.vitro.webapp.edit.n3editing.configuration.forms#'," +
@@ -102,11 +121,35 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
 		      	"]" +
 		    "}";
 	
-	private final static String[] N3_PATTERN = {
-		"?subject bibframe:genreForm ?lcsh .",
-		"?lcsh rdfs:label ?lcshTerm .",
-		"?lcsh rdf:type owl:Thing ."
-	};
+	private final static String DYNAMIC_N3_COMPONENT_WITH_EMPTY_DYNAMIC_VARIABLES = 
+		    "{" +
+		    		"'@context': { " +
+		    			"'forms': 'java:edu.cornell.mannlib.vitro.webapp.edit.n3editing.configuration.forms#'," +
+		    			"'customform': 'http://vitro.mannlib.cornell.edu/ns/vitro/CustomFormConfiguration#'" +
+		    		"}," +
+		    		"'@graph': [" +
+		    			"{" +
+		    				"'@id': 'customform:addWork_dynamicN3'," +
+		    				"'@type': [" +
+		    					"'forms:DynamicN3Pattern'," +
+		    					"'forms:FormComponent'" +
+	    					"]," +
+		    			    "'customform:pattern': [" +
+		    			        "'?subject bibframe:genreForm ?lcsh .'," +
+		    				    "'?lcsh rdfs:label ?lcshTerm .'," +
+		    				    "'?lcsh rdf:type owl:Thing .'," +
+		    				"]," +
+		    				"'customform:dynamic_variables': [" +
+		    				"]" + 
+		      		"}" +
+		      	"]" +
+		    "}";
+	
+//	private final static String[] N3_PATTERN = {
+//		"?subject bibframe:genreForm ?lcsh .",
+//		"?lcsh rdfs:label ?lcshTerm .",
+//		"?lcsh rdf:type owl:Thing ."
+//	};
 			
 	
 	private MinimalConfigurationPreprocessor preprocessor;
@@ -122,16 +165,27 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
 	
 	
 	@Test
-	public void invalidDynamicN3Component_ThrowsException() throws Exception {
+	public void dynamicN3ComponentWithoutPattern_ThrowsException() throws Exception {
 		expectException(FormConfigurationException.class, "No custom form pattern");
 		validateDynamicN3Component(BASE_DYNAMIC_N3_COMPONENT);
 	}
 	
+	@Test
+	public void dynamicN3ComponentWithEmptyPattern_ThrowsException() throws Exception {
+		expectException(FormConfigurationException.class, "Custom form pattern is empty");
+		validateDynamicN3Component(DYNAMIC_N3_COMPONENT_WITH_EMPTY_PATTERN);		
+	}
+	
 	@Test 
-	public void noDynamicVariablesInDynamicN3Component_ThrowsException() throws Exception {
+	public void dynamicN3ComponentWithoutDynamicVariables_ThrowsException() throws Exception {
 		expectException(FormConfigurationException.class, "No dynamic variables");
-		validateDynamicN3Component(DYNAMIC_N3_COMPONENT_WITH_PATTERN);
-
+		validateDynamicN3Component(DYNAMIC_N3_COMPONENT_WITHOUT_DYNAMIC_VARIABLES);
+	}
+	
+	@Test 
+	public void dynamicN3ComponentWithEmptyDynamicVariables_ThrowsException() throws Exception {
+		expectException(FormConfigurationException.class, "Custom form dynamic variable array is empty");
+		validateDynamicN3Component(DYNAMIC_N3_COMPONENT_WITH_EMPTY_DYNAMIC_VARIABLES);
 	}
 	
     // ---------------------------------------------------------------------

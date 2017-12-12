@@ -437,7 +437,7 @@ public class MinimalConfigurationPreprocessor extends
 		}	
 		
 	    if (dynamicN3Component.getJSONArray("customform:dynamic_variables").size() == 0) {
-			throw new FormConfigurationException("dynamic variables specified.");
+			throw new FormConfigurationException("Custom form dynamic variable array is empty.");
 		}
 	}
 
