@@ -80,6 +80,28 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
 	      	"]" +
 	    "}";
 	
+	private final static String DYNAMIC_N3_COMPONENT_WITH_PATTERN = 
+		    "{" +
+		    		"'@context': { " +
+		    			"'forms': 'java:edu.cornell.mannlib.vitro.webapp.edit.n3editing.configuration.forms#'," +
+		    			"'customform': 'http://vitro.mannlib.cornell.edu/ns/vitro/CustomFormConfiguration#'" +
+		    		"}," +
+		    		"'@graph': [" +
+		    			"{" +
+		    				"'@id': 'customform:addWork_dynamicN3'," +
+		    				"'@type': [" +
+		    					"'forms:DynamicN3Pattern'," +
+		    					"'forms:FormComponent'" +
+	    					"]," +
+		    			    "'customform:pattern': [" +
+		    			        "'?subject bibframe:genreForm ?lcsh .'," +
+		    				    "'?lcsh rdfs:label ?lcshTerm .'," +
+		    				    "'?lcsh rdf:type owl:Thing .'," +
+		    				"]" +
+		      		"}" +
+		      	"]" +
+		    "}";
+	
 	private final static String[] N3_PATTERN = {
 		"?subject bibframe:genreForm ?lcsh .",
 		"?lcsh rdfs:label ?lcshTerm .",
@@ -106,10 +128,10 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
 	}
 	
 	@Test 
-	@Ignore
 	public void noDynamicVariablesInDynamicN3Component_ThrowsException() throws Exception {
 		expectException(FormConfigurationException.class, "No dynamic variables");
-		validateDynamicN3Component(BASE_DYNAMIC_N3_COMPONENT, "customform:pattern", N3_PATTERN);
+		validateDynamicN3Component(DYNAMIC_N3_COMPONENT_WITH_PATTERN);
+
 	}
 	
     // ---------------------------------------------------------------------
@@ -117,30 +139,15 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
     // ---------------------------------------------------------------------
 
 	private void validateDynamicN3Component(String jsonString) throws Exception {
-		validateDynamicN3Component(jsonString, null, null);		
+		preprocessor.validateDynamicN3Component(getComponent(jsonString));		
 	}
-	
-	private void validateDynamicN3Component(String jsonBase, String key, String[] array) throws Exception {
-		JSONObject component = getComponent(jsonBase, key, array);
-		validateDynamicN3Component(component);
-	}
-	
-	private void validateDynamicN3Component(JSONObject component) throws Exception {
-		preprocessor.validateDynamicN3Component(component);		
-	}
-	
-	private JSONObject getComponent(String base, String key, String[] value) {
-		JSONObject json = addArrayToJsonObject(base, key, value);
+
+	private JSONObject getComponent(String jsonString) {
+		JSONObject json = (JSONObject) JSONSerializer.toJSON(jsonString);
 		JSONArray graph = json.getJSONArray("@graph");
 		return graph.getJSONObject(0);		
 	}
 	
-	private JSONObject addArrayToJsonObject(String base, String key, String[] value) {
-		JSONObject jsonObject = (JSONObject) JSONSerializer.toJSON(base);
-		if (key != null && value != null) {
-			jsonObject.put(key, value);
-		}
-		return jsonObject;
-	}
+	
 
 }
