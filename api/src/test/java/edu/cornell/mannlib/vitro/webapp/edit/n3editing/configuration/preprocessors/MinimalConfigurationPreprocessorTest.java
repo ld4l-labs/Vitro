@@ -64,7 +64,7 @@ import net.sf.json.JSONSerializer;
  */
 public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
 			
-	private final static String BASE_DYNAMIC_N3_COMPONENT = 
+	private final static String BASE_DYNAMIC_N3_CONFIG = 
 	    "{" +
 	    		"'@context': { " +
 	    			"'forms': 'java:edu.cornell.mannlib.vitro.webapp.edit.n3editing.configuration.forms#'," +
@@ -81,7 +81,7 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
 	      	"]" +
 	    "}";
 	
-	private final static String DYNAMIC_N3_COMPONENT_WITH_EMPTY_PATTERN = 
+	private final static String DYNAMIC_N3_CONFIG_WITH_EMPTY_PATTERN = 
 		    "{" +
 		    		"'@context': { " +
 		    			"'forms': 'java:edu.cornell.mannlib.vitro.webapp.edit.n3editing.configuration.forms#'," +
@@ -100,7 +100,7 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
 		      	"]" +
 		    "}";
 	
-	private final static String DYNAMIC_N3_COMPONENT_WITHOUT_DYNAMIC_VARIABLES = 
+	private final static String DYNAMIC_N3_CONFIG_WITHOUT_DYNAMIC_VARIABLES = 
 		    "{" +
 		    		"'@context': { " +
 		    			"'forms': 'java:edu.cornell.mannlib.vitro.webapp.edit.n3editing.configuration.forms#'," +
@@ -122,7 +122,7 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
 		      	"]" +
 		    "}";
 	
-	private final static String DYNAMIC_N3_COMPONENT_WITH_EMPTY_DYNAMIC_VARIABLES = 
+	private final static String DYNAMIC_N3_CONFIG_WITH_EMPTY_DYNAMIC_VARIABLES = 
 		    "{" +
 		    		"'@context': { " +
 		    			"'forms': 'java:edu.cornell.mannlib.vitro.webapp.edit.n3editing.configuration.forms#'," +
@@ -146,7 +146,32 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
 		      	"]" +
 		    "}";
 	
- 
+	private final static String VALID_DYNAMIC_N3_CONFIG = 
+		    "{" +
+		    		"'@context': { " +
+		    			"'forms': 'java:edu.cornell.mannlib.vitro.webapp.edit.n3editing.configuration.forms#'," +
+		    			"'customform': 'http://vitro.mannlib.cornell.edu/ns/vitro/CustomFormConfiguration#'" +
+		    		"}," +
+		    		"'@graph': [" +
+		    			"{" +
+		    				"'@id': 'customform:addWork_dynamicN3'," +
+		    				"'@type': [" +
+		    					"'forms:DynamicN3Pattern'," +
+		    					"'forms:FormComponent'" +
+	    					"]," +
+		    			    "'customform:pattern': [" +
+		    			        "'?subject bibframe:genreForm ?lcsh .'," +
+		    				    "'?lcsh rdfs:label ?lcshLabel .'," +
+		    				    "'?lcsh rdf:type owl:Thing .'," +
+		    				"]," +
+		    				"'customform:dynamic_variables': [" +
+		    				    "'?lcsh'," +
+		    				    "'?lcshLabel'," +		    				
+		    				"]" + 
+		      		"}" +
+		      	"]" +
+		    "}"; 
+	
 //	private final static String[] N3_PATTERN = {
 //		"?subject bibframe:genreForm ?lcsh .",
 //		"?lcsh rdfs:label ?lcshTerm .",
@@ -168,7 +193,7 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
 	@Test
 	public void dynamicN3ComponentWithoutPattern_ThrowsException() throws Exception {
 		expectException(FormConfigurationException.class, "Custom form pattern not defined or not a JSON array");
-		validateDynamicN3Component(BASE_DYNAMIC_N3_COMPONENT);
+		validateDynamicN3Component(BASE_DYNAMIC_N3_CONFIG);
 	}
 	
 	@Test
@@ -181,20 +206,25 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
 //		graph.remove(0);
 //		graph.add(0, first);
 //		validateDynamicN3Component(jsonObject);	
-		validateDynamicN3Component(DYNAMIC_N3_COMPONENT_WITH_EMPTY_PATTERN);
+		validateDynamicN3Component(DYNAMIC_N3_CONFIG_WITH_EMPTY_PATTERN);
 	
 	}
 	
 	@Test 
 	public void dynamicN3ComponentWithoutDynamicVariables_ThrowsException() throws Exception {
 		expectException(FormConfigurationException.class, "Dynamic variables not defined or not a JSON array");
-		validateDynamicN3Component(DYNAMIC_N3_COMPONENT_WITHOUT_DYNAMIC_VARIABLES);
+		validateDynamicN3Component(DYNAMIC_N3_CONFIG_WITHOUT_DYNAMIC_VARIABLES);
 	}
 	
 	@Test 
 	public void dynamicN3ComponentWithEmptyDynamicVariables_ThrowsException() throws Exception {
 		expectException(FormConfigurationException.class, "Dynamic variables array is empty");
-		validateDynamicN3Component(DYNAMIC_N3_COMPONENT_WITH_EMPTY_DYNAMIC_VARIABLES);
+		validateDynamicN3Component(DYNAMIC_N3_CONFIG_WITH_EMPTY_DYNAMIC_VARIABLES);
+	}
+	
+	@Test 
+	public void validDynamicN3Component_Succeeds() throws Exception {
+		validateDynamicN3Component(VALID_DYNAMIC_N3_CONFIG);		
 	}
 	
     // ---------------------------------------------------------------------
