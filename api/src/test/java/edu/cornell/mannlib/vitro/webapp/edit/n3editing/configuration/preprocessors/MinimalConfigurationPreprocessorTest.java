@@ -146,17 +146,12 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
 		      	"]" +
 		    "}";
 	
-//	* JSON manipulation for unit tests (ask Jim)
-//    * See JSONObject.remove(), JSONObject.put(), JSONArray.add()
-//	* See JSONObject.remove(), JSONObject.put(), JSONArray.add()
-//    * So: create the base object, get the @graph array, add to the array, remove @graph from the base and add new @graph
-    
-    
-	private final static String[] N3_PATTERN = {
-		"?subject bibframe:genreForm ?lcsh .",
-		"?lcsh rdfs:label ?lcshTerm .",
-		"?lcsh rdf:type owl:Thing ."
-	};
+ 
+//	private final static String[] N3_PATTERN = {
+//		"?subject bibframe:genreForm ?lcsh .",
+//		"?lcsh rdfs:label ?lcshTerm .",
+//		"?lcsh rdf:type owl:Thing ."
+//	};
 			
 	
 	private MinimalConfigurationPreprocessor preprocessor;
@@ -207,7 +202,7 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
     // ---------------------------------------------------------------------
 
 	private void validateDynamicN3Component(String jsonString) throws Exception {
-		preprocessor.validateDynamicN3Component(getComponent(jsonString));		
+		validateDynamicN3Component(getComponent(jsonString));		
 	}
 	
 	private void validateDynamicN3Component(JSONObject component) throws Exception {
@@ -216,8 +211,12 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
 
 	private JSONObject getComponent(String jsonString) {
 		JSONObject json = (JSONObject) JSONSerializer.toJSON(jsonString);
+		return getComponent(json);		
+	}
+	
+	private JSONObject getComponent(JSONObject json) {
 		JSONArray graph = json.getJSONArray("@graph");
-		return graph.getJSONObject(0);		
+		return graph.getJSONObject(0);				
 	}
 	
 	
