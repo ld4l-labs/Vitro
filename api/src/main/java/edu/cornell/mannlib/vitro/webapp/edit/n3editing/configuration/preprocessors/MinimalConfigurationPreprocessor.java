@@ -334,7 +334,7 @@ public class MinimalConfigurationPreprocessor extends
 		}		
 	}
 	
-	private String buildDynamicN3Pattern(Map<String, String[]> parameterMap) 
+	String buildDynamicN3Pattern(Map<String, String[]> parameterMap) 
 			throws FormConfigurationException, FormSubmissionException {
 	
 		/*
@@ -357,7 +357,8 @@ public class MinimalConfigurationPreprocessor extends
 	    // Get the dynamic variables
 		JSONArray dynamicVars = this.dynamicN3Component.getJSONArray("customform:dynamic_variables");
 	    
-		// Get the count of the dynamic vars in the form submission
+		// Get the count of the dynamic variable values in the form submission
+		// TODO - maybe don't define dynamic variables, just get all the params that have multiple values
 		int valueCount = getDynamicVariableValueCount(dynamicVars, parameterMap);
 
 		return buildDynamicN3Pattern(dynamicN3Array, dynamicVars, valueCount);				
@@ -482,19 +483,16 @@ public class MinimalConfigurationPreprocessor extends
 	 * form submission.
 	 * @throws FormSubmissionException 
 	 */
-	private int getDynamicVariableValueCount(JSONArray dynamicVars, Map<String, String[]>parameterMap) 
+	int getDynamicVariableValueCount(JSONArray dynamicVars, Map<String, String[]> params) 
 			throws FormSubmissionException  {
 
 	    // Get the first dynamic variable to compare to the others.
-	    int valueCount = getParameterValueCount(0, dynamicVars, parameterMap);
-	    if (valueCount == 0) {
-	    		throw new FormSubmissionException("A required dynamic variable has no value.");
-	    }
+	    int valueCount = getParameterValueCount(0, dynamicVars, params);
 
 	    // Match the dynamic variables to the input parameter values and make sure all variables have the same 
 	    // number of inputs.	
 	    for (int index = 1; index < dynamicVars.size(); index++) {
-	    		int count = getParameterValueCount(index, dynamicVars, parameterMap);
+	    		int count = getParameterValueCount(index, dynamicVars, params);
 	    		if (count != valueCount) {
 	    			throw new FormSubmissionException("Dynamic variable value counts are different.");
 	    		}   		
@@ -505,12 +503,17 @@ public class MinimalConfigurationPreprocessor extends
 	
 	/** 
 	 * Return the number of values in the parameter map for the specified variables
+	 * @throws FormSubmissionException 
 	 */
-    private int getParameterValueCount(int index, JSONArray vars, Map<String, String[]> parameterMap) {
+    int getParameterValueCount(int index, JSONArray dynamicVars, Map<String, String[]> params) 
+    		throws FormSubmissionException {
     	
-		String var = vars.getString(index).replaceAll("^?",  "");
-		int valuesCount = parameterMap.get(var).length;
-		return valuesCount;
+    		// Remove initial "?"
+		String var = dynamicVars.getString(index).substring(1);
+		if (! params.containsKey(var)) {
+			throw new FormSubmissionException("Dynamic variable requires at least one value.");
+		}
+		return params.get(var).length;
     }
 
 	private boolean isReservedVarName(String s) {
