@@ -28,6 +28,8 @@ import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdf.model.StmtIterator;
 
+import com.github.jsonldjava.core.JsonLdError.Error;
+
 import edu.cornell.mannlib.vitro.webapp.application.ApplicationUtils;
 import edu.cornell.mannlib.vitro.webapp.controller.VitroRequest;
 import edu.cornell.mannlib.vitro.webapp.dao.WebappDaoFactory;
@@ -95,8 +97,6 @@ public class MinimalConfigurationPreprocessor extends
 		}catch (Exception ex) {
 			log.error("Exception occurred reading in file", ex);
 		}
-		
-	
 
 	}
 	
@@ -267,10 +267,10 @@ public class MinimalConfigurationPreprocessor extends
 		
 		// Add dynamic N3 to the edit configuration's required N3
 		try {
-			String dynamicN3String = buildDynamicN3String(parameterMap);
+			String dynamicN3String = buildDynamicN3Pattern(parameterMap);
 			// Not sure if editConfiguration processing tolerates an empty string
 			if (! dynamicN3String.isEmpty()) {
-				this.editConfiguration.addN3Required(buildDynamicN3String(parameterMap));
+				this.editConfiguration.addN3Required(buildDynamicN3Pattern(parameterMap));
 			}
 		} catch (FormConfigurationException | FormSubmissionException e) {
 			log.error(e.getStackTrace());
@@ -334,7 +334,7 @@ public class MinimalConfigurationPreprocessor extends
 		}		
 	}
 	
-	private String buildDynamicN3String(Map<String, String[]> parameterMap) 
+	private String buildDynamicN3Pattern(Map<String, String[]> parameterMap) 
 			throws FormConfigurationException, FormSubmissionException {
 	
 		/*
@@ -343,52 +343,52 @@ public class MinimalConfigurationPreprocessor extends
 		 	"?subject ?predicate ?lcsh1 . ?subject ? predicate ?lcsh2 ."
         "?lcsh bib:isSubjectOf ?subject .", =>
         	  	"?lcsh1 bib:isSubjectOf ?subject . ?lcsh2 bib:isSubjectOf ?subject ."
-		"?lcsh rdfs:label ?lcshTerm .", =>
-		    "?lcsh1 rdfs:label ?lcshTerm1 . ?lcsh2 rdfs:label ?lcshTerm2."
+		"?lcsh rdfs:label ?lcshLabel .", =>
+		    "?lcsh1 rdfs:label ?lcshLabel1 . ?lcsh2 rdfs:label ?lcshLabel2."
 		"?lcsh rdf:type owl:Thing ." =>
 			"?lcsh1 rdf:type owl:Thing . ?lcsh2 rdf:type owl:Thing."
 		 */
 		
 		validateDynamicN3Component(dynamicN3Component);
 
-		// Get the custom form configuration patten
+		// Get the custom form configuration pattern
 		JSONArray dynamicN3Array = this.dynamicN3Component.getJSONArray("customform:pattern");
 
 	    // Get the dynamic variables
 		JSONArray dynamicVars = this.dynamicN3Component.getJSONArray("customform:dynamic_variables");
 	    
+		// Get the count of the dynamic vars in the form submission
 		int valueCount = getDynamicVariableValueCount(dynamicVars, parameterMap);
-		if (valueCount == 0) {
-			throw new FormConfigurationException("Invalid dynamic variable value counts.");
-		}
 
-		return buildN3Pattern(dynamicN3Array, dynamicVars, valueCount);				
+		return buildDynamicN3Pattern(dynamicN3Array, dynamicVars, valueCount);				
 	}
 	
-	private String buildN3Pattern(JSONArray dynamicN3Array, JSONArray dynamicVars, int valueCount) 
-			throws FormSubmissionException {
+	private String buildDynamicN3Pattern(JSONArray dynamicN3Array, JSONArray dynamicVars, int valueCount) 
+			throws FormSubmissionException, FormConfigurationException {
 		
 	    StringBuilder stringBuilder = new StringBuilder();
 
 	    // For each triple in the dynamic pattern
 	    for (int i = 0; i < dynamicN3Array.size(); i++) {
 	    		String triple = dynamicN3Array.getString(i);
-	    		
-	    		// Peel final punct off the triple and store it
+ 		
 	    		triple = triple.trim();
-	    		String finalPunct = triple.substring(triple.length() - 1);
+	    		
+	    		String finalPunct = "";
+	    		// Peel final punct off the triple and store it.
+	    		if (triple.endsWith(".")) {
+	    			finalPunct = ".";
+	    			triple = triple.substring(0, triple.length() - 1); // triple.lastIndexOf(".");
+	    		}
 	    		
 	    		// Split the triple into terms
 	    		String[] terms = triple.trim().split("\\s+");
-	    		if (terms.length != 3) {
-	    			throw new FormSubmissionException("Invalid triple in DynamicN3Component pattern.");
-	    		}
 	    		
-	    		// Iterate over the terms of the triple to match each dynamic variable
+	    		// Iterate over the terms of the triple to find a match to each dynamic variable
 	    		for (int j = 0; j < 3; j++) {
 		    		for (int k = 0; k < valueCount; k++) {
 		    			String dynamicVar = dynamicVars.getString(k);
-		    			if (terms[j].equals(dynamicVar)) {
+		    			if (dynamicVar.equals(terms[j])) {
 		    				// Append the index to the term
 		    				terms[j] = dynamicVar + k;
 		    			}
@@ -415,12 +415,23 @@ public class MinimalConfigurationPreprocessor extends
 	}
 	
 	/**
-	 * Validate the dynamic N3 component. Throw an error if the component is invalid.
+	 * Validates the dynamic N3 component. Throws an error if the component is invalid.
 	 * @throws FormConfigurationException 
 	 */
 	void validateDynamicN3Component(JSONObject dynamicN3Component) throws FormConfigurationException {
 		
+		validateDynamicN3Pattern(dynamicN3Component);	
+		validateDynamicN3Variables(dynamicN3Component);
+	}
+	
+	/**
+	 * Validates the dynamic N3 component pattern. Throws an error if the pattern is invalid.
+	 * @throws FormConfigurationException
+	 */
+	private void validateDynamicN3Pattern(JSONObject dynamicN3Component) throws FormConfigurationException {	
+		
 		// Check that the first element of the graph defines a non-empty pattern array.
+		
 		JSONArray pattern = null;
 		try {
 			pattern = dynamicN3Component.getJSONArray("customform:pattern");
@@ -430,6 +441,28 @@ public class MinimalConfigurationPreprocessor extends
 		if (pattern.size() == 0) {
 			throw new FormConfigurationException("Custom form pattern is empty.");
 		}
+		
+		// Check that each element of the pattern is a well-formed triple: 3 elements, and ends with .
+		for (int i = 0; i < pattern.size(); i++) {
+			String triple = pattern.getString(i);
+			triple = triple.trim();
+			if (! triple.endsWith(".")) {
+				throw new FormConfigurationException("Triple in pattern is missing final period.");
+			}
+			// Peel off final period
+			triple = triple.substring(0, triple.length() - 1); 
+			String[] terms = triple.split("\\s+");
+			if (terms.length != 3) {
+				throw new FormConfigurationException("Triple in pattern does not have exactly three terms.");
+			}			
+		}	
+	}
+	
+	/**
+	 * Validates the dynamic N3 dynamic variables array. Throws an error if the array is invalid.
+	 * @throws FormConfigurationException
+	 */
+	private 	void validateDynamicN3Variables(JSONObject dynamicN3Component) throws FormConfigurationException {
 		
 		// Check that the first element of the graph defines a non-empty dynamic variables array. 
 		JSONArray dynamicVars = null;
@@ -442,17 +475,20 @@ public class MinimalConfigurationPreprocessor extends
 			throw new FormConfigurationException("Dynamic variables array is empty.");
 		}
 	}
-
+	
+	
 	/**
-	 * Return true iff each dynamic variable in the form configuration has the same number of values in the
+	 * Returns true iff each dynamic variable in the form configuration has the same number of values in the
 	 * form submission.
+	 * @throws FormSubmissionException 
 	 */
-	private int getDynamicVariableValueCount(JSONArray dynamicVars, Map<String, String[]>parameterMap)  {
-   
+	private int getDynamicVariableValueCount(JSONArray dynamicVars, Map<String, String[]>parameterMap) 
+			throws FormSubmissionException  {
+
 	    // Get the first dynamic variable to compare to the others.
 	    int valueCount = getParameterValueCount(0, dynamicVars, parameterMap);
 	    if (valueCount == 0) {
-	    		return 0;
+	    		throw new FormSubmissionException("A required dynamic variable has no value.");
 	    }
 
 	    // Match the dynamic variables to the input parameter values and make sure all variables have the same 
@@ -460,7 +496,7 @@ public class MinimalConfigurationPreprocessor extends
 	    for (int index = 1; index < dynamicVars.size(); index++) {
 	    		int count = getParameterValueCount(index, dynamicVars, parameterMap);
 	    		if (count != valueCount) {
-	    			return 0;
+	    			throw new FormSubmissionException("Dynamic variable value counts are different.");
 	    		}   		
 	    }
 	    
