@@ -359,11 +359,10 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
 	}
 
 	@Test
-	@Ignore
 	public void testDynamicN3Component() throws Exception {
 		Map<String, String[]> params = new HashMap<>();
-		params.put("?var1", new String[] {"var1_value1", "var1_value2", "var1_value3"});
-		params.put("?var2", new String[] {"var2_value1", "var2_value2", "var2_value3"});
+		params.put("var1", new String[] {"var1_value1", "var1_value2", "var1_value3"});
+		params.put("var2", new String[] {"var2_value1", "var2_value2", "var2_value3"});
 		String pattern = buildDynamicN3Pattern(VALID_DYNAMIC_N3_COMPONENT, params);
 		String expected = "?subject ex:predicate1 ?var10 . "
 				+ "?subject ex:predicate1 ?var11 . "
