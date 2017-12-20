@@ -1,7 +1,5 @@
 package edu.cornell.mannlib.vitro.webapp.edit.n3editing.configuration.preprocessors;
 
-import static org.junit.Assert.fail;
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -9,18 +7,14 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
-import static org.junit.Assert.assertEquals;
 
 import edu.cornell.mannlib.vitro.testing.AbstractTestClass;
 import edu.cornell.mannlib.vitro.webapp.edit.n3editing.VTwo.EditConfigurationVTwo;
 import edu.cornell.mannlib.vitro.webapp.edit.n3editing.VTwo.EditSubmissionVTwoPreprocessor.FormConfigurationException;
 import edu.cornell.mannlib.vitro.webapp.edit.n3editing.VTwo.EditSubmissionVTwoPreprocessor.FormSubmissionException;
-
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import net.sf.json.JSONSerializer;
-
-
 
 /*
  * Test plan:
@@ -104,9 +98,9 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
     					"'forms:FormComponent'" +
 					"]," +
     			    "'customform:pattern': [" +
-			        "'?subject bibframe:genreForm ?lcsh .'," +
-				    "'?lcsh rdfs:label ?lcshTerm .'," +
-				    "'?lcsh rdf:type owl:Thing .'," +
+			        "'?subject ex:predicate1 var1 .'," +
+				    "'?var1 rdfs:label ?var2 .'," +
+				    "'?var1 rdf:type ex:Class1 .'," +
     				"]" +
 		    "}";
 
@@ -119,16 +113,15 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
     					"'forms:FormComponent'" +
 					"]," +
     			    "'customform:pattern': [" +
-			        "'?subject bibframe:genreForm ?lcsh .'," +
-				    "'?lcsh rdfs:label ?lcshTerm .'," +
-				    "'?lcsh rdf:type owl:Thing .'," +
+			        "'?subject ex:predicate1 ?var1 .'," +
+				    "'?var1 rdfs:label ?var2 .'," +
+				    "'?var1 rdf:type ex:Class1 .'," +
     				"]," +
     				"'customform:dynamic_variables': [" +
     				"]" + 
 		    "}";
 	
 
-	
 	private final static String INVALID_TRIPLE_MISSING_FINAL_PERIOD = 
 		    "{" +
     				"'@id': 'customform:addWork_dynamicN3'," +
@@ -137,13 +130,13 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
     					"'forms:FormComponent'" +
 					"]," +
     			    "'customform:pattern': [" +
-			        "'?subject bibframe:genreForm ?lcsh .'," +
-				    "'?lcsh rdfs:label ?lcshTerm'," +
-				    "'?lcsh rdf:type owl:Thing .'," +
+			        "'?subject ex:predicate ?var1 .'," +
+				    "'?var1 rdfs:label ?var2 .'," +
+				    "'?var1 rdf:type ex:Class1'," +
     				"]," +
     				"'customform:dynamic_variables': [" +
-    					"'?lcsh'," +
-    					"'?lcsh'" +
+    					"'?var1'," +
+    					"'?var2'" +
     				"]" + 
 		    "}";
 	
@@ -155,13 +148,13 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
     					"'forms:FormComponent'" +
 					"]," +
     			    "'customform:pattern': [" +
-			        "'?subject bibframe:genreForm ?lcsh .'," +
-				    "'?lcsh rdfs:label ?lcshTerm .'," +
-				    "'?lcsh owl:Thing .'," +
+			        "'?subject ex:predicate1 ?var1 .'," +
+				    "'?var1 rdfs:label ?var2 .'," +
+				    "'?var1 ex:Class1 .'," +
     				"]," +
     				"'customform:dynamic_variables': [" +
-    					"'?lcsh'," +
-    					"'?lcsh'" +
+    					"'?var1'," +
+    					"'?var2'" +
     				"]" + 
 		    "}";
 
@@ -173,13 +166,13 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
     					"'forms:FormComponent'" +
 					"]," +
     			    "'customform:pattern': [" +
-			        "'?subject bibframe:genreForm ?lcsh .'," +
-				    "'?lcsh rdfs:label ?lcshTerm .'," +
-				    "'?lcsh owl:Thing .'," +
+			        "'?subject ex:predicate1 ?var1 .'," +
+				    "'?var1 rdfs:label ?var2 .'," +
+				    "'?var1 ex:Class1 .'," +
     				"]," +
     				"'customform:dynamic_variables': [" +
-    					"'?lcsh'," +
-    					"'?lcsh'" +
+    					"'?var1'," +
+    					"'?var2'" +
     				"]" + 
 		    "}";
 	
@@ -191,18 +184,26 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
     					"'forms:FormComponent'" +
 					"]," +
     			    "'customform:pattern': [" +
-			        "'?subject bibframe:genreForm ?lcsh .'," +
-				    "'?lcsh rdfs:label ?lcshTerm .'," +
-				    "'?lcsh rdf:type owl:Thing .'," +
+			        "'?subject ex:predicate1 ?var1 .'," +
+				    "'?var1 rdfs:label ?var2 .'," +
+				    "'?var1 rdf:type ex:Class1 .'," +
     				"]," +
     				"'customform:dynamic_variables': [" +
-    					"'?lcsh'," +
-    					"'?lcshTerm'" +
+    					"'?var1'," +
+    					"'?var2'" +
     				"]" + 
 		    "}";
 	
 	private static final JSONArray DYNAMIC_VARS = 
 			(JSONArray) JSONSerializer.toJSON(new String[] {"?var1", "?var2", "?var3"});
+	
+	private static final JSONArray DYNAMIC_PATTERN = 
+			(JSONArray) JSONSerializer.toJSON(new String[] {
+				"?subject ex:predicate1 ?var1 . ",
+				"?var1 rdfs:label ?var2 . " ,
+				"?var1 rdf:type ex:Class1 . "	 ,
+				"?var2 ex:predicate2 ?var3 . "
+			});
 	
 	private MinimalConfigurationPreprocessor preprocessor;
 	
@@ -241,7 +242,7 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
 	
 	@Test
 	public void dynamicN3TripleWithNoFinalPeriod_ThrowsException() throws Exception {
-		expectException(FormConfigurationException.class, "Triple in pattern is missing final period");
+		expectException(FormConfigurationException.class, "Triple must end in a period");
 		validateDynamicN3Component(INVALID_TRIPLE_MISSING_FINAL_PERIOD);
 	}
 	
@@ -278,37 +279,105 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
 	}
 	
 	@Test
-	public void dynamicVariableCountOfOne_Succeeds() throws Exception {
+	public void testDynamicVariableValueCountOfOne() throws Exception {
+		Map<String, String[]> params = new HashMap<>();
+		params.put("var1", new String[] {"var1_value"});
+		int count = getParameterValueCount(0, DYNAMIC_VARS, params);
+		Assert.assertEquals(count, 1);
+	}
+	
+	@Test
+	public void testDynamicVariableCountGreaterThanOne() throws Exception {
+		Map<String, String[]> params = new HashMap<>();
+		params.put("var1", new String[] {"var1_value1", "var_value2", "var1_value3"});
+		params.put("var2", new String[] {"var2_value1", "var2_value2", "var2_value3"});
+		int count = getParameterValueCount(0, DYNAMIC_VARS, params);
+		Assert.assertEquals(count, 3);
+	}
+	
+	@Test
+	public void nonMatchingDynamicVariableValueCounts_ThrowsException() throws Exception {
+		expectException(FormSubmissionException.class, "Dynamic variables must have the same number of values");
 		Map<String, String[]> params = new HashMap<>();
 		params.put("var1", new String[] {"var1_value1", "var1_value2"});
-		int count = getParameterValueCount(0, DYNAMIC_VARS, params);
-		Assert.assertEquals(count, 2);
+		params.put("var2", new String[] {"var2_value1", "var2_value2", "var2_value3"});
+		getDynamicVariableValueCount(DYNAMIC_VARS, params);
 	}
 	
 	@Test
-	@Ignore
-	public void validDynamicVariableCountWithMultipleValues_Succeeds() throws Exception {
+	public void testDynamicPatternWithOneValue() throws Exception {
 		Map<String, String[]> params = new HashMap<>();
-		params.put("lcsh", new String[] {"lcsh_v1", "lcsh_v2", "lcsh_v3"});
-		params.put("lcshTerm", new String[] {"lcshTerm_v1", "lcshTerm_v2", "lcshTerm_v3"});
-		buildDynamicN3Component(VALID_DYNAMIC_N3_COMPONENT, params);
+		params.put("var1", new String[] {"var1_value1"});
+		params.put("var2", new String[] {"var2_value1"});
+		params.put("var3", new String[] {"var3_value1"});
+		String pattern = buildDynamicN3Pattern(DYNAMIC_PATTERN, DYNAMIC_VARS, "", 1);
+		Assert.assertEquals(DYNAMIC_PATTERN.join(" "), pattern);
+	}
+	
+	@Test 
+	public void testDynamicPatternWithMultipleValues() throws Exception {
+		Map<String, String[]> params = new HashMap<>();
+		params.put("var1", new String[] {"var1_value1", "var1_value2", "var1_value3"});
+		params.put("var2", new String[] {"var2_value1", "var2_value2", "var2_value3"});
+		params.put("var3", new String[] {"var3_value1", "var3_value1", "var3_value3"});
+		String expected = "?subject ex:predicate1 ?var10 . "
+				+ "?subject ex:predicate1 ?var11 . "
+				+ "?subject ex:predicate1 ?var12 . "
+				+ "?var10 rdfs:label ?var20 . "
+				+ "?var11 rdfs:label ?var21 . "
+				+ "?var12 rdfs:label ?var22 . "
+				+ "?var10 rdf:type ex:Class1 . "
+				+ "?var11 rdf:type ex:Class1 . "
+				+ "?var12 rdf:type ex:Class1 . "
+				+ "?var20 ex:predicate2 ?var30 . "
+				+ "?var21 ex:predicate2 ?var31 . "
+				+ "?var22 ex:predicate2 ?var32 . ";				
+		String pattern = buildDynamicN3Pattern(DYNAMIC_PATTERN, DYNAMIC_VARS, "", 3);
+		Assert.assertEquals(expected, pattern);
 	}
 	
 	@Test
-	@Ignore
-	public void nonMatchingDynamicVariableValueCounts_ThrowsException() {
-		HashMap<String, String[]> params = new HashMap();
-		//** Check vitrolib forms to see whether incoming param has "?" prefixed or not
-		for (int i = 1; i <= 3; i++) {
-			String index = String.valueOf(i);
-			//sparams.put("var" + index, "value" + index);
-		}
-		fail("nonMatchingDynamicVariableValueCounts_ThrowsException not implemented");
+	public void testDynamicPatternWithNonDynamicVariable() throws Exception {
+		JSONArray dynamicVars = (JSONArray) JSONSerializer.toJSON(new String[] {"?var1", "?var2"});
+		Map<String, String[]> params = new HashMap<>();
+		params.put("var1", new String[] {"var1_value1", "var1_value2", "var1_value3"});
+		params.put("var2", new String[] {"var2_value1", "var2_value2", "var2_value3"});
+		String expected = "?subject ex:predicate1 ?var10 . "
+				+ "?subject ex:predicate1 ?var11 . "
+				+ "?subject ex:predicate1 ?var12 . "
+				+ "?var10 rdfs:label ?var20 . "
+				+ "?var11 rdfs:label ?var21 . "
+				+ "?var12 rdfs:label ?var22 . "
+				+ "?var10 rdf:type ex:Class1 . "
+				+ "?var11 rdf:type ex:Class1 . "
+				+ "?var12 rdf:type ex:Class1 . "
+				+ "?var20 ex:predicate2 ?var3 . "
+				+ "?var21 ex:predicate2 ?var3 . "
+				+ "?var22 ex:predicate2 ?var3 . ";				
+		String pattern = buildDynamicN3Pattern(DYNAMIC_PATTERN, dynamicVars, "", 3);
+		Assert.assertEquals(expected, pattern);		
 	}
-	
 
-	
-	
+	@Test
+	@Ignore
+	public void testDynamicN3Component() throws Exception {
+		Map<String, String[]> params = new HashMap<>();
+		params.put("?var1", new String[] {"var1_value1", "var1_value2", "var1_value3"});
+		params.put("?var2", new String[] {"var2_value1", "var2_value2", "var2_value3"});
+		String pattern = buildDynamicN3Pattern(VALID_DYNAMIC_N3_COMPONENT, params);
+		String expected = "?subject ex:predicate1 ?var10 . "
+				+ "?subject ex:predicate1 ?var11 . "
+				+ "?subject ex:predicate1 ?var12 . "
+				+ "?var10 rdfs:label ?var20 . "
+				+ "?var11 rdfs:label ?var21 . "
+				+ "?var12 rdfs:label ?var22 . "
+				+ "?var10 rdf:type ex:Class1 . "
+				+ "?var11 rdf:type ex:Class1 . "
+				+ "?var12 rdf:type ex:Class1 . ";
+		Assert.assertEquals(expected, pattern);
+	}
+
+		
     // ---------------------------------------------------------------------
     // Helper methods
     // ---------------------------------------------------------------------
@@ -321,19 +390,30 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
 	private void validateDynamicN3Component(JSONObject component) throws Exception {
 		preprocessor.validateDynamicN3Component(component);
 	}
+		
+	private int getParameterValueCount(int index, JSONArray dynamicVars, Map<String, String[]> params) 
+			throws Exception {
+		return preprocessor.getParameterValueCount(index,  dynamicVars, params);
+	}
 	
-	private void buildDynamicN3Component(String jsonString, Map<String, String[]> parameters) throws Exception {
-		preprocessor.dynamicN3Component = getComponent(jsonString);
-		preprocessor.buildDynamicN3Pattern(parameters);
+	private int getDynamicVariableValueCount(JSONArray dynamicVars, Map<String, String[]> params) 
+			throws Exception {
+		return preprocessor.getDynamicVariableValueCount(dynamicVars, params);
+	}
+	
+	private String buildDynamicN3Pattern(JSONArray array, JSONArray vars, String prefixes, int paramValueCount) 
+			throws Exception {
+		return preprocessor.buildDynamicN3Pattern(array, vars, prefixes, paramValueCount);
+	}
+	
+	private String buildDynamicN3Pattern(String jsonString, Map<String, String[]> params) 
+			throws Exception {
+		JSONObject dynamicN3Component = getComponent(jsonString);
+		return preprocessor.buildDynamicN3Pattern(dynamicN3Component, params);
 	}
 
 	private JSONObject getComponent(String jsonString) {
 		return (JSONObject) JSONSerializer.toJSON(jsonString);
-	}
-	
-	private int getParameterValueCount(int index, JSONArray dynamicVars, Map<String, String[]> params) 
-			throws FormSubmissionException {
-		return preprocessor.getParameterValueCount(index,  dynamicVars, params);
 	}
 
 

@@ -15,6 +15,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.jena.ontology.OntModel;
@@ -27,8 +28,6 @@ import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdf.model.StmtIterator;
-
-import com.github.jsonldjava.core.JsonLdError.Error;
 
 import edu.cornell.mannlib.vitro.webapp.application.ApplicationUtils;
 import edu.cornell.mannlib.vitro.webapp.controller.VitroRequest;
@@ -265,13 +264,10 @@ public class MinimalConfigurationPreprocessor extends
 			this.editConfiguration.addN3Required(requiredN3String);
 		}
 		
-		// Add dynamic N3 to the edit configuration's required N3
 		try {
-			String dynamicN3String = buildDynamicN3Pattern(parameterMap);
-			// Not sure if editConfiguration processing tolerates an empty string
-			if (! dynamicN3String.isEmpty()) {
-				this.editConfiguration.addN3Required(buildDynamicN3Pattern(parameterMap));
-			}
+			// Add dynamic N3 pattern to the edit configuration's required N3
+			String dynamicN3Pattern = buildDynamicN3Pattern(dynamicN3Component, parameterMap);
+			this.editConfiguration.addN3Required(dynamicN3Pattern);
 		} catch (FormConfigurationException | FormSubmissionException e) {
 			log.error(e.getStackTrace());
 		}
@@ -334,7 +330,7 @@ public class MinimalConfigurationPreprocessor extends
 		}		
 	}
 	
-	String buildDynamicN3Pattern(Map<String, String[]> parameterMap) 
+	String buildDynamicN3Pattern(JSONObject dynamicComponent, Map<String, String[]> parameterMap) 
 			throws FormConfigurationException, FormSubmissionException {
 	
 		/*
@@ -349,68 +345,65 @@ public class MinimalConfigurationPreprocessor extends
 			"?lcsh1 rdf:type owl:Thing . ?lcsh2 rdf:type owl:Thing."
 		 */
 		
-		validateDynamicN3Component(dynamicN3Component);
+		validateDynamicN3Component(dynamicComponent);
 
 		// Get the custom form configuration pattern
-		JSONArray dynamicN3Array = this.dynamicN3Component.getJSONArray("customform:pattern");
+		JSONArray dynamicN3Array = dynamicComponent.getJSONArray("customform:pattern");
 
 	    // Get the dynamic variables
-		JSONArray dynamicVars = this.dynamicN3Component.getJSONArray("customform:dynamic_variables");
+		JSONArray dynamicVars = dynamicComponent.getJSONArray("customform:dynamic_variables");
 	    
 		// Get the count of the dynamic variable values in the form submission
 		// TODO - maybe don't define dynamic variables, just get all the params that have multiple values
 		int valueCount = getDynamicVariableValueCount(dynamicVars, parameterMap);
+		
+		String prefixes = getPrefixes(dynamicComponent);
 
-		return buildDynamicN3Pattern(dynamicN3Array, dynamicVars, valueCount);				
+		return buildDynamicN3Pattern(dynamicN3Array, dynamicVars, prefixes, valueCount);
 	}
 	
-	private String buildDynamicN3Pattern(JSONArray dynamicN3Array, JSONArray dynamicVars, int valueCount) 
-			throws FormSubmissionException, FormConfigurationException {
+	String buildDynamicN3Pattern(JSONArray dynamicN3Array, JSONArray dynamicVars, String prefixes, 
+			int paramValueCount) throws FormSubmissionException, FormConfigurationException {
 		
 	    StringBuilder stringBuilder = new StringBuilder();
+	    stringBuilder.append(prefixes);
+	    
+	    if (paramValueCount == 1) {
+	    		stringBuilder.append(dynamicN3Array.join(" "));
+    			return stringBuilder.toString();
+	    }
 
 	    // For each triple in the dynamic pattern
-	    for (int i = 0; i < dynamicN3Array.size(); i++) {
-	    		String triple = dynamicN3Array.getString(i);
+	    for (int tripleCount = 0; tripleCount < dynamicN3Array.size(); tripleCount++) {
+	    		String triple = dynamicN3Array.getString(tripleCount);
  		
 	    		triple = triple.trim();
-	    		
-	    		String finalPunct = "";
-	    		// Peel final punct off the triple and store it.
-	    		if (triple.endsWith(".")) {
-	    			finalPunct = ".";
-	    			triple = triple.substring(0, triple.length() - 1); // triple.lastIndexOf(".");
-	    		}
+	    		// Peel off final period (required to pass validity tests)
+	    		triple = triple.substring(0, triple.length() - 1); // triple.lastIndexOf(".");
 	    		
 	    		// Split the triple into terms
 	    		String[] terms = triple.trim().split("\\s+");
 	    		
-	    		// Iterate over the terms of the triple to find a match to each dynamic variable
-	    		for (int j = 0; j < 3; j++) {
-		    		for (int k = 0; k < valueCount; k++) {
-		    			String dynamicVar = dynamicVars.getString(k);
-		    			if (dynamicVar.equals(terms[j])) {
-		    				// Append the index to the term
-		    				terms[j] = dynamicVar + k;
-		    			}
-		    		}
+	    		// For each set of values in the input
+	    		for (int valueIndex = 0; valueIndex < paramValueCount; valueIndex++) {
+	    			// For each term in the triple
+    				String[] newTerms = new String[3];
+    				for (int termIndex = 0; termIndex < 3; termIndex++) {
+    					String term = terms[termIndex];
+    				    newTerms[termIndex] = dynamicVars.contains(term) ? term + valueIndex : term;
+    				}
+	    		    // Join the new terms into a triple, appending the final punctuation
+		    		stringBuilder.append(StringUtils.join(newTerms, " ")).append(" . ");
 	    		}
-		    		
-		    // Join the terms back into a triple, appending the final punctuation
-	    		stringBuilder.append(StringUtils.join(terms, " ")).append(" " + finalPunct);
 	    }
-	    
-		if (stringBuilder.length() > 0) {
-			stringBuilder.append(getPrefixes());
-		}
 	    
 	    return stringBuilder.toString();
 	}
 	
-	private String getPrefixes() {
+	private String getPrefixes(JSONObject component) {
 		String prefixes = "";
-		if (this.dynamicN3Component.containsKey("customform:prefixes")) {
-			prefixes = this.dynamicN3Component.getString("customform:prefixes");
+		if (component.containsKey("customform:prefixes")) {
+			prefixes = component.getString("customform:prefixes");
 		}
 		return prefixes;
 	}
@@ -443,15 +436,17 @@ public class MinimalConfigurationPreprocessor extends
 			throw new FormConfigurationException("Custom form pattern is empty.");
 		}
 		
-		// Check that each element of the pattern is a well-formed triple: 3 elements, and ends with .
+		// Check that each element of the pattern is a well-formed triple: 3 terms plus final period.
 		for (int i = 0; i < pattern.size(); i++) {
 			String triple = pattern.getString(i);
 			triple = triple.trim();
-			if (! triple.endsWith(".")) {
-				throw new FormConfigurationException("Triple in pattern is missing final period.");
+			if (! (triple.endsWith("."))) {
+				throw new FormConfigurationException("Triple must end in a period.");
 			}
-			// Peel off final period
+			
+			// Peel off final period (in case preceded by spaces)
 			triple = triple.substring(0, triple.length() - 1); 
+			
 			String[] terms = triple.split("\\s+");
 			if (terms.length != 3) {
 				throw new FormConfigurationException("Triple in pattern does not have exactly three terms.");
@@ -475,34 +470,32 @@ public class MinimalConfigurationPreprocessor extends
 		if (dynamicVars.size() == 0) {
 			throw new FormConfigurationException("Dynamic variables array is empty.");
 		}
-	}
-	
+	}	
 	
 	/**
-	 * Returns true iff each dynamic variable in the form configuration has the same number of values in the
-	 * form submission.
+	 * Returns true iff the count of values in the form submission is the same for each dynamic variable. 
 	 * @throws FormSubmissionException 
 	 */
 	int getDynamicVariableValueCount(JSONArray dynamicVars, Map<String, String[]> params) 
 			throws FormSubmissionException  {
 
 	    // Get the first dynamic variable to compare to the others.
-	    int valueCount = getParameterValueCount(0, dynamicVars, params);
+	    int firstValueCount = getParameterValueCount(0, dynamicVars, params);
 
 	    // Match the dynamic variables to the input parameter values and make sure all variables have the same 
-	    // number of inputs.	
+	    // number of inputs.	 
 	    for (int index = 1; index < dynamicVars.size(); index++) {
-	    		int count = getParameterValueCount(index, dynamicVars, params);
-	    		if (count != valueCount) {
-	    			throw new FormSubmissionException("Dynamic variable value counts are different.");
+	    		int valueCount = getParameterValueCount(index, dynamicVars, params);
+	    		if (valueCount != firstValueCount) {
+	    			throw new FormSubmissionException("Dynamic variables must have the same number of values.");
 	    		}   		
 	    }
 	    
-	    return valueCount;
+	    return firstValueCount;
 	}
 	
 	/** 
-	 * Return the number of values in the parameter map for the specified variables
+	 * Return the number of values in the parameter map for the specified variable
 	 * @throws FormSubmissionException 
 	 */
     int getParameterValueCount(int index, JSONArray dynamicVars, Map<String, String[]> params) 
@@ -692,10 +685,6 @@ public class MinimalConfigurationPreprocessor extends
 		//Copy
 		copyUrisFromForm.putAll(urisFromForm);
 		copyLiteralsFromForm.putAll(literalsFromForm);
-	}
-	
-	
-
-	
+	}	
 
 }
