@@ -333,18 +333,6 @@ public class MinimalConfigurationPreprocessor extends
 	String buildDynamicN3Pattern(JSONObject dynamicComponent, Map<String, String[]> parameterMap) 
 			throws FormConfigurationException, FormSubmissionException {
 	
-		/*
-		 * PATTERN => NEW PATTERN
-		 "?subject ?predicate ?lcsh .", =>
-		 	"?subject ?predicate ?lcsh1 . ?subject ? predicate ?lcsh2 ."
-        "?lcsh bib:isSubjectOf ?subject .", =>
-        	  	"?lcsh1 bib:isSubjectOf ?subject . ?lcsh2 bib:isSubjectOf ?subject ."
-		"?lcsh rdfs:label ?lcshLabel .", =>
-		    "?lcsh1 rdfs:label ?lcshLabel1 . ?lcsh2 rdfs:label ?lcshLabel2."
-		"?lcsh rdf:type owl:Thing ." =>
-			"?lcsh1 rdf:type owl:Thing . ?lcsh2 rdf:type owl:Thing."
-		 */
-		
 		validateDynamicN3Component(dynamicComponent);
 
 		// Get the custom form configuration pattern
@@ -378,8 +366,10 @@ public class MinimalConfigurationPreprocessor extends
 	    		String triple = dynamicN3Array.getString(tripleCount);
  		
 	    		triple = triple.trim();
-	    		// Peel off final period (required to pass validity tests)
-	    		triple = triple.substring(0, triple.length() - 1); // triple.lastIndexOf(".");
+	    		if (triple.endsWith(".")) {
+	    			// Peel off final period
+	    			triple = triple.substring(0, triple.length() - 1).trim(); // triple.lastIndexOf(".");
+	    		}
 	    		
 	    		// Split the triple into terms
 	    		String[] terms = triple.trim().split("\\s+");
@@ -440,13 +430,10 @@ public class MinimalConfigurationPreprocessor extends
 		for (int i = 0; i < pattern.size(); i++) {
 			String triple = pattern.getString(i);
 			triple = triple.trim();
-			if (! (triple.endsWith("."))) {
-				throw new FormConfigurationException("Triple must end in a period.");
-			}
 			
-			// Peel off final period (in case preceded by spaces)
-			triple = triple.substring(0, triple.length() - 1); 
-			
+			// Peel off final period (in case preceded by spaces) 
+			triple = triple.substring(0, triple.length() - 1).trim(); // triple.lastIndexOf(".");
+		
 			String[] terms = triple.split("\\s+");
 			if (terms.length != 3) {
 				throw new FormConfigurationException("Triple in pattern does not have exactly three terms.");
@@ -501,7 +488,7 @@ public class MinimalConfigurationPreprocessor extends
     int getParameterValueCount(int index, JSONArray dynamicVars, Map<String, String[]> params) 
     		throws FormSubmissionException {
     	
-    		// Remove initial "?"
+    		// Remove initial "?" from the variable for the comparison with the params
 		String var = dynamicVars.getString(index).substring(1);
 		if (! params.containsKey(var)) {
 			throw new FormSubmissionException("Dynamic variable requires at least one value.");

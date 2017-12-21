@@ -5,7 +5,6 @@ import java.util.Map;
 
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import edu.cornell.mannlib.vitro.testing.AbstractTestClass;
@@ -17,47 +16,10 @@ import net.sf.json.JSONObject;
 import net.sf.json.JSONSerializer;
 
 /*
- * Test plan:
- * 
- * 
- * buildDynamicN3String:
- * invalid component - throws exception
- * value count == 0 - throws exception
- * builds good string
- * 
- * 
- * buildN3Pattern:
- * final punct with preceding space
- * final punct no preceding space
- * terms.length == 3
- * terms.length != 3 - throws exception
- * single value term 
- * multi-value term
- * test final triple
- * test final triple w/prefixes
- * 
  * getPrefixes:
  * test non-empty prefix string
  * test empty prefix string
- * 
- * getParameterValueCount - values count 0, values count 1, values count > 1
- * 
- * isValidDynamicN3Component:
- * no customform:pattern
- * dynamicArraySize = 0
- * no customform:dynamic_variables
- * dynamic variables 0
- * All satisfied, return true
- * 
- * getParameterValueCount - test a couple of different sizes
- * 
- * getDynamicVariableValueCount
- * no values for first dynamic var
- * dynamic vars not all same counts
- * dynamic vars all same counts
- * 
- * 
- * 
+
  */
 
 /**
@@ -118,25 +80,6 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
 				    "'?var1 rdf:type ex:Class1 .'," +
     				"]," +
     				"'customform:dynamic_variables': [" +
-    				"]" + 
-		    "}";
-	
-
-	private final static String INVALID_TRIPLE_MISSING_FINAL_PERIOD = 
-		    "{" +
-    				"'@id': 'customform:addWork_dynamicN3'," +
-    				"'@type': [" +
-    					"'forms:DynamicN3Pattern'," +
-    					"'forms:FormComponent'" +
-					"]," +
-    			    "'customform:pattern': [" +
-			        "'?subject ex:predicate ?var1 .'," +
-				    "'?var1 rdfs:label ?var2 .'," +
-				    "'?var1 rdf:type ex:Class1'," +
-    				"]," +
-    				"'customform:dynamic_variables': [" +
-    					"'?var1'," +
-    					"'?var2'" +
     				"]" + 
 		    "}";
 	
@@ -205,6 +148,14 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
 				"?var2 ex:predicate2 ?var3 . "
 			});
 	
+	private static final JSONArray TRIPLES_MISSING_FINAL_PERIOD = 
+			(JSONArray) JSONSerializer.toJSON(new String[] {
+				"?subject ex:predicate1 ?var1 ",
+				"?var1 rdfs:label ?var2 . " ,
+				"?var1 rdf:type ex:Class1"	 ,
+				"?var2 ex:predicate2 ?var3 . "
+			});
+	
 	private MinimalConfigurationPreprocessor preprocessor;
 	
 	@Before
@@ -241,12 +192,6 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
 	}
 	
 	@Test
-	public void dynamicN3TripleWithNoFinalPeriod_ThrowsException() throws Exception {
-		expectException(FormConfigurationException.class, "Triple must end in a period");
-		validateDynamicN3Component(INVALID_TRIPLE_MISSING_FINAL_PERIOD);
-	}
-	
-	@Test
 	public void dynamicN3TripleWithTwoTerms_ThrowsException() throws Exception {
 		expectException(FormConfigurationException.class, "Triple in pattern does not have exactly three terms");
 		validateDynamicN3Component(INVALID_TRIPLE_WITH_TWO_TERMS);
@@ -262,13 +207,7 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
 	public void validDynamicN3Component_Succeeds() throws Exception {
 		validateDynamicN3Component(VALID_DYNAMIC_N3_COMPONENT);		
 	}
-	
-	// TODO - 1
-	// 2 - one value for first var, 2 values for second var
-	// 3 - 2 value for first var, 3 values for second var
-	// 4 - 0 value for first var
-	// 5 - 0 value for second var
-	// 6 - 2 values for each var - succeeds
+
 	@Test
 	public void dynamicVariableWithNoValue_ThrowsException() throws Exception {
 		expectException(FormSubmissionException.class, "Dynamic variable requires at least one value");
@@ -356,6 +295,28 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
 				+ "?var22 ex:predicate2 ?var3 . ";				
 		String pattern = buildDynamicN3Pattern(DYNAMIC_PATTERN, dynamicVars, "", 3);
 		Assert.assertEquals(expected, pattern);		
+	}
+	
+	@Test
+	public void testDynamicN3TripleWithNoFinalPeriod() throws Exception {
+		Map<String, String[]> params = new HashMap<>();
+		params.put("var1", new String[] {"var1_value1", "var1_value2"});
+		params.put("var2", new String[] {"var2_value1", "var2_value2"});
+		params.put("var3", new String[] {"var3_value1", "var3_value1", "var3_value3"});
+		String expected = "?subject ex:predicate1 ?var10 . "
+				+ "?subject ex:predicate1 ?var11 . "
+				+ "?subject ex:predicate1 ?var12 . "
+				+ "?var10 rdfs:label ?var20 . "
+				+ "?var11 rdfs:label ?var21 . "
+				+ "?var12 rdfs:label ?var22 . "
+				+ "?var10 rdf:type ex:Class1 . "
+				+ "?var11 rdf:type ex:Class1 . "
+				+ "?var12 rdf:type ex:Class1 . "
+				+ "?var20 ex:predicate2 ?var30 . "
+				+ "?var21 ex:predicate2 ?var31 . "
+				+ "?var22 ex:predicate2 ?var32 . ";
+		String pattern = buildDynamicN3Pattern(TRIPLES_MISSING_FINAL_PERIOD, DYNAMIC_VARS, "", 3);
+		Assert.assertEquals(expected, pattern);
 	}
 
 	@Test
