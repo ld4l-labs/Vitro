@@ -137,6 +137,26 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
     				"]" + 
 		    "}";
 	
+	private final static String DYNAMIC_N3_COMPONENT_WITH_PREFIXES = 
+		    "{" +
+    				"'@id': 'customform:addWork_dynamicN3'," +
+    				"'@type': [" +
+    					"'forms:DynamicN3Pattern'," +
+    					"'forms:FormComponent'" +
+					"]," +
+    			    "'customform:pattern': [" +
+			        "'?subject ex:predicate1 ?var1 .'," +
+				    "'?var1 rdfs:label ?var2 .'," +
+				    "'?var1 rdf:type ex:Class1 .'," +
+    				"]," +
+    				"'customform:dynamic_variables': [" +
+    					"'?var1'," +
+    					"'?var2'" +
+    				"]" + 
+    			    "'customform:prefixes': '@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> . " +
+    					"@prefix ex: <http://example.org/> . '" +
+		    "}";
+	
 	private static final JSONArray DYNAMIC_VARS = 
 			(JSONArray) JSONSerializer.toJSON(new String[] {"?var1", "?var2", "?var3"});
 	
@@ -337,7 +357,26 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
 		Assert.assertEquals(expected, pattern);
 	}
 
-		
+	public void testDynamicN3ComponentWithPrefixes() throws Exception {
+		Map<String, String[]> params = new HashMap<>();
+		params.put("var1", new String[] {"var1_value1", "var1_value2", "var1_value3"});
+		params.put("var2", new String[] {"var2_value1", "var2_value2", "var2_value3"});
+		String pattern = buildDynamicN3Pattern(VALID_DYNAMIC_N3_COMPONENT, params);
+		String expected = "@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> . " 
+				+ "@prefix ex: <http://example.org/> . "
+				+ "?subject ex:predicate1 ?var10 . "
+				+ "?subject ex:predicate1 ?var11 . "
+				+ "?subject ex:predicate1 ?var12 . "
+				+ "?var10 rdfs:label ?var20 . "
+				+ "?var11 rdfs:label ?var21 . "
+				+ "?var12 rdfs:label ?var22 . "
+				+ "?var10 rdf:type ex:Class1 . "
+				+ "?var11 rdf:type ex:Class1 . "
+				+ "?var12 rdf:type ex:Class1 . ";
+		Assert.assertEquals(expected, pattern);
+	}	
+	
+	
     // ---------------------------------------------------------------------
     // Helper methods
     // ---------------------------------------------------------------------
