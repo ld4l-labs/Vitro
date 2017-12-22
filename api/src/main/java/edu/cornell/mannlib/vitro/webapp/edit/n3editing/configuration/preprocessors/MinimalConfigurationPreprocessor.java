@@ -94,7 +94,7 @@ public class MinimalConfigurationPreprocessor extends
 			handleExistingValues(vreq);
 			
 		}catch (Exception ex) {
-			log.error("Exception occurred reading in file", ex);
+			log.error("Exception occurred reading in configuration file", ex);
 		}
 
 	}
@@ -222,7 +222,8 @@ public class MinimalConfigurationPreprocessor extends
 	}
 
 	//Add fields, etc. for what we see
-	private void updateConfiguration(VitroRequest vreq, JSONObject json) {
+	private void updateConfiguration(VitroRequest vreq, JSONObject json) 
+			throws FormConfigurationException, FormSubmissionException {
 		//Normally, would get fields from json? or just see everything within vreq param and check from json config
 		//The latter parallels the javascript approach
 		Map<String, String[]> parameterMap = vreq.getParameterMap();
@@ -264,13 +265,10 @@ public class MinimalConfigurationPreprocessor extends
 			this.editConfiguration.addN3Required(requiredN3String);
 		}
 		
-		try {
-			// Add dynamic N3 pattern to the edit configuration's required N3
-			String dynamicN3Pattern = buildDynamicN3Pattern(dynamicN3Component, parameterMap);
-			this.editConfiguration.addN3Required(dynamicN3Pattern);
-		} catch (FormConfigurationException | FormSubmissionException e) {
-			log.error(e.getStackTrace());
-		}
+		// Add dynamic N3 pattern to the edit configuration's required N3
+		String dynamicN3Pattern = buildDynamicN3Pattern(dynamicN3Component, parameterMap);
+		this.editConfiguration.addN3Required(dynamicN3Pattern);
+
 
 		//For each satisfiedVarName: get commponent and check if URI field, string field, or new resource and add accordingly
 		for(String s: satisfiedVarNames) {
