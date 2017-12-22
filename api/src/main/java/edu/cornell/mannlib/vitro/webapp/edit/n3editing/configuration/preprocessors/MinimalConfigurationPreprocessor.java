@@ -2,8 +2,6 @@
 
 package edu.cornell.mannlib.vitro.webapp.edit.n3editing.configuration.preprocessors;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.nio.file.Files;
@@ -16,22 +14,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import net.sf.json.JSON;
-import net.sf.json.JSONArray;
-import net.sf.json.JSONObject;
-import net.sf.json.JSONSerializer;
-
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.apache.jena.ontology.OntModel;
-import org.apache.jena.query.Query;
-import org.apache.jena.query.QueryExecution;
-import org.apache.jena.query.QueryExecutionFactory;
-import org.apache.jena.query.QueryFactory;
-import org.apache.jena.query.QuerySolution;
-import org.apache.jena.query.ResultSet;
 import org.apache.jena.rdf.model.Literal;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
@@ -41,20 +28,20 @@ import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdf.model.StmtIterator;
-import org.apache.jena.vocabulary.OWL;
-import org.apache.jena.vocabulary.RDF;
-import org.apache.jena.vocabulary.RDFS;
-import org.apache.jena.vocabulary.XSD;
 
 import edu.cornell.mannlib.vitro.webapp.application.ApplicationUtils;
 import edu.cornell.mannlib.vitro.webapp.controller.VitroRequest;
 import edu.cornell.mannlib.vitro.webapp.dao.WebappDaoFactory;
 import edu.cornell.mannlib.vitro.webapp.edit.n3editing.VTwo.BaseEditSubmissionPreprocessorVTwo;
-import edu.cornell.mannlib.vitro.webapp.edit.n3editing.VTwo.EditConfigurationUtils;
 import edu.cornell.mannlib.vitro.webapp.edit.n3editing.VTwo.EditConfigurationVTwo;
 import edu.cornell.mannlib.vitro.webapp.edit.n3editing.VTwo.MultiValueEditSubmission;
 import edu.cornell.mannlib.vitro.webapp.edit.n3editing.VTwo.fields.FieldVTwo;
 import edu.cornell.mannlib.vitro.webapp.modelaccess.ModelAccess;
+import net.sf.json.JSON;
+import net.sf.json.JSONArray;
+import net.sf.json.JSONException;
+import net.sf.json.JSONObject;
+import net.sf.json.JSONSerializer;
 
 public class MinimalConfigurationPreprocessor extends
 		BaseEditSubmissionPreprocessorVTwo {
@@ -73,6 +60,7 @@ public class MinimalConfigurationPreprocessor extends
 	List<String> allowedVarNames = new ArrayList<String>();
 	JSONObject optionalN3Component = null;
 	JSONObject requiredN3Component = null;
+	JSONObject dynamicN3Component = null;
 	JSONObject newResourcesComponent = null;
 	HashSet<String> newResourcesSet = new HashSet<String>();
 	HashMap<String, HashSet<String>> dependencies = new HashMap<String, HashSet<String>>();
@@ -106,10 +94,8 @@ public class MinimalConfigurationPreprocessor extends
 			handleExistingValues(vreq);
 			
 		}catch (Exception ex) {
-			log.error("Exception occurred reading in file", ex);
+			log.error("Exception occurred reading in configuration file", ex);
 		}
-		
-	
 
 	}
 	
@@ -176,12 +162,17 @@ public class MinimalConfigurationPreprocessor extends
 			}
 			//required n3 pattern
 			if(types.contains("forms:RequiredN3Pattern")) {
-				this.requiredN3Component= component;
+				this.requiredN3Component = component;
 			}
 			//optional n3 pattern - assuming only one optional n3 component
 			if(types.contains("forms:OptionalN3Pattern")) {
-				this.optionalN3Component= component;
+				this.optionalN3Component = component;
 			}
+			
+			if (types.contains("forms:DynamicN3Pattern")) {
+				this.dynamicN3Component = component;
+			}
+
 			//TODO: New resources now identified on field itself as proeprty not type
 			//"http://vitro.mannlib.cornell.edu/ns/vitro/CustomFormConfiguration#mayUseNewResource": true,
 			//new resources
@@ -231,7 +222,8 @@ public class MinimalConfigurationPreprocessor extends
 	}
 
 	//Add fields, etc. for what we see
-	private void updateConfiguration(VitroRequest vreq, JSONObject json) {
+	private void updateConfiguration(VitroRequest vreq, JSONObject json) 
+			throws FormConfigurationException, FormSubmissionException {
 		//Normally, would get fields from json? or just see everything within vreq param and check from json config
 		//The latter parallels the javascript approach
 		Map<String, String[]> parameterMap = vreq.getParameterMap();
@@ -272,8 +264,12 @@ public class MinimalConfigurationPreprocessor extends
 			}
 			this.editConfiguration.addN3Required(requiredN3String);
 		}
-		//Attach allowedN3 as n3 required
-		this.editConfiguration.addN3Required(allowedN3);
+		
+		// Add dynamic N3 pattern to the edit configuration's required N3
+		String dynamicN3Pattern = buildDynamicN3Pattern(dynamicN3Component, parameterMap);
+		this.editConfiguration.addN3Required(dynamicN3Pattern);
+
+
 		//For each satisfiedVarName: get commponent and check if URI field, string field, or new resource and add accordingly
 		for(String s: satisfiedVarNames) {
 			//reserved names subject, predicate, objectVar do not need to be processed
@@ -329,9 +325,174 @@ public class MinimalConfigurationPreprocessor extends
 					this.editConfiguration.addNewResource(s, null);
 				}
 			}
+		}		
+	}
+	
+	String buildDynamicN3Pattern(JSONObject dynamicComponent, Map<String, String[]> parameterMap) 
+			throws FormConfigurationException, FormSubmissionException {
+	
+		validateDynamicN3Component(dynamicComponent);
+
+		// Get the custom form configuration pattern
+		JSONArray dynamicN3Array = dynamicComponent.getJSONArray("customform:pattern");
+
+	    // Get the dynamic variables
+		JSONArray dynamicVars = dynamicComponent.getJSONArray("customform:dynamic_variables");
+	    
+		// Get the count of the dynamic variable values in the form submission
+		// TODO - maybe don't define dynamic variables, just get all the params that have multiple values
+		int valueCount = getDynamicVariableValueCount(dynamicVars, parameterMap);
+		
+		String prefixes = getPrefixes(dynamicComponent);
+
+		return buildDynamicN3Pattern(dynamicN3Array, dynamicVars, prefixes, valueCount);
+	}
+	
+	String buildDynamicN3Pattern(JSONArray dynamicN3Array, JSONArray dynamicVars, String prefixes, 
+			int paramValueCount) throws FormSubmissionException, FormConfigurationException {
+		
+	    StringBuilder stringBuilder = new StringBuilder();
+	    stringBuilder.append(prefixes);
+	    
+	    if (paramValueCount == 1) {
+	    		stringBuilder.append(dynamicN3Array.join(" "));
+    			return stringBuilder.toString();
+	    }
+
+	    // For each triple in the dynamic pattern
+	    for (int tripleCount = 0; tripleCount < dynamicN3Array.size(); tripleCount++) {
+	    		String triple = dynamicN3Array.getString(tripleCount);
+ 		
+	    		triple = triple.trim();
+	    		if (triple.endsWith(".")) {
+	    			// Peel off final period
+	    			triple = triple.substring(0, triple.length() - 1).trim(); // triple.lastIndexOf(".");
+	    		}
+	    		
+	    		// Split the triple into terms
+	    		String[] terms = triple.trim().split("\\s+");
+	    		
+	    		// For each set of values in the input
+	    		for (int valueIndex = 0; valueIndex < paramValueCount; valueIndex++) {
+	    			// For each term in the triple
+    				String[] newTerms = new String[3];
+    				for (int termIndex = 0; termIndex < 3; termIndex++) {
+    					String term = terms[termIndex];
+    				    newTerms[termIndex] = dynamicVars.contains(term) ? term + valueIndex : term;
+    				}
+	    		    // Join the new terms into a triple, appending the final punctuation
+		    		stringBuilder.append(StringUtils.join(newTerms, " ")).append(" . ");
+	    		}
+	    }
+	    
+	    return stringBuilder.toString();
+	}
+	
+	private String getPrefixes(JSONObject component) {
+		String prefixes = "";
+		if (component.containsKey("customform:prefixes")) {
+			prefixes = component.getString("customform:prefixes");
+		}
+		return prefixes;
+	}
+	
+	/**
+	 * Validates the dynamic N3 component. Throws an error if the component is invalid.
+	 * @throws FormConfigurationException 
+	 */
+	void validateDynamicN3Component(JSONObject dynamicN3Component) throws FormConfigurationException {
+		
+		validateDynamicN3Pattern(dynamicN3Component);	
+		validateDynamicN3Variables(dynamicN3Component);
+	}
+	
+	/**
+	 * Validates the dynamic N3 component pattern. Throws an error if the pattern is invalid.
+	 * @throws FormConfigurationException
+	 */
+	private void validateDynamicN3Pattern(JSONObject dynamicN3Component) throws FormConfigurationException {	
+		
+		// Check that the first element of the graph defines a non-empty pattern array.
+		
+		JSONArray pattern = null;
+		try {
+			pattern = dynamicN3Component.getJSONArray("customform:pattern");
+		} catch (JSONException e) {
+			throw new FormConfigurationException("Custom form pattern not defined or not a JSON array.", e);
+		}				
+		if (pattern.size() == 0) {
+			throw new FormConfigurationException("Custom form pattern is empty.");
 		}
 		
+		// Check that each element of the pattern is a well-formed triple: 3 terms plus final period.
+		for (int i = 0; i < pattern.size(); i++) {
+			String triple = pattern.getString(i);
+			triple = triple.trim();
+			
+			// Peel off final period (in case preceded by spaces) 
+			triple = triple.substring(0, triple.length() - 1).trim(); // triple.lastIndexOf(".");
+		
+			String[] terms = triple.split("\\s+");
+			if (terms.length != 3) {
+				throw new FormConfigurationException("Triple in pattern does not have exactly three terms.");
+			}			
+		}	
 	}
+	
+	/**
+	 * Validates the dynamic N3 dynamic variables array. Throws an error if the array is invalid.
+	 * @throws FormConfigurationException
+	 */
+	private 	void validateDynamicN3Variables(JSONObject dynamicN3Component) throws FormConfigurationException {
+		
+		// Check that the first element of the graph defines a non-empty dynamic variables array. 
+		JSONArray dynamicVars = null;
+		try {
+			dynamicVars = dynamicN3Component.getJSONArray("customform:dynamic_variables");
+		} catch (JSONException e) {
+			throw new FormConfigurationException("Dynamic variables not defined or not a JSON array.", e);
+		}				
+		if (dynamicVars.size() == 0) {
+			throw new FormConfigurationException("Dynamic variables array is empty.");
+		}
+	}	
+	
+	/**
+	 * Returns true iff the count of values in the form submission is the same for each dynamic variable. 
+	 * @throws FormSubmissionException 
+	 */
+	int getDynamicVariableValueCount(JSONArray dynamicVars, Map<String, String[]> params) 
+			throws FormSubmissionException  {
+
+	    // Get the first dynamic variable to compare to the others.
+	    int firstValueCount = getParameterValueCount(0, dynamicVars, params);
+
+	    // Match the dynamic variables to the input parameter values and make sure all variables have the same 
+	    // number of inputs.	 
+	    for (int index = 1; index < dynamicVars.size(); index++) {
+	    		int valueCount = getParameterValueCount(index, dynamicVars, params);
+	    		if (valueCount != firstValueCount) {
+	    			throw new FormSubmissionException("Dynamic variables must have the same number of values.");
+	    		}   		
+	    }
+	    
+	    return firstValueCount;
+	}
+	
+	/** 
+	 * Return the number of values in the parameter map for the specified variable
+	 * @throws FormSubmissionException 
+	 */
+    int getParameterValueCount(int index, JSONArray dynamicVars, Map<String, String[]> params) 
+    		throws FormSubmissionException {
+    	
+    		// Remove initial "?" from the variable for the comparison with the params
+		String var = dynamicVars.getString(index).substring(1);
+		if (! params.containsKey(var)) {
+			throw new FormSubmissionException("Dynamic variable requires at least one value.");
+		}
+		return params.get(var).length;
+    }
 
 	private boolean isReservedVarName(String s) {
 		return (s.equals("subject") || s.equals("predicate") || s.equals("objectVar"));
@@ -509,10 +670,6 @@ public class MinimalConfigurationPreprocessor extends
 		//Copy
 		copyUrisFromForm.putAll(urisFromForm);
 		copyLiteralsFromForm.putAll(literalsFromForm);
-	}
-	
-	
-
-	
+	}	
 
 }
