@@ -465,12 +465,12 @@ public class MinimalConfigurationPreprocessor extends
 			throws FormSubmissionException  {
 
 	    // Get the first dynamic variable to compare to the others.
-	    int firstValueCount = getParameterValueCount(0, dynamicVars, params);
+	    int firstValueCount = getDynamicVarParameterValueCount(0, dynamicVars, params);
 
 	    // Match the dynamic variables to the input parameter values and make sure all variables have the same 
 	    // number of inputs.	 
 	    for (int index = 1; index < dynamicVars.size(); index++) {
-	    		int valueCount = getParameterValueCount(index, dynamicVars, params);
+	    		int valueCount = getDynamicVarParameterValueCount(index, dynamicVars, params);
 	    		if (valueCount != firstValueCount) {
 	    			throw new FormSubmissionException("Dynamic variables must have the same number of values.");
 	    		}   		
@@ -483,7 +483,7 @@ public class MinimalConfigurationPreprocessor extends
 	 * Return the number of values in the parameter map for the specified variable
 	 * @throws FormSubmissionException 
 	 */
-    int getParameterValueCount(int index, JSONArray dynamicVars, Map<String, String[]> params) 
+    int getDynamicVarParameterValueCount(int index, JSONArray dynamicVars, Map<String, String[]> params) 
     		throws FormSubmissionException {
     	
     		// Remove initial "?" from the variable for the comparison with the params

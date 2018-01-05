@@ -392,7 +392,7 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
 		
 	private int getParameterValueCount(int index, JSONArray dynamicVars, Map<String, String[]> params) 
 			throws Exception {
-		return preprocessor.getParameterValueCount(index,  dynamicVars, params);
+		return preprocessor.getDynamicVarParameterValueCount(index,  dynamicVars, params);
 	}
 	
 	private int getDynamicVariableValueCount(JSONArray dynamicVars, Map<String, String[]> params) 
