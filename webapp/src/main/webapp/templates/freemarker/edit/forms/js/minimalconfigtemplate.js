@@ -223,7 +223,10 @@ function MinimalConfigTemplate(formData, displayData) {
             // "@type": [ "forms:ConstantList",
            
             if(componentHasType(fieldOptionComponent, "forms:ConstantList")) {
-            	
+            	if("constantList" in displayInfo) {
+            		var staticContent = displayInfo["constantList"];
+            		createStaticDropdownField(fieldName, staticContent);
+            	}
             } else { 
 	            //If a constant field option, use the display data
 	            //Otherwise do an ajax request
