@@ -220,22 +220,33 @@ function MinimalConfigTemplate(formData, displayData) {
         //First, just see if this even works
         if(fieldName in formFieldsToOptions) {
             var fieldOptionComponent = formFieldsToOptions[fieldName];
-            //Just pass the entire JSON object to the servlet and let the servlet parse it
-            $.ajax(
-                {
-                    method: "GET",
-                    url: formData.customFormAJAXUrl,
-                    data: { "configComponent": JSON.stringify(fieldOptionComponent),
-                    "fieldName": fieldName,
-                    "action": "dropdown"
-                }
-            })
-            .done(function( content ) {
-                //templateclone is from URI Field, so make this work better
-                //templateClone = createURIField(configComponent);
-                createDropdownField(fieldName, content);
-
-            });
+            // "@type": [ "forms:ConstantList",
+           
+            if(componentHasType(fieldOptionComponent, "forms:ConstantList")) {
+            	if("constantList" in displayInfo) {
+            		var staticContent = displayInfo["constantList"];
+            		createStaticDropdownField(fieldName, staticContent);
+            	}
+            } else { 
+	            //If a constant field option, use the display data
+	            //Otherwise do an ajax request
+	            //Just pass the entire JSON object to the servlet and let the servlet parse it
+	            $.ajax(
+	                {
+	                    method: "GET",
+	                    url: formData.customFormAJAXUrl,
+	                    data: { "configComponent": JSON.stringify(fieldOptionComponent),
+	                    "fieldName": fieldName,
+	                    "action": "dropdown"
+	                }
+	            })
+	            .done(function( content ) {
+	                //templateclone is from URI Field, so make this work better
+	                //templateClone = createURIField(configComponent);
+	                createDropdownField(fieldName, content);
+	
+	            });
+            }
         }
     }
 
@@ -333,6 +344,24 @@ function MinimalConfigTemplate(formData, displayData) {
             htmlList += "<option value='" + key + "'>" + value + "</option>";
 
         });*/
+        dropdownElement.empty().append(htmlList);
+    }
+    
+    //TODO: refactor above to use the same basis, one with sorting and one without
+    //And or have sort at data level
+    //Also this uses label and value - right now label and uri
+    function createStaticDropdownField(varName, content) {
+        //populate drop downs
+        var dropdownElement = $("select#" + varName);
+        var htmlList = "";
+       
+        $.each(content, function(index, contentObj) {
+        	var uri = contentObj["uri"];
+        	var label = contentObj["label"];
+            htmlList += "<option value='" + uri + "'>" + label + "</option>";
+
+        });
+      
         dropdownElement.empty().append(htmlList);
     }
     
