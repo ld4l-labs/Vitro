@@ -245,7 +245,7 @@ public class MinimalConfigurationPreprocessor extends
 		Model allowedN3Model = createAllowedModel(satisfiedVarNames, fakeNS, uriizedAllN3);
 		
 		String allowedN3 = unURIize(fakeNS, allowedN3Model);
-		System.out.println(allowedN3);
+		//System.out.println(allowedN3);
 		//Hardcoding here - will do the rest above
 		//N3 required
 		//how did this even work before?
@@ -266,11 +266,12 @@ public class MinimalConfigurationPreprocessor extends
 		}
 		
 		// Add dynamic N3 pattern to the edit configuration's required N3
-		String dynamicN3Pattern = buildDynamicN3Pattern(dynamicN3Component, parameterMap);
-		this.editConfiguration.addN3Required(dynamicN3Pattern);
+		if (dynamicN3Component != null) {
+			String dynamicN3Pattern = buildDynamicN3Pattern(dynamicN3Component, parameterMap);
+			this.editConfiguration.addN3Required(dynamicN3Pattern);
+		}
 
-
-		//For each satisfiedVarName: get commponent and check if URI field, string field, or new resource and add accordingly
+		//For each satisfiedVarName: get component and check if URI field, string field, or new resource and add accordingly
 		for(String s: satisfiedVarNames) {
 			//reserved names subject, predicate, objectVar do not need to be processed
 			//that said, we may need to override certain properties, so do process if element is present
