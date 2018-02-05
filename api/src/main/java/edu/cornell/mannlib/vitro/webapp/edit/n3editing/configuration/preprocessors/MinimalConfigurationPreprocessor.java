@@ -2,8 +2,6 @@
 
 package edu.cornell.mannlib.vitro.webapp.edit.n3editing.configuration.preprocessors;
 
-import java.io.StringReader;
-import java.io.StringWriter;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -15,19 +13,11 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.jena.ontology.OntModel;
 import org.apache.jena.rdf.model.Literal;
-import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.ModelFactory;
-import org.apache.jena.rdf.model.Property;
-import org.apache.jena.rdf.model.RDFNode;
-import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
-import org.apache.jena.rdf.model.Statement;
-import org.apache.jena.rdf.model.StmtIterator;
 
 import edu.cornell.mannlib.vitro.webapp.application.ApplicationUtils;
 import edu.cornell.mannlib.vitro.webapp.controller.VitroRequest;
@@ -105,6 +95,7 @@ public class MinimalConfigurationPreprocessor extends
 		if(StringUtils.isNotEmpty(existingValues)) {
 			//Convert to JSON object
 			JSONObject existingValuesObject = (JSONObject) JSONSerializer.toJSON(existingValues);
+			@SuppressWarnings("unchecked")
 			Set<String> keys = existingValuesObject.keySet();
 			for(String key: keys) {
 				if(fieldNameToConfigurationComponent.containsKey(key)) {
@@ -237,12 +228,12 @@ public class MinimalConfigurationPreprocessor extends
 		}*/
 		
 		HashSet<String> satisfiedVarNames = getSatisfiedVarNames(parameterMap);
-		String fakeNS = "http://www.uriize.com/fake-ns#";
-		String uriizedAllN3 = createN3WithFakeNS(fakeNS);
+		// String fakeNS = "http://www.uriize.com/fake-ns#";
+		// String uriizedAllN3 = createN3WithFakeNS(fakeNS);
 		//Add to a model
-		Model allowedN3Model = createAllowedModel(satisfiedVarNames, fakeNS, uriizedAllN3);
+		// Model allowedN3Model = createAllowedModel(satisfiedVarNames, fakeNS, uriizedAllN3);
 		
-		String allowedN3 = unURIize(fakeNS, allowedN3Model);
+		// String allowedN3 = unURIize(fakeNS, allowedN3Model);
 		//System.out.println(allowedN3);
 		//Hardcoding here - will do the rest above
 		//N3 required
@@ -306,13 +297,13 @@ public class MinimalConfigurationPreprocessor extends
 					String uriValue = parameterMap.get(s)[0];
 					String[] uriVals = new String[1];
 					uriVals[0] = uriValue;
-					this.submission.addUriToForm(this.editConfiguration, s, uriVals);
+					submission.addUriToForm(this.editConfiguration, s, uriVals);
 				} else if(isLiteral) {
 					String literalValue = parameterMap.get(s)[0];
 					String[] literalVals = new String[1];
 					literalVals[0] = literalValue;
 					FieldVTwo literalField = this.editConfiguration.getField(s);
-					this.submission.addLiteralToForm(this.editConfiguration, literalField, s, literalVals);
+					submission.addLiteralToForm(this.editConfiguration, literalField, s, literalVals);
 				}
 				//Need a way to deal with Date Time separately - this will require separate implementation?
 				//Do we have date-time in VitroLib?
@@ -497,6 +488,7 @@ public class MinimalConfigurationPreprocessor extends
 		return (s.equals("subject") || s.equals("predicate") || s.equals("objectVar"));
 	}
 
+	/*
 	private String unURIize(String fakeNS, Model allowedN3Model) {
 		//Un uriize
 		StringWriter sw = new StringWriter();
@@ -512,7 +504,9 @@ public class MinimalConfigurationPreprocessor extends
 		System.out.println("Resubstituting");
 		return allowedN3;
 	}
+	*/
 
+	/*
 	private String createN3WithFakeNS(String fakeNS) {
 		String uriizedAllN3 = null;
 		//Take the N3 strings, and then URI-ize them
@@ -553,8 +547,8 @@ public class MinimalConfigurationPreprocessor extends
 			System.out.println(uriizedAllN3);
 		}
 		return uriizedAllN3;
-
 	}
+	*/
 
 	//Given the values for the parameters, which varnames are satisfifed
 	private HashSet<String> getSatisfiedVarNames(Map<String, String[]> parameterMap) {
@@ -597,6 +591,7 @@ public class MinimalConfigurationPreprocessor extends
 		return satisfiedVarNames;
 	}
 
+	/*
 	private Model createAllowedModel(HashSet<String> satisfiedVarNames, String fakeNS, String uriizedAllN3) {
 		Model allowedN3Model = ModelFactory.createDefaultModel();
 		//this string may be null or empty if there are no optional N3 defined
@@ -645,13 +640,16 @@ public class MinimalConfigurationPreprocessor extends
 		}
 		return allowedN3Model;
 	}
+	*/
 	
+	/*
 	private void addConfigurationComponent(JSONObject component) {
 		//Get the N3 
-		//Create field
-		
+		//Create field		
 	}
+	*/
 
+	/*
 	private JSONObject getConfigurationComponent(String fieldName, JSONObject json) {
 		if(this.fieldNameToConfigurationComponent.containsKey(fieldName)) {
 			return this.fieldNameToConfigurationComponent.get(fieldName);
@@ -659,6 +657,7 @@ public class MinimalConfigurationPreprocessor extends
 		
 		return null;
 	}
+	*/
 
 	//Since we will change the uris and literals from form, we should make copies
 	//of the original values and store them, this will also make iterations
