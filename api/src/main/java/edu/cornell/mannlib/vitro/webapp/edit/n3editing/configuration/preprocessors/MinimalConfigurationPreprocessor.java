@@ -90,10 +90,10 @@ public class MinimalConfigurationPreprocessor extends
 			String contents = new String(Files.readAllBytes(Paths.get(configjsonString)));
 			JSONObject contentsJSON = (JSONObject) JSONSerializer.toJSON(contents);
 			processConfigurationJSONFields(contentsJSON);
-			updateConfiguration(vreq, contentsJSON);
+			updateConfiguration(vreq.getParameterMap(), contentsJSON);
 			handleExistingValues(vreq);
 			
-		}catch (Exception ex) {
+		} catch (Exception ex) {
 			log.error("Exception occurred reading in configuration file", ex);
 		}
 
@@ -221,12 +221,11 @@ public class MinimalConfigurationPreprocessor extends
 		
 	}
 
-	//Add fields, etc. for what we see
-	private void updateConfiguration(VitroRequest vreq, JSONObject json) 
+	// Add fields, etc. for what we see
+	void updateConfiguration(Map<String, String[]> parameterMap, JSONObject json) 
 			throws FormConfigurationException, FormSubmissionException {
 		//Normally, would get fields from json? or just see everything within vreq param and check from json config
 		//The latter parallels the javascript approach
-		Map<String, String[]> parameterMap = vreq.getParameterMap();
 		/*
 		for(String k: parameterMap.keySet()) {
 			//Check if field exists within configuration
@@ -236,7 +235,6 @@ public class MinimalConfigurationPreprocessor extends
 				addConfigurationComponent(component);
 			}
 		}*/
-		
 		
 		HashSet<String> satisfiedVarNames = getSatisfiedVarNames(parameterMap);
 		String fakeNS = "http://www.uriize.com/fake-ns#";
@@ -305,12 +303,12 @@ public class MinimalConfigurationPreprocessor extends
 				
 				//Add URI - add Literal
 				if(isURI) {
-					String uriValue = vreq.getParameter(s);
+					String uriValue = parameterMap.get(s)[0];
 					String[] uriVals = new String[1];
 					uriVals[0] = uriValue;
 					this.submission.addUriToForm(this.editConfiguration, s, uriVals);
 				} else if(isLiteral) {
-					String literalValue = vreq.getParameter(s);
+					String literalValue = parameterMap.get(s)[0];
 					String[] literalVals = new String[1];
 					literalVals[0] = literalValue;
 					FieldVTwo literalField = this.editConfiguration.getField(s);

@@ -125,7 +125,7 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
     				"'@type': [" +
     					"'forms:DynamicN3Pattern'," +
     					"'forms:FormComponent'" +
-					"]," +
+				"]," +
     			    "'customform:pattern': [" +
 			        "'?subject ex:predicate1 ?var1 .'," +
 				    "'?var1 rdfs:label ?var2 .'," +
@@ -137,25 +137,24 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
     				"]" + 
 		    "}";
 	
-	private final static String DYNAMIC_N3_COMPONENT_WITH_PREFIXES = 
-		    "{" +
-    				"'@id': 'customform:addWork_dynamicN3'," +
-    				"'@type': [" +
-    					"'forms:DynamicN3Pattern'," +
-    					"'forms:FormComponent'" +
-					"]," +
-    			    "'customform:pattern': [" +
-			        "'?subject ex:predicate1 ?var1 .'," +
-				    "'?var1 rdfs:label ?var2 .'," +
-				    "'?var1 rdf:type ex:Class1 .'," +
-    				"]," +
-    				"'customform:dynamic_variables': [" +
-    					"'?var1'," +
-    					"'?var2'" +
-    				"]" + 
-    			    "'customform:prefixes': '@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> . " +
-    					"@prefix ex: <http://example.org/> . '" +
-		    "}";
+	private final static String N3_CONFIG = 
+			"{" +
+				"'@context': {" +
+		    			"'owl': 'http://www.w3.org/2002/07/owl#'" +
+	    			"}," + 
+	    			"'@graph': [" + 
+	    				"{" +
+    						"'@id': 'customform:addWork_requiredN3'," +
+    						"'@type': [" +
+    							"'forms:DynamicN3Pattern'," +
+    							"'forms:FormComponent'" +
+    						"]," +
+    						"'customform:pattern': [" +
+    							"'?subject ex:predicate1 ?var1 .'" +
+						"]" +
+    					"}" +
+    				"]" +
+			"}";
 	
 	private static final JSONArray DYNAMIC_VARS = 
 			(JSONArray) JSONSerializer.toJSON(new String[] {"?var1", "?var2", "?var3"});
@@ -183,9 +182,19 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
         this.preprocessor = new MinimalConfigurationPreprocessor(new EditConfigurationVTwo());
     }
 
+
     // ---------------------------------------------------------------------
     // The tests
     // ---------------------------------------------------------------------
+	
+	@Test
+	public void formWithNoDynamicN3Component_Succeeds() throws Exception {
+		JSONObject config = (JSONObject) JSONSerializer.toJSON(N3_CONFIG);
+		Map<String, String[]> params = new HashMap<>();
+		params.put("var1", new String[] {"value"});
+		preprocessor.requiredN3Component = config.getJSONArray("@graph").getJSONObject(0);
+		preprocessor.updateConfiguration(params, config);
+	}
 	
 	@Test
 	public void dynamicN3ComponentWithoutPattern_ThrowsException() throws Exception {
