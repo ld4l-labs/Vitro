@@ -306,14 +306,10 @@ public class MinimalConfigurationPreprocessor extends
 				
 				//Add URI - add Literal
 				if(isURI) {
-					String uriValue = parameterMap.get(s)[0];
-					String[] uriVals = new String[1];
-					uriVals[0] = uriValue;
+					String[] uriVals = parameterMap.get(s);
 					submission.addUriToForm(this.editConfiguration, s, uriVals);
 				} else if(isLiteral) {
-					String literalValue = parameterMap.get(s)[0];
-					String[] literalVals = new String[1];
-					literalVals[0] = literalValue;
+					String[] literalVals = parameterMap.get(s);
 					FieldVTwo literalField = this.editConfiguration.getField(s);
 					submission.addLiteralToForm(this.editConfiguration, literalField, s, literalVals);
 				}
