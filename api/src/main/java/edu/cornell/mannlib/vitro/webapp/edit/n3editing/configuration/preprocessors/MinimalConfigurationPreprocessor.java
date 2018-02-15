@@ -251,8 +251,6 @@ public class MinimalConfigurationPreprocessor extends
 
 		//Hardcoding here - will do the rest above
 		//N3 required
-		
-
 		if (requiredN3Component != null) {
 			JSONArray requiredN3Array = this.requiredN3Component.getJSONArray("customform:pattern");	
 		

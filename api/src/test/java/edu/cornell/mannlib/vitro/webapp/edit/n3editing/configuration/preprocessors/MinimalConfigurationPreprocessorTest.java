@@ -15,12 +15,6 @@ import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import net.sf.json.JSONSerializer;
 
-/*
- * getPrefixes:
- * test non-empty prefix string
- * test empty prefix string
-
- */
 
 /**
  * Tests class MinimalConfigurationPreprocessor
