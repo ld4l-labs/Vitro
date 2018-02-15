@@ -236,6 +236,11 @@ public class MinimalConfigurationPreprocessor extends
 			}
 		}*/
 		
+		if (requiredN3Component == null && dynamicN3Component == null) {
+			throw new FormConfigurationException(
+					"Configuration must include either a required or dynamic component.");
+		}
+		
 		HashSet<String> satisfiedVarNames = getSatisfiedVarNames(parameterMap);
 		String fakeNS = "http://www.uriize.com/fake-ns#";
 		String uriizedAllN3 = createN3WithFakeNS(fakeNS);
@@ -243,28 +248,31 @@ public class MinimalConfigurationPreprocessor extends
 		Model allowedN3Model = createAllowedModel(satisfiedVarNames, fakeNS, uriizedAllN3);
 		
 		String allowedN3 = unURIize(fakeNS, allowedN3Model);
-		//System.out.println(allowedN3);
+
 		//Hardcoding here - will do the rest above
 		//N3 required
-		//how did this even work before?
-		JSONArray requiredN3Array = this.requiredN3Component.getJSONArray("customform:pattern");	
 		
-		if(requiredN3Array.size() > 0) {
-			String prefixes = "";
-			if(this.requiredN3Component.containsKey("customform:prefixes")) {
-				prefixes = this.requiredN3Component.getString("customform:prefixes");
+
+		if (requiredN3Component != null) {
+			JSONArray requiredN3Array = this.requiredN3Component.getJSONArray("customform:pattern");	
+		
+			if (requiredN3Array.size() > 0) {
+				String prefixes = "";
+				if (this.requiredN3Component.containsKey("customform:prefixes")) {
+					prefixes = this.requiredN3Component.getString("customform:prefixes");
+				}
+				String requiredN3String = prefixes;
+				int slen = requiredN3Array.size();
+				int s;
+				for(s = 0; s < slen; s++) {
+					requiredN3String += requiredN3Array.getString(s);
+				}
+				this.editConfiguration.addN3Required(requiredN3String);
 			}
-			String requiredN3String = prefixes;
-			int slen = requiredN3Array.size();
-			int s;
-			for(s = 0; s < slen; s++) {
-				requiredN3String += requiredN3Array.getString(s);
-			}
-			this.editConfiguration.addN3Required(requiredN3String);
+			
+			// Attach allowedN3 as n3 required
+			this.editConfiguration.addN3Required(allowedN3);
 		}
-		
-		// Attach allowedN3 as n3 required
-		this.editConfiguration.addN3Required(allowedN3);
 		
 		// Add dynamic N3 pattern to the edit configuration's required N3
 		if (dynamicN3Component != null) {
@@ -383,6 +391,7 @@ public class MinimalConfigurationPreprocessor extends
 	    		}
 	    }
 	    
+	    log.debug(stringBuilder.toString());
 	    return stringBuilder.toString();
 	}
 	

@@ -137,7 +137,7 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
     				"]" + 
 		    "}";
 	
-	private final static String N3_CONFIG = 
+	private final static String N3_CONFIG_REQUIRED = 
 			"{" +
 				"'@context': {" +
 		    			"'owl': 'http://www.w3.org/2002/07/owl#'" +
@@ -145,6 +145,50 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
 	    			"'@graph': [" + 
 	    				"{" +
     						"'@id': 'customform:addWork_requiredN3'," +
+    						"'@type': [" +
+    							"'forms:DynamicN3Pattern'," +
+    							"'forms:FormComponent'" +
+    						"]," +
+    						"'customform:pattern': [" +
+    							"'?subject ex:predicate1 ?var1 .'" +
+						"]" +
+    					"}" +
+    				"]" +
+			"}";
+	
+	private final static String N3_CONFIG_NO_REQUIRED = 
+			"{" +
+				"'@context': {" +
+		    			"'owl': 'http://www.w3.org/2002/07/owl#'" +
+	    			"}," + 
+	    			"'@graph': [" + 
+	    				"{" +
+    						"'@id': 'customform:addWork_dynamicN3'," +
+    						"'@type': [" +
+    							"'forms:DynamicN3Pattern'," +
+    							"'forms:FormComponent'" +
+    						"]," +
+    	    			    		"'customform:pattern': [" +
+    	    			    			"'?subject ex:predicate1 ?var1 .'," +
+	    			    			"'?var1 rdfs:label ?var2 .'," +
+	    			    			"'?var1 rdf:type ex:Class1 .'," +
+	    			    		"]," +
+	    			    		"'customform:dynamic_variables': [" +
+	    			    			"'?var1'," +
+	    			    			"'?var2'" +
+	    			    		"]" + 
+    					"}" +
+    				"]" +
+			"}";
+	
+	private final static String N3_CONFIG_NO_REQUIRED_OR_DYNAMIC = 
+			"{" +
+				"'@context': {" +
+		    			"'owl': 'http://www.w3.org/2002/07/owl#'" +
+	    			"}," + 
+	    			"'@graph': [" + 
+	    				"{" +
+    						"'@id': 'customform:addWork_optionalN3'," +
     						"'@type': [" +
     							"'forms:DynamicN3Pattern'," +
     							"'forms:FormComponent'" +
@@ -189,10 +233,30 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
 	
 	@Test
 	public void formWithNoDynamicN3Component_Succeeds() throws Exception {
-		JSONObject config = (JSONObject) JSONSerializer.toJSON(N3_CONFIG);
+		JSONObject config = (JSONObject) JSONSerializer.toJSON(N3_CONFIG_REQUIRED);
 		Map<String, String[]> params = new HashMap<>();
 		params.put("var1", new String[] {"value"});
 		preprocessor.requiredN3Component = config.getJSONArray("@graph").getJSONObject(0);
+		preprocessor.updateConfiguration(params, config);
+	}
+	
+	@Test
+	public void formWithDynamicButNoRequiredN3Component_Succeeds() throws Exception {
+		JSONObject config = (JSONObject) JSONSerializer.toJSON(N3_CONFIG_NO_REQUIRED);
+		Map<String, String[]> params = new HashMap<>();
+		params.put("var1", new String[] {"value1"});
+		params.put("var2", new String[] {"value2"});
+		preprocessor.dynamicN3Component = config.getJSONArray("@graph").getJSONObject(0);
+		preprocessor.updateConfiguration(params, config);
+	}
+	
+	@Test (expected = FormConfigurationException.class)
+	public void formWithDynamicButNoRequiredN3Component_ThrowException() throws Exception {
+		JSONObject config = (JSONObject) JSONSerializer.toJSON(N3_CONFIG_NO_REQUIRED_OR_DYNAMIC);
+		Map<String, String[]> params = new HashMap<>();
+		params.put("var1", new String[] {"value1"});
+		params.put("var2", new String[] {"value2"});
+		preprocessor.optionalN3Component = config.getJSONArray("@graph").getJSONObject(0);
 		preprocessor.updateConfiguration(params, config);
 	}
 	
