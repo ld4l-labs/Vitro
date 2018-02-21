@@ -28,62 +28,68 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
 	
 	private final static String BASE_DYNAMIC_N3_COMPONENT = 
 		    "{" +
-    				"'@id': 'customform:addWork_dynamicN3'," +
+    				"'@id': 'customform:sampleForm_dynamicN3'," +
     				"'@type': [" +
     					"'forms:DynamicN3Pattern'," +
     					"'forms:FormComponent'" +
-					"]," +
+				"]," +
 		    "}";
 	
-	private final static String DYNAMIC_N3_COMPONENT_WITH_EMPTY_PATTERN = 
+	private final static String DYNAMIC_N3_COMPONENT_EMPTY_PATTERN = 
 		    "{" +
-    				"'@id': 'customform:addWork_dynamicN3'," +
+    				"'@id': 'customform:sampleForm_dynamicN3'," +
     				"'@type': [" +
     					"'forms:DynamicN3Pattern'," +
     					"'forms:FormComponent'" +
-					"]," +
+				"]," +
     			    "'customform:pattern': [" +
     				"]" +
 		    "}";
 	
-	private final static String DYNAMIC_N3_COMPONENT_WITHOUT_DYNAMIC_VARIABLES = 
+	private final static String DYNAMIC_N3_COMPONENT_NO_DYNAMIC_VARIABLES = 
 		    "{" +
-    				"'@id': 'customform:addWork_dynamicN3'," +
+    				"'@id': 'customform:sampleForm_dynamicN3'," +
     				"'@type': [" +
     					"'forms:DynamicN3Pattern'," +
     					"'forms:FormComponent'" +
-					"]," +
+				"]," +
     			    "'customform:pattern': [" +
 			        "'?subject ex:predicate1 var1 .'," +
 				    "'?var1 rdfs:label ?var2 .'," +
 				    "'?var1 rdf:type ex:Class1 .'," +
-    				"]" +
+    				"]," +
+    				"'customform:prefixes': '@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> . " + 
+    					"@prefix  rdfs: <http://www.w3.org/2000/01/rdf-schema#> . " +
+    					"@prefix ex: <http://example.com> . '" +
 		    "}";
 
 	
-	private final static String DYNAMIC_N3_COMPONENT_WITH_EMPTY_DYNAMIC_VARIABLES = 
+	private final static String DYNAMIC_N3_COMPONENT_EMPTY_DYNAMIC_VARIABLES = 
 		    "{" +
-    				"'@id': 'customform:addWork_dynamicN3'," +
+    				"'@id': 'customform:sampleForm_dynamicN3'," +
     				"'@type': [" +
     					"'forms:DynamicN3Pattern'," +
     					"'forms:FormComponent'" +
-					"]," +
+				"]," +
     			    "'customform:pattern': [" +
 			        "'?subject ex:predicate1 ?var1 .'," +
 				    "'?var1 rdfs:label ?var2 .'," +
 				    "'?var1 rdf:type ex:Class1 .'," +
     				"]," +
     				"'customform:dynamic_variables': [" +
-    				"]" + 
+    				"]," + 
+    				"'customform:prefixes': '@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> . " + 
+	    				"@prefix  rdfs: <http://www.w3.org/2000/01/rdf-schema#> . " +
+	    				"@prefix ex: <http://example.com> . '" +
 		    "}";
 	
 	private final static String INVALID_TRIPLE_WITH_TWO_TERMS = 
 		    "{" +
-    				"'@id': 'customform:addWork_dynamicN3'," +
+    				"'@id': 'customform:sampleForm_dynamicN3'," +
     				"'@type': [" +
     					"'forms:DynamicN3Pattern'," +
     					"'forms:FormComponent'" +
-					"]," +
+			    "]," +
     			    "'customform:pattern': [" +
 			        "'?subject ex:predicate1 ?var1 .'," +
 				    "'?var1 rdfs:label ?var2 .'," +
@@ -92,30 +98,35 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
     				"'customform:dynamic_variables': [" +
     					"'?var1'," +
     					"'?var2'" +
-    				"]" + 
+    				"]," + 
+    				"'customform:prefixes': '@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> . " + 
+	    				"@prefix  rdfs: <http://www.w3.org/2000/01/rdf-schema#> . '" +
 		    "}";
 
 	private final static String INVALID_TRIPLE_WITH_FOUR_TERMS = 
 		    "{" +
-    				"'@id': 'customform:addWork_dynamicN3'," +
+    				"'@id': 'customform:sampleForm_dynamicN3'," +
     				"'@type': [" +
     					"'forms:DynamicN3Pattern'," +
     					"'forms:FormComponent'" +
-					"]," +
+				"]," +
     			    "'customform:pattern': [" +
 			        "'?subject ex:predicate1 ?var1 .'," +
-				    "'?var1 rdfs:label ?var2 .'," +
-				    "'?var1 ex:Class1 .'," +
+				    "'?var1 rdfs:label ?var2 ?var1 .'," +
+				    "'?var1 rdf:type ex:Class1 .'," +
     				"]," +
     				"'customform:dynamic_variables': [" +
     					"'?var1'," +
     					"'?var2'" +
-    				"]" + 
+    				"]," + 
+    				"'customform:prefixes': '@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> . " + 
+		    			"@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> . " +
+		    			"@prefix ex: <http://example.com> . '" +
 		    "}";
 	
 	private final static String VALID_DYNAMIC_N3_COMPONENT = 
 		    "{" +
-    				"'@id': 'customform:addWork_dynamicN3'," +
+    				"'@id': 'customform:sampleForm_dynamicN3'," +
     				"'@type': [" +
     					"'forms:DynamicN3Pattern'," +
     					"'forms:FormComponent'" +
@@ -128,36 +139,76 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
     				"'customform:dynamic_variables': [" +
     					"'?var1'," +
     					"'?var2'" +
-    				"]" + 
+    				"]," +
+    				"'customform:prefixes': '@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> . " + 
+	    		    		"@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> . " +
+	    		    		"@prefix ex: <http://example.com> . '" +
 		    "}";
 	
-	private final static String N3_CONFIG_REQUIRED = 
+	private final static String VALID_DYNAMIC_N3_COMPONENT_NO_PREFIXES = 
+		    "{" +
+    				"'@id': 'customform:sampleForm_dynamicN3'," +
+    				"'@type': [" +
+    					"'forms:DynamicN3Pattern'," +
+    					"'forms:FormComponent'" +
+				"]," +
+    			    "'customform:pattern': [" +
+			        "'?subject <http://example.com/predicate1> ?var1 .'," +
+				    "'?var1 <http://www.w3.org/2000/01/rdf-schema#label> ?var2 .'," +
+				    "'?var1 <http://www.w3.org/2000/01/rdf-schema#type> <http://example.com/Class1> .'," +
+    				"]," +
+    				"'customform:dynamic_variables': [" +
+    					"'?var1'," +
+    					"'?var2'" +
+    				"]" +
+		    "}";
+	
+	private final static String VALID_DYNAMIC_N3_COMPONENT_NO_PREFIXES_DEFINED = 
+		    "{" +
+    				"'@id': 'customform:sampleForm_dynamicN3'," +
+    				"'@type': [" +
+    					"'forms:DynamicN3Pattern'," +
+    					"'forms:FormComponent'" +
+				"]," +
+    			    "'customform:pattern': [" +
+			        "'?subject ex:predicate1 ?var1 .'," +
+				    "'?var1 rdfs:label ?var2 .'," +
+				    "'?var1 rdf:type ex:Class1 .'," +
+    				"]," +
+    				"'customform:dynamic_variables': [" +
+    					"'?var1'," +
+    					"'?var2'" +
+    				"]" +
+		    "}";
+	
+	private final static String N3_CONFIG_REQUIRED_COMPONENT = 
 			"{" +
 				"'@context': {" +
 		    			"'owl': 'http://www.w3.org/2002/07/owl#'" +
 	    			"}," + 
 	    			"'@graph': [" + 
 	    				"{" +
-    						"'@id': 'customform:addWork_requiredN3'," +
+    						"'@id': 'customform:sampleForm_requiredN3'," +
     						"'@type': [" +
-    							"'forms:DynamicN3Pattern'," +
+    							"'forms:RequiredN3Pattern'," +
     							"'forms:FormComponent'" +
     						"]," +
     						"'customform:pattern': [" +
     							"'?subject ex:predicate1 ?var1 .'" +
-						"]" +
+						"]," +
+					    "'customform:prefixes': '@prefix ex: <http://example.com> .'" +
     					"}" +
     				"]" +
 			"}";
 	
-	private final static String N3_CONFIG_NO_REQUIRED = 
+	private final static String N3_CONFIG_NO_REQUIRED_COMPONENT = 
 			"{" +
 				"'@context': {" +
 		    			"'owl': 'http://www.w3.org/2002/07/owl#'" +
 	    			"}," + 
 	    			"'@graph': [" + 
 	    				"{" +
-    						"'@id': 'customform:addWork_dynamicN3'," +
+    						"'@id': 'customform:sampleForm_dynamicN3'," +
     						"'@type': [" +
     							"'forms:DynamicN3Pattern'," +
     							"'forms:FormComponent'" +
@@ -170,26 +221,30 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
 	    			    		"'customform:dynamic_variables': [" +
 	    			    			"'?var1'," +
 	    			    			"'?var2'" +
-	    			    		"]" + 
+	    			    		"]," + 
+	    					"'customform:prefixes': '@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> . " + 
+	    			    		    "@prefix  rdfs: <http://www.w3.org/2000/01/rdf-schema#> .  " +
+	    					    "@prefix ex: <http://example.com> .'" +
     					"}" +
     				"]" +
 			"}";
 	
-	private final static String N3_CONFIG_NO_REQUIRED_OR_DYNAMIC = 
+	private final static String N3_CONFIG_NO_REQUIRED_OR_DYNAMIC_COMPONENT = 
 			"{" +
 				"'@context': {" +
 		    			"'owl': 'http://www.w3.org/2002/07/owl#'" +
 	    			"}," + 
 	    			"'@graph': [" + 
 	    				"{" +
-    						"'@id': 'customform:addWork_optionalN3'," +
+    						"'@id': 'customform:sampleForm_optionalN3'," +
     						"'@type': [" +
-    							"'forms:DynamicN3Pattern'," +
+    							"'forms:OptionalN3Pattern'," +
     							"'forms:FormComponent'" +
     						"]," +
     						"'customform:pattern': [" +
     							"'?subject ex:predicate1 ?var1 .'" +
-						"]" +
+						"]," +
+    					    "'customform:prefixes': '@prefix ex: <http://example.com> .'" +
     					"}" +
     				"]" +
 			"}";
@@ -227,8 +282,9 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
 	
 	@Test
 	public void formWithNoDynamicN3Component_Succeeds() throws Exception {
-		JSONObject config = (JSONObject) JSONSerializer.toJSON(N3_CONFIG_REQUIRED);
+		JSONObject config = (JSONObject) JSONSerializer.toJSON(N3_CONFIG_REQUIRED_COMPONENT);
 		Map<String, String[]> params = new HashMap<>();
+		params.put("subject", new String[] {"<http://example.com/me>"});
 		params.put("var1", new String[] {"value"});
 		preprocessor.requiredN3Component = config.getJSONArray("@graph").getJSONObject(0);
 		preprocessor.updateConfiguration(params, config);
@@ -236,18 +292,22 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
 	
 	@Test
 	public void formWithDynamicButNoRequiredN3Component_Succeeds() throws Exception {
-		JSONObject config = (JSONObject) JSONSerializer.toJSON(N3_CONFIG_NO_REQUIRED);
+		JSONObject config = (JSONObject) JSONSerializer.toJSON(N3_CONFIG_NO_REQUIRED_COMPONENT);
 		Map<String, String[]> params = new HashMap<>();
+		params.put("subject", new String[] {"<http://example.com/me>"});
 		params.put("var1", new String[] {"value1"});
 		params.put("var2", new String[] {"value2"});
 		preprocessor.dynamicN3Component = config.getJSONArray("@graph").getJSONObject(0);
 		preprocessor.updateConfiguration(params, config);
 	}
 	
-	@Test (expected = FormConfigurationException.class)
+	@Test
 	public void formWithDynamicButNoRequiredN3Component_ThrowException() throws Exception {
-		JSONObject config = (JSONObject) JSONSerializer.toJSON(N3_CONFIG_NO_REQUIRED_OR_DYNAMIC);
+		expectException(FormConfigurationException.class, 
+				"Configuration must include either a required or dynamic component");
+		JSONObject config = (JSONObject) JSONSerializer.toJSON(N3_CONFIG_NO_REQUIRED_OR_DYNAMIC_COMPONENT);
 		Map<String, String[]> params = new HashMap<>();
+		params.put("subject", new String[] {"<http://example.com/me>"});
 		params.put("var1", new String[] {"value1"});
 		params.put("var2", new String[] {"value2"});
 		preprocessor.optionalN3Component = config.getJSONArray("@graph").getJSONObject(0);
@@ -263,19 +323,19 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
 	@Test
 	public void dynamicN3ComponentWithEmptyPattern_ThrowsException() throws Exception {
 		expectException(FormConfigurationException.class, "Custom form pattern is empty");		
-		validateDynamicN3Component(DYNAMIC_N3_COMPONENT_WITH_EMPTY_PATTERN);	
+		validateDynamicN3Component(DYNAMIC_N3_COMPONENT_EMPTY_PATTERN);	
 	}
 	
 	@Test 
 	public void dynamicN3ComponentWithoutDynamicVariables_ThrowsException() throws Exception {
 		expectException(FormConfigurationException.class, "Dynamic variables not defined or not a JSON array");
-		validateDynamicN3Component(DYNAMIC_N3_COMPONENT_WITHOUT_DYNAMIC_VARIABLES);
+		validateDynamicN3Component(DYNAMIC_N3_COMPONENT_NO_DYNAMIC_VARIABLES);
 	}
 	
 	@Test 
 	public void dynamicN3ComponentWithEmptyDynamicVariables_ThrowsException() throws Exception {
 		expectException(FormConfigurationException.class, "Dynamic variables array is empty");
-		validateDynamicN3Component(DYNAMIC_N3_COMPONENT_WITH_EMPTY_DYNAMIC_VARIABLES);
+		validateDynamicN3Component(DYNAMIC_N3_COMPONENT_EMPTY_DYNAMIC_VARIABLES);
 	}
 	
 	@Test
@@ -293,6 +353,17 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
 	@Test 
 	public void validDynamicN3Component_Succeeds() throws Exception {
 		validateDynamicN3Component(VALID_DYNAMIC_N3_COMPONENT);		
+	}
+	
+	@Test 
+	public void validDynamicN3ComponentNoPrefixes_Succeeds() throws Exception {
+		validateDynamicN3Component(VALID_DYNAMIC_N3_COMPONENT_NO_PREFIXES);		
+	}
+	
+	@Test 
+	// This should fail elsewhere but not in the MinimalConfigurationPreprocessor
+	public void validDynamicN3ComponentNoPrefixesDefined_Succeeds() throws Exception {
+		validateDynamicN3Component(VALID_DYNAMIC_N3_COMPONENT_NO_PREFIXES_DEFINED);		
 	}
 
 	@Test
@@ -333,6 +404,7 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
 	@Test
 	public void testDynamicPatternWithOneValue() throws Exception {
 		Map<String, String[]> params = new HashMap<>();
+		params.put("subject", new String[] {"<http://example.com/me>"});
 		params.put("var1", new String[] {"var1_value1"});
 		params.put("var2", new String[] {"var2_value1"});
 		params.put("var3", new String[] {"var3_value1"});
@@ -343,21 +415,23 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
 	@Test 
 	public void testDynamicPatternWithMultipleValues() throws Exception {
 		Map<String, String[]> params = new HashMap<>();
+		params.put("subject", new String[] {"<http://example.com/me>"});
 		params.put("var1", new String[] {"var1_value1", "var1_value2", "var1_value3"});
 		params.put("var2", new String[] {"var2_value1", "var2_value2", "var2_value3"});
 		params.put("var3", new String[] {"var3_value1", "var3_value1", "var3_value3"});
-		String expected = "?subject ex:predicate1 ?var10 . "
-				+ "?subject ex:predicate1 ?var11 . "
-				+ "?subject ex:predicate1 ?var12 . "
-				+ "?var10 rdfs:label ?var20 . "
-				+ "?var11 rdfs:label ?var21 . "
-				+ "?var12 rdfs:label ?var22 . "
-				+ "?var10 rdf:type ex:Class1 . "
-				+ "?var11 rdf:type ex:Class1 . "
-				+ "?var12 rdf:type ex:Class1 . "
-				+ "?var20 ex:predicate2 ?var30 . "
-				+ "?var21 ex:predicate2 ?var31 . "
-				+ "?var22 ex:predicate2 ?var32 . ";				
+		String expected = 
+				"?subject ex:predicate1 ?var10 . " +
+				"?subject ex:predicate1 ?var11 . " +
+				"?subject ex:predicate1 ?var12 . " +
+				"?var10 rdfs:label ?var20 . " +
+				"?var11 rdfs:label ?var21 . " +
+				"?var12 rdfs:label ?var22 . " +
+				"?var10 rdf:type ex:Class1 . " +
+				"?var11 rdf:type ex:Class1 . " +
+				"?var12 rdf:type ex:Class1 . " +
+				"?var20 ex:predicate2 ?var30 . " +
+				"?var21 ex:predicate2 ?var31 . " +
+				"?var22 ex:predicate2 ?var32 . ";				
 		String pattern = buildDynamicN3Pattern(DYNAMIC_PATTERN, DYNAMIC_VARS, "", 3);
 		Assert.assertEquals(expected, pattern);
 	}
@@ -366,20 +440,22 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
 	public void testDynamicPatternWithNonDynamicVariable() throws Exception {
 		JSONArray dynamicVars = (JSONArray) JSONSerializer.toJSON(new String[] {"?var1", "?var2"});
 		Map<String, String[]> params = new HashMap<>();
+		params.put("subject", new String[] {"<http://example.com/me>"});
 		params.put("var1", new String[] {"var1_value1", "var1_value2", "var1_value3"});
 		params.put("var2", new String[] {"var2_value1", "var2_value2", "var2_value3"});
-		String expected = "?subject ex:predicate1 ?var10 . "
-				+ "?subject ex:predicate1 ?var11 . "
-				+ "?subject ex:predicate1 ?var12 . "
-				+ "?var10 rdfs:label ?var20 . "
-				+ "?var11 rdfs:label ?var21 . "
-				+ "?var12 rdfs:label ?var22 . "
-				+ "?var10 rdf:type ex:Class1 . "
-				+ "?var11 rdf:type ex:Class1 . "
-				+ "?var12 rdf:type ex:Class1 . "
-				+ "?var20 ex:predicate2 ?var3 . "
-				+ "?var21 ex:predicate2 ?var3 . "
-				+ "?var22 ex:predicate2 ?var3 . ";				
+		String expected = 
+				"?subject ex:predicate1 ?var10 . " +
+				"?subject ex:predicate1 ?var11 . " +
+				"?subject ex:predicate1 ?var12 . " +
+				"?var10 rdfs:label ?var20 . " +
+				"?var11 rdfs:label ?var21 . " +
+				"?var12 rdfs:label ?var22 . " +
+				"?var10 rdf:type ex:Class1 . " +
+				"?var11 rdf:type ex:Class1 . " +
+				"?var12 rdf:type ex:Class1 . " +
+				"?var20 ex:predicate2 ?var3 . " +
+				"?var21 ex:predicate2 ?var3 . " +
+				"?var22 ex:predicate2 ?var3 . ";				
 		String pattern = buildDynamicN3Pattern(DYNAMIC_PATTERN, dynamicVars, "", 3);
 		Assert.assertEquals(expected, pattern);		
 	}
@@ -387,21 +463,23 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
 	@Test
 	public void testDynamicN3TripleWithNoFinalPeriod() throws Exception {
 		Map<String, String[]> params = new HashMap<>();
+		params.put("subject", new String[] {"<http://example.com/me>"});
 		params.put("var1", new String[] {"var1_value1", "var1_value2"});
 		params.put("var2", new String[] {"var2_value1", "var2_value2"});
 		params.put("var3", new String[] {"var3_value1", "var3_value1", "var3_value3"});
-		String expected = "?subject ex:predicate1 ?var10 . "
-				+ "?subject ex:predicate1 ?var11 . "
-				+ "?subject ex:predicate1 ?var12 . "
-				+ "?var10 rdfs:label ?var20 . "
-				+ "?var11 rdfs:label ?var21 . "
-				+ "?var12 rdfs:label ?var22 . "
-				+ "?var10 rdf:type ex:Class1 . "
-				+ "?var11 rdf:type ex:Class1 . "
-				+ "?var12 rdf:type ex:Class1 . "
-				+ "?var20 ex:predicate2 ?var30 . "
-				+ "?var21 ex:predicate2 ?var31 . "
-				+ "?var22 ex:predicate2 ?var32 . ";
+		String expected = 
+				"?subject ex:predicate1 ?var10 . " +
+				"?subject ex:predicate1 ?var11 . " +
+				"?subject ex:predicate1 ?var12 . " +
+				"?var10 rdfs:label ?var20 . " +
+				"?var11 rdfs:label ?var21 . " +
+				"?var12 rdfs:label ?var22 . " +
+				"?var10 rdf:type ex:Class1 . " +
+				"?var11 rdf:type ex:Class1 . " +
+				"?var12 rdf:type ex:Class1 . " +
+				"?var20 ex:predicate2 ?var30 . " +
+				"?var21 ex:predicate2 ?var31 . " +
+				"?var22 ex:predicate2 ?var32 . ";
 		String pattern = buildDynamicN3Pattern(TRIPLES_MISSING_FINAL_PERIOD, DYNAMIC_VARS, "", 3);
 		Assert.assertEquals(expected, pattern);
 	}
@@ -409,37 +487,45 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
 	@Test
 	public void testDynamicN3Component() throws Exception {
 		Map<String, String[]> params = new HashMap<>();
+		params.put("subject", new String[] {"<http://example.com/me>"});
 		params.put("var1", new String[] {"var1_value1", "var1_value2", "var1_value3"});
 		params.put("var2", new String[] {"var2_value1", "var2_value2", "var2_value3"});
 		String pattern = buildDynamicN3Pattern(VALID_DYNAMIC_N3_COMPONENT, params);
-		String expected = "?subject ex:predicate1 ?var10 . "
-				+ "?subject ex:predicate1 ?var11 . "
-				+ "?subject ex:predicate1 ?var12 . "
-				+ "?var10 rdfs:label ?var20 . "
-				+ "?var11 rdfs:label ?var21 . "
-				+ "?var12 rdfs:label ?var22 . "
-				+ "?var10 rdf:type ex:Class1 . "
-				+ "?var11 rdf:type ex:Class1 . "
-				+ "?var12 rdf:type ex:Class1 . ";
+		String expected = 
+				"@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> . " +
+				"@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> . " +
+	    			"@prefix ex: <http://example.com> . " +	
+				"?subject ex:predicate1 ?var10 . " +
+				"?subject ex:predicate1 ?var11 . " +
+				"?subject ex:predicate1 ?var12 . " +
+				"?var10 rdfs:label ?var20 . " +
+				"?var11 rdfs:label ?var21 . " +
+				"?var12 rdfs:label ?var22 . " +
+				"?var10 rdf:type ex:Class1 . " +
+				"?var11 rdf:type ex:Class1 . " +
+				"?var12 rdf:type ex:Class1 . ";
 		Assert.assertEquals(expected, pattern);
 	}
 
 	public void testDynamicN3ComponentWithPrefixes() throws Exception {
 		Map<String, String[]> params = new HashMap<>();
+		params.put("subject", new String[] {"<http://example.com/me>"});
 		params.put("var1", new String[] {"var1_value1", "var1_value2", "var1_value3"});
 		params.put("var2", new String[] {"var2_value1", "var2_value2", "var2_value3"});
 		String pattern = buildDynamicN3Pattern(VALID_DYNAMIC_N3_COMPONENT, params);
-		String expected = "@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> . " 
-				+ "@prefix ex: <http://example.org/> . "
-				+ "?subject ex:predicate1 ?var10 . "
-				+ "?subject ex:predicate1 ?var11 . "
-				+ "?subject ex:predicate1 ?var12 . "
-				+ "?var10 rdfs:label ?var20 . "
-				+ "?var11 rdfs:label ?var21 . "
-				+ "?var12 rdfs:label ?var22 . "
-				+ "?var10 rdf:type ex:Class1 . "
-				+ "?var11 rdf:type ex:Class1 . "
-				+ "?var12 rdf:type ex:Class1 . ";
+		String expected = 
+				"@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> . " +
+				"@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> . " +
+				"@prefix ex: <http://example.org/> . " +
+				"?subject ex:predicate1 ?var10 . " +
+				"?subject ex:predicate1 ?var11 . " +
+				"?subject ex:predicate1 ?var12 . " +
+				"?var10 rdfs:label ?var20 . " +
+				"?var11 rdfs:label ?var21 . " +
+				"?var12 rdfs:label ?var22 . " +
+				"?var10 rdf:type ex:Class1 . " +
+				"?var11 rdf:type ex:Class1 . " +
+				"?var12 rdf:type ex:Class1 . ";
 		Assert.assertEquals(expected, pattern);
 	}	
 	
@@ -481,6 +567,5 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
 	private JSONObject getComponent(String jsonString) {
 		return (JSONObject) JSONSerializer.toJSON(jsonString);
 	}
-
 
 }
