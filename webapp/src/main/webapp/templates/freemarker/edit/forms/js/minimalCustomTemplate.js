@@ -9,8 +9,14 @@ var minimalCustomTemplate = {
     /* *** Initial page setup *** */
    fieldNameProperty : "customform:varName",
    configJSON:null,
-    onLoad: function() {
+   displayData:{},
+    onLoad: function(displayData) {
     	 	this.mixIn();  
+    	 	if(typeof displayData != "undefined") {
+    	 		this.displayData = displayData;
+    	 	} else {
+    	 		this.displayData = {};
+    	 	}
     		//Do ajax request to get config and only then trigger the rest
 	    	$.ajax({
 				  method: "GET",
@@ -196,24 +202,34 @@ var minimalCustomTemplate = {
     displayConfigComponent: function(configComponent) {
     	//Get fieldName
     	var fieldName = configComponent[minimalCustomTemplate.fieldNameProperty];
-    	
+        var displayInfo = minimalCustomTemplate.displayData.fieldDisplayProperties[fieldName];
+
     	if(fieldName in minimalCustomTemplate.formFieldsToOptions) {
     		var fieldOptionComponent = minimalCustomTemplate.formFieldsToOptions[fieldName];
     		//Just pass the entire JSON object to the servlet and let the servlet parse it
-    		$.ajax({
-    			  method: "GET",
-    			  url: minimalCustomTemplate.customFormAJAXUrl,
-    			  data: { "configComponent": JSON.stringify(fieldOptionComponent),
-    				  		"fieldName": fieldName,
-    				  		"action": "dropdown"
-    			  }
-    			})
-    			  .done(function( content ) {
-    				  //templateclone is from URI Field, so make this work better
-    				  //templateClone = minimalCustomTemplate.createURIField(configComponent);
-    				  minimalCustomTemplate.createDropdownField(fieldName, content);
-    				  
-    			  });
+    		 
+            if(minimalCustomTemplate.componentHasType(fieldOptionComponent, "forms:ConstantList")) {
+            	if("constantList" in displayInfo) {
+            		var staticContent = displayInfo["constantList"];
+            		minimalCustomTemplate.createStaticDropdownField(fieldName, staticContent);
+            	}
+            } else { 
+	    		$.ajax({
+	    			  method: "GET",
+	    			  url: minimalCustomTemplate.customFormAJAXUrl,
+	    			  data: { "configComponent": JSON.stringify(fieldOptionComponent),
+	    				  		"fieldName": fieldName,
+	    				  		"action": "dropdown"
+	    			  }
+	    			})
+	    			  .done(function( content ) {
+	    				  //templateclone is from URI Field, so make this work better
+	    				  //templateClone = minimalCustomTemplate.createURIField(configComponent);
+	    				  minimalCustomTemplate.createDropdownField(fieldName, content);
+	    				  
+	    			  });
+    		
+            }
     	} 
     	
     	
@@ -298,11 +314,30 @@ var minimalCustomTemplate = {
     			return true;
     	}
     	return false;
-    }           
+    },
+    //TODO: refactor above to use the same basis, one with sorting and one without
+    //And or have sort at data level
+    //Also this uses label and value - right now label and uri
+   createStaticDropdownField:function(varName, content) {
+        //populate drop downs
+        var dropdownElement = $("select#" + varName);
+        var htmlList = "";
+       
+        $.each(content, function(index, contentObj) {
+        	var uri = contentObj["uri"];
+        	var label = contentObj["label"];
+            htmlList += "<option value='" + uri + "'>" + label + "</option>";
+
+        });
+      
+        dropdownElement.empty().append(htmlList);
+    }
+    
    
 
 };
 
 $(document).ready(function() {   
-    minimalCustomTemplate.onLoad();
+	
+    minimalCustomTemplate.onLoad(displayConfig);
 }); 
