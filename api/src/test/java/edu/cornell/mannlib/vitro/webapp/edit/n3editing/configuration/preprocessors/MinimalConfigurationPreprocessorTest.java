@@ -405,7 +405,6 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
 	}
 	
 	@Test
-	@Ignore
 	public void testDynamicPatternWithOneValue() throws Exception {
 		Map<String, String[]> params = new HashMap<>();
 		params.put("subject", new String[] {"<http://example.org/subject_value>"});
@@ -413,7 +412,7 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
 		params.put("lit1", new String[] {"lit1_value1"});
 		params.put("uri2", new String[] {"<http://example.org/uri2_value1>"});
 		String pattern = buildDynamicN3Pattern(DYNAMIC_PATTERN, DYNAMIC_VARS, "", 1);
-		Assert.assertEquals(DYNAMIC_PATTERN.join(" "), pattern);
+		Assert.assertEquals(DYNAMIC_PATTERN.join(" ", true), pattern);
 	}
 	
 	@Test
