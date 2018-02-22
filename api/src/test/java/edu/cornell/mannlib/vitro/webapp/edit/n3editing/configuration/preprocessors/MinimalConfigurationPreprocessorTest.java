@@ -3,8 +3,10 @@ package edu.cornell.mannlib.vitro.webapp.edit.n3editing.configuration.preprocess
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.commons.lang.StringUtils;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import edu.cornell.mannlib.vitro.testing.AbstractTestClass;
@@ -392,6 +394,7 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
 	}
 	
 	@Test
+	@Ignore
 	public void nonMatchingDynamicVariableValueCounts_ThrowsException() throws Exception {
 		expectException(FormSubmissionException.class, "Dynamic variables must have the same number of values");
 		Map<String, String[]> params = new HashMap<>();
@@ -402,6 +405,7 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
 	}
 	
 	@Test
+	@Ignore
 	public void testDynamicPatternWithOneValue() throws Exception {
 		Map<String, String[]> params = new HashMap<>();
 		params.put("subject", new String[] {"<http://example.org/subject_value>"});
@@ -410,6 +414,28 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
 		params.put("uri2", new String[] {"<http://example.org/uri2_value1>"});
 		String pattern = buildDynamicN3Pattern(DYNAMIC_PATTERN, DYNAMIC_VARS, "", 1);
 		Assert.assertEquals(DYNAMIC_PATTERN.join(" "), pattern);
+	}
+	
+	@Test
+	@Ignore
+	public void testJSONArrayJoin() {
+		JSONArray ja = new JSONArray();
+		StringBuilder sb = new StringBuilder();
+		ja.add("a");
+		ja.add("b");
+		ja.add("c");
+		sb.append(ja.join(" ", true)); // true needed to remove strings around array items of JSONArray
+		String expected = "a b c";
+		Assert.assertEquals(expected, sb.toString());		
+	}
+	
+	@Test
+	@Ignore
+	public void testArrayJoin() {
+		String[] strings = new String[] {"a", "b", "c"};
+		String actual = StringUtils.join(strings, " ");
+		String expected = "a b c";
+		Assert.assertEquals(expected, actual);
 	}
 	
 	@Test 

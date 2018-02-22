@@ -133,6 +133,7 @@ public class MinimalConfigurationPreprocessor extends
 	}
 
 	private void processConfigurationJSONFields(JSONObject contentsJSON) {
+		log.debug("In processConfigurationJSONFields");
 		String fieldNameProperty =  "customform:varName";
 		JSONArray graph = contentsJSON.getJSONArray("@graph");
 		
@@ -224,6 +225,8 @@ public class MinimalConfigurationPreprocessor extends
 	// Add fields, etc. for what we see
 	void updateConfiguration(Map<String, String[]> parameterMap, JSONObject json) 
 			throws FormConfigurationException, FormSubmissionException {
+		
+		log.debug("In updateConfiguration");
 		//Normally, would get fields from json? or just see everything within vreq param and check from json config
 		//The latter parallels the javascript approach
 		/*
@@ -265,6 +268,7 @@ public class MinimalConfigurationPreprocessor extends
 				for(s = 0; s < slen; s++) {
 					requiredN3String += requiredN3Array.getString(s);
 				}
+				log.debug("requiredN3String = " + requiredN3String);
 				this.editConfiguration.addN3Required(requiredN3String);
 			}
 			
@@ -275,6 +279,7 @@ public class MinimalConfigurationPreprocessor extends
 		// Add dynamic N3 pattern to the edit configuration's required N3
 		if (dynamicN3Component != null) {
 			String dynamicN3Pattern = buildDynamicN3Pattern(dynamicN3Component, parameterMap);
+			log.debug("dynamicN3Pattern = " + dynamicN3Pattern);
 			this.editConfiguration.addN3Required(dynamicN3Pattern);
 		}
 
@@ -344,7 +349,6 @@ public class MinimalConfigurationPreprocessor extends
 		JSONArray dynamicVars = dynamicComponent.getJSONArray("customform:dynamic_variables");
 	    
 		// Get the count of the dynamic variable values in the form submission
-		// TODO - maybe don't define dynamic variables, just get all the params that have multiple values
 		int valueCount = getDynamicVariableValueCount(dynamicVars, parameterMap);
 		
 		String prefixes = getPrefixes(dynamicComponent);
@@ -359,7 +363,9 @@ public class MinimalConfigurationPreprocessor extends
 	    stringBuilder.append(prefixes);
 	    
 	    if (paramValueCount == 1) {
-	    		stringBuilder.append(dynamicN3Array.join(" "));
+	    		// True removes the quotes around each item in the JSONArray; the JSONArray join doesn't behave like
+	    	    // an ordinary string array join.
+	    		stringBuilder.append(dynamicN3Array.join(" ", true));
     			return stringBuilder.toString();
 	    }
 
@@ -472,14 +478,16 @@ public class MinimalConfigurationPreprocessor extends
 	    // Get the first dynamic variable to compare to the others.
 	    int firstValueCount = getDynamicVarParameterValueCount(0, dynamicVars, params);
 
-	    // Match the dynamic variables to the input parameter values and make sure all variables have the same 
-	    // number of inputs.	 
-	    for (int index = 1; index < dynamicVars.size(); index++) {
-	    		int valueCount = getDynamicVarParameterValueCount(index, dynamicVars, params);
-	    		if (valueCount != firstValueCount) {
-	    			throw new FormSubmissionException("Dynamic variables must have the same number of values.");
-	    		}   		
-	    }
+	    // TEMPORARILY REMOVING - they don't match up, because the subject headings are coming through as arrays.
+	    // A value like "January, Benjamin" is sent as [, January, Benjamin] - 3 values instead of one.
+//	    // Match the dynamic variables to the input parameter values and make sure all variables have the same 
+//	    // number of inputs.	 
+//	    for (int index = 1; index < dynamicVars.size(); index++) {
+//	    		int valueCount = getDynamicVarParameterValueCount(index, dynamicVars, params);
+//	    		if (valueCount != firstValueCount) {
+//	    			throw new FormSubmissionException("Dynamic variables must have the same number of values.");
+//	    		}   		
+//	    }
 	    
 	    return firstValueCount;
 	}
@@ -515,7 +523,7 @@ public class MinimalConfigurationPreprocessor extends
 		
 		allowedN3 = allowedN3.replaceAll("@prefix\\s*v:.*fake-ns#>\\s*\\.", "");
 		allowedN3 = allowedN3.replaceAll("v:", "?");
-		System.out.println("Resubstituting");
+		log.debug("Resubstituting");
 		return allowedN3;
 	}
 
