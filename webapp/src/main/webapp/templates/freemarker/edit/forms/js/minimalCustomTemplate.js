@@ -9,7 +9,6 @@ var minimalCustomTemplate = {
     /* *** Initial page setup *** */
    fieldNameProperty : "customform:varName",
    configJSON:null,
-   displayData:{},
     onLoad: function(displayData) {
     	 	this.mixIn();  
     	 	if(typeof displayData != "undefined") {
@@ -202,8 +201,10 @@ var minimalCustomTemplate = {
     displayConfigComponent: function(configComponent) {
     	//Get fieldName
     	var fieldName = configComponent[minimalCustomTemplate.fieldNameProperty];
-        var displayInfo = minimalCustomTemplate.displayData.fieldDisplayProperties[fieldName];
-
+    	var displayInfo = {};
+    	if(("fieldDisplayProperties" in minimalCustomTemplate.displayData) && (fieldName in  minimalCustomTemplate.displayData.fieldDisplayProperties)) {
+    		displayInfo = minimalCustomTemplate.displayData.fieldDisplayProperties[fieldName];
+    	}
     	if(fieldName in minimalCustomTemplate.formFieldsToOptions) {
     		var fieldOptionComponent = minimalCustomTemplate.formFieldsToOptions[fieldName];
     		//Just pass the entire JSON object to the servlet and let the servlet parse it
@@ -338,6 +339,8 @@ var minimalCustomTemplate = {
 };
 
 $(document).ready(function() {   
-	
+	if(typeof displayConfig == "undefined") {
+		var displayConfig = {};
+	}
     minimalCustomTemplate.onLoad(displayConfig);
 }); 
