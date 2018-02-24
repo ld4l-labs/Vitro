@@ -339,8 +339,12 @@ var minimalCustomTemplate = {
 };
 
 $(document).ready(function() {   
-	if(typeof displayConfig == "undefined") {
-		var displayConfig = {};
+	if(typeof displayConfig != "undefined") {
+		minimalCustomTemplate.onLoad(displayConfig);
+	} else {
+		minimalCustomTemplate.onLoad({});
+
+		
 	}
-    minimalCustomTemplate.onLoad(displayConfig);
+    
 }); 
