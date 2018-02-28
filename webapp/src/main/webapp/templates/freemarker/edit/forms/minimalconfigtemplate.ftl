@@ -6,6 +6,7 @@
 <#import "lib-vitro-form.ftl" as lvf>
 
 <#--Retrieve certain edit configuration information-->
+<#assign defaultNamespace = editConfiguration.defaultNamespace />
 <#assign editMode = editConfiguration.pageData.editMode />
 <#assign formTitle = editConfiguration.formTitle />
 <#assign newUriSentinel = "" />
@@ -188,7 +189,8 @@ Set this flag on the input acUriReceiver where you would like this behavior to o
         blankSentinel: '${blankSentinel}',
         flagClearLabelForExisting: '${flagClearLabelForExisting}',
         defaultTypeName: 'entity', //REPLACE with type name for specific auto complete
-        acTypes: {}
+        acTypes: {},
+        defaultNamespace:"${defaultNamespace}"
     };
     var i18nStrings = {
         selectAnExisting: '${i18n().select_an_existing}',
