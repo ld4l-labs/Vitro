@@ -550,8 +550,8 @@ public class MinimalConfigurationPreprocessor extends
 				uriizedN3.add(substitutedN3String);
 				//one at a time so we can see which N3 statement might be a problem
 				try {
-					System.out.println(allPrefixes + substitutedN3String);
-					 StringReader reader = new StringReader(allPrefixes + substitutedN3String.replaceAll("\n", "").replaceAll("\r",""));
+					log.debug(allPrefixes + substitutedN3String);
+					StringReader reader = new StringReader(allPrefixes + substitutedN3String.replaceAll("\n", "").replaceAll("\r",""));
 					testModel.read(reader, "", "N3");
 				} catch(Exception ex) {
 					ex.printStackTrace();
@@ -559,12 +559,12 @@ public class MinimalConfigurationPreprocessor extends
 				
 			}
 			uriizedAllN3 = StringUtils.join(uriizedN3, " ");
-			System.out.println("Pre carriage return removal");
-			System.out.println(uriizedAllN3);
+			log.debug("Pre carriage return removal");
+			log.debug(uriizedAllN3);
 			//remove newline/carriage return characters
 			uriizedAllN3 = uriizedAllN3.replaceAll("\n", "").replaceAll("\r","");
-			System.out.println("N3 after newline removal");
-			System.out.println(uriizedAllN3);
+			log.debug("N3 after newline removal");
+			log.debug(uriizedAllN3);
 		}
 		return uriizedAllN3;
 	}
