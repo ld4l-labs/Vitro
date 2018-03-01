@@ -783,6 +783,10 @@ public class EditConfigurationTemplateModel extends BaseTemplateModel {
     	pageData.put("htmlForElements", generatedHtml);
     }
    
+    //Adding a method for retrieving the namespace for the application to enable use on the front-end
+    public String getDefaultNamespace() {
+    	return this.vreq.getWebappDaoFactory().getDefaultNamespace();
+    }
   
    
 }

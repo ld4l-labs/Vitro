@@ -33,6 +33,7 @@ import edu.cornell.mannlib.vitro.webapp.controller.ajax.SparqlUtils.AjaxControll
 import edu.cornell.mannlib.vitro.webapp.edit.n3editing.VTwo.EditN3GeneratorVTwo;
 import edu.cornell.mannlib.vitro.webapp.edit.n3editing.VTwo.SparqlEvaluateVTwo;
 import edu.cornell.mannlib.vitro.webapp.edit.n3editing.VTwo.fields.ChildVClassesWithParent;
+import edu.cornell.mannlib.vitro.webapp.edit.n3editing.VTwo.fields.IndividualsMatchingQuery;
 import edu.cornell.mannlib.vitro.webapp.edit.n3editing.VTwo.fields.IndividualsViaVClassOptions;
 import edu.cornell.mannlib.vitro.webapp.edit.n3editing.VTwo.fields.RdfTypeOptions;
 import edu.cornell.mannlib.vitro.webapp.modelaccess.ModelAccess;
@@ -263,6 +264,15 @@ public class CustomFormAJAXController extends VitroAjaxController {
 					optionsAsJSON = JSONSerializer.toJSON(ioptions);
 					break;
 			
+				case "IndividualsMatchingQuery":
+					JSONObject queryClassJSON = json.getJSONObject("customform:optionSparqlQuery");
+					String query = queryClassJSON.getString("query");
+					IndividualsMatchingQuery imq = new IndividualsMatchingQuery(query, vreq);
+					//Get the options
+					Map<String, String> qoptions = imq.getOptions(null, fieldNameValue, vreq.getWebappDaoFactory());
+					optionsAsJSON = JSONSerializer.toJSON(qoptions);
+					break;
+				
 				
 				case "":
 				break;
