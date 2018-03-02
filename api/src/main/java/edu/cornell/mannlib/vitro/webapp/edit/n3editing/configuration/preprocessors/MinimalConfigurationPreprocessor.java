@@ -110,17 +110,15 @@ public class MinimalConfigurationPreprocessor extends
                 if(fieldNameToConfigurationComponent.containsKey(key)) {
                     JSONObject configurationComponent = fieldNameToConfigurationComponent.get(key);
                     JSONArray values = existingValuesObject.getJSONArray(key);
-                    int valuesLength = values.size();
-                    int v;
                     JSONArray types = configurationComponent.getJSONArray("@type");
                     if(types.contains("forms:UriField")) {
                         List<String> urisInScope = new ArrayList<String>();
-                        for(v = 0; v < valuesLength; v++) {
+                        for(int v = 0; v < values.size(); v++) {
                             urisInScope.add(values.getString(v));
                         }
                         this.editConfiguration.addUrisInScope(key, urisInScope);
                     } else if(types.contains("forms:LiteralField")) {
-                        for(v = 0; v < valuesLength; v++) {
+                        for(int v = 0; v < values.size(); v++) {
                             String value = values.getString(v);
                             Literal valueLiteral = ResourceFactory.createPlainLiteral(value);
                             this.editConfiguration.addLiteralInScope(key,valueLiteral);
@@ -133,42 +131,40 @@ public class MinimalConfigurationPreprocessor extends
     }
 
     private void processConfigurationJSONFields(JSONObject contentsJSON) {
-        log.debug("In processConfigurationJSONFields");
+
         String fieldNameProperty =  "customform:varName";
         JSONArray graph = contentsJSON.getJSONArray("@graph");
         
-        int len = graph.size();
-        int i;
-        for(i = 0; i < len; i++) {
+        for(int i = 0; i < graph.size(); i++) {
             JSONObject component = graph.getJSONObject(i);
             JSONArray types = component.getJSONArray("@type");
             //Get field name info
             Object fieldInfo = component.get(fieldNameProperty);
             if(fieldInfo != null) {
                 JSONArray jsonArray = new JSONArray();
-                if(fieldInfo instanceof String)
+                if(fieldInfo instanceof String) {
                     jsonArray.add(fieldInfo);
-                else if(((JSON)fieldInfo).isArray())
+                } else if(((JSON)fieldInfo).isArray()) {
                     jsonArray.addAll((JSONArray)fieldInfo);
-                else
+                } else {
+                		// Should this error be thrown as well as logged? If just logged, then downgrade to warning.
                     log.error("This is neither string nor array but probably a json object instead");
+                }
                 
-                
-                int fieldNumber = jsonArray.size();
-                int f;
-                for(f = 0; f < fieldNumber; f++) {
+                for(int f = 0; f < jsonArray.size(); f++) {
                     String fieldName = jsonArray.getString(f);
                     fieldNameToConfigurationComponent.put(fieldName, component);
                 }
             }
-            //required n3 pattern
-            if(types.contains("forms:RequiredN3Pattern")) {
+
+            if (types.contains("forms:RequiredN3Pattern")) {
                 this.requiredN3Component = component;
-            }
-            //optional n3 pattern - assuming only one optional n3 component
-            if(types.contains("forms:OptionalN3Pattern")) {
-                this.optionalN3Component = component;
-            }
+            } 
+            
+            // Assuming only one optional n3 component
+            if (types.contains("forms:OptionalN3Pattern")) {
+                this.optionalN3Component = component;            
+            } 
             
             if (types.contains("forms:DynamicN3Pattern")) {
                 this.dynamicN3Component = component;
@@ -198,8 +194,7 @@ public class MinimalConfigurationPreprocessor extends
             //TODO:Assume these will be modeled exactly the same way
             if(types.contains( "forms:FieldDependencies")) {
                 JSONArray dependenciesArray = component.getJSONArray("customform:dependencies");
-                int n, numberDependencies = dependenciesArray.size();
-                for(n = 0; n < numberDependencies; n++ ) {
+                for(int n = 0; n < dependenciesArray.size(); n++ ) {
                     String dependencyDelimited = dependenciesArray.getString(n);
                     //Replace all empty spaces
                     dependencyDelimited = dependencyDelimited.replaceAll("\\s+","");
@@ -263,9 +258,7 @@ public class MinimalConfigurationPreprocessor extends
                     prefixes = this.requiredN3Component.getString("customform:prefixes");
                 }
                 String requiredN3String = prefixes;
-                int slen = requiredN3Array.size();
-                int s;
-                for(s = 0; s < slen; s++) {
+                for(int s = 0; s < requiredN3Array.size(); s++) {
                     requiredN3String += requiredN3Array.getString(s);
                 }
                 log.debug("requiredN3String = " + requiredN3String);
@@ -454,7 +447,7 @@ public class MinimalConfigurationPreprocessor extends
      * Validates the dynamic N3 dynamic variables array. Throws an error if the array is invalid.
      * @throws FormConfigurationException
      */
-    private     void validateDynamicN3Variables(JSONObject dynamicN3Component) throws FormConfigurationException {
+    private void validateDynamicN3Variables(JSONObject dynamicN3Component) throws FormConfigurationException {
         
         // Check that the first element of the graph defines a non-empty dynamic variables array. 
         JSONArray dynamicVars = null;
@@ -541,10 +534,8 @@ public class MinimalConfigurationPreprocessor extends
             String allPrefixes = fakeNSPrefix + n3Prefixes;
             uriizedN3.add(fakeNSPrefix);
             uriizedN3.add(n3Prefixes);
-            int optArrayLength = optionalN3Array.size();
-            int on;
             Model testModel = ModelFactory.createDefaultModel();
-            for(on = 0; on < optArrayLength; on++) {
+            for(int on = 0; on < optionalN3Array.size(); on++) {
                 String n3String = optionalN3Array.getString(on);
                 String substitutedN3String = n3String.replaceAll("[?]", "v:");
                 uriizedN3.add(substitutedN3String);
@@ -653,7 +644,7 @@ public class MinimalConfigurationPreprocessor extends
                 }
                 
             }
-            //Write out allowedN3Model
+            // Write out allowedN3Model
             allowedN3Model.write(System.out, "ttl");
         }
         return allowedN3Model;
