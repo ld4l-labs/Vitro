@@ -56,11 +56,10 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
                     "'forms:FormComponent'" +
                 "]," +
                 "'customform:pattern': [" +
-                    "'?subject ex:predicate1 ?uri1 . '" +
+                    "'?subject ex:predicate0 ?entity0 . '" +
                 "]," +
-                "'customform:prefixes': '@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> . " + 
-                    "@prefix  rdfs: <http://www.w3.org/2000/01/rdf-schema#> . " +
-                    "@prefix ex: <http://example.org> . '" +
+                "'customform:prefixes': '@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> . " +
+            			"@prefix ex: <http://example.org> . '" +
             "}";
 
     
@@ -72,14 +71,14 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
                     "'forms:FormComponent'" +
                 "]," +
                 "'customform:pattern': [" +
-                    "'?subject ex:predicate1 ?uri1 . '," +
-                    "'?uri1 rdfs:label ?lit1 . '," +
-                    "'?uri1 rdf:type ex:Class1 . '" +
+                    "'?subject ex:predicate0 ?entity0 . '," +
+                    "'?entity0 rdfs:label ?label0 . '," +
+                    "'?entity0 rdf:type ex:Class0 . '" +
                 "]," +
                 "'customform:dynamic_variables': [" +
                 "]," + 
                 "'customform:prefixes': '@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> . " + 
-                    "@prefix  rdfs: <http://www.w3.org/2000/01/rdf-schema#> . " +
+                    "@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> . " +
                     "@prefix ex: <http://example.org> . '" +
             "}";
     
@@ -91,16 +90,17 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
                     "'forms:FormComponent'" +
                 "]," +
                 "'customform:pattern': [" +
-                    "'?subject ex:predicate1 ?uri1 . '," +
-                    "'?uri1 rdfs:label ?lit1 . '," +
-                    "'?uri1 ex:Class1 . '" +
+                    "'?subject ex:predicate0 ?entity0 . '," +
+                    "'?entity0 rdfs:label ?label0 . '," +
+                    "'?entity0 ex:Class0 . '" +
                 "]," +
                 "'customform:dynamic_variables': [" +
-                    "'?uri1'," +
-                    "'?lit1'" +
+                    "'?entity0'," +
+                    "'?label0'" +
                 "]," + 
                 "'customform:prefixes': '@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> . " + 
-                    "@prefix  rdfs: <http://www.w3.org/2000/01/rdf-schema#> . '" +
+                    "@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> . " +
+                    "@prefix ex: <http://example.org> . '" +
             "}";
 
     private final static String INVALID_TRIPLE_WITH_FOUR_TERMS = 
@@ -111,13 +111,13 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
                     "'forms:FormComponent'" +
                 "]," +
                 "'customform:pattern': [" +
-                    "'?subject ex:predicate1 ?uri1 . '," +
-                    "'?uri1 rdfs:label ?lit1 ?uri1 . '," +
-                    "'?uri1 rdf:type ex:Class1 . '" +
+                    "'?subject ex:predicate0 ?entity0 . '," +
+                    "'?entity0 rdfs:label ?label0 ?entity0 . '," +
+                    "'?entity0 rdf:type ex:Class0 . '" +
                 "]," +
                 "'customform:dynamic_variables': [" +
-                    "'?uri1'," +
-                    "'?lit1'" +
+                    "'?entity0'," +
+                    "'?label0'" +
                 "]," + 
                 "'customform:prefixes': '@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> . " + 
                     "@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> . " +
@@ -132,20 +132,20 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
                     "'forms:FormComponent'" +
                 "]," +
                 "'customform:pattern': [" +
-                    "'?subject ex:predicate1 ?uri1 . '," +
-                    "'?uri1 rdfs:label ?lit1 . '," +
-                    "'?uri1 rdf:type ex:Class1 . '" +
+                    "'?subject ex:predicate0 ?entity0 . '," +
+                    "'?entity0 rdfs:label ?label0 . '," +
+                    "'?entity0 rdf:type ex:Class0 . '" +
                 "]," +
                 "'customform:dynamic_variables': [" +
-                    "'?uri1'," +
-                    "'?lit1'" +
+                    "'?entity0'," +
+                    "'?label0'" +
                 "]," +
                 "'customform:prefixes': '@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> . " + 
                     "@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> . " +
                     "@prefix ex: <http://example.org> . '" +
             "}";
     
-    private final static String VALID_DYNAMIC_N3_COMPONENT_NO_PREFIXES = 
+    private final static String VALID_DYNAMIC_N3_COMPONENT_NO_PREFIXES_USED = 
             "{" +
                 "'@id': 'customform:sampleForm_dynamicN3'," +
                 "'@type': [" +
@@ -153,13 +153,13 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
                     "'forms:FormComponent'" +
                 "]," +
                 "'customform:pattern': [" +
-                    "'?subject <http://example.org/predicate1> ?uri1 . '," +
-                    "'?uri1 <http://www.w3.org/2000/01/rdf-schema#label> ?lit1 . '," +
-                    "'?uri1 <http://www.w3.org/2000/01/rdf-schema#type> <http://example.org/Class1> . '" +
+                    "'?subject ex:predicate0 ?entity0 . '," +
+                    "'?entity0 <http://www.w3.org/2000/01/rdf-schema#label> ?label0 . '," +
+                    "'?entity0 <http://www.w3.org/2000/01/rdf-schema#type> <http://example.org/Class0> . '" +
                 "]," +
                 "'customform:dynamic_variables': [" +
-                    "'?uri1'," +
-                    "'?lit1'" +
+                    "'?entity0'," +
+                    "'?label0'" +
                 "]" +
             "}";
     
@@ -171,13 +171,13 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
                     "'forms:FormComponent'" +
                 "]," +
                 "'customform:pattern': [" +
-                    "'?subject ex:predicate1 ?uri1 . '," +
-                    "'?uri1 rdfs:label ?lit1 . '," +
-                    "'?uri1 rdf:type ex:Class1 . '" +
+                    "'?subject ex:predicate0 ?entity0 . '," +
+                    "'?entity0 rdfs:label ?label0 . '," +
+                    "'?entity0 rdf:type ex:Class0 . '" +
                 "]," +
                 "'customform:dynamic_variables': [" +
-                    "'?uri1'," +
-                    "'?lit1'" +
+                    "'?entity0'," +
+                    "'?label0'" +
                 "]" +
             "}";
     
@@ -194,9 +194,8 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
                             "'forms:FormComponent'" +
                         "]," +
                         "'customform:pattern': [" +
-                            "'?subject ex:predicate1 ?uri1 . '" +
+                            "'?subject ex:predicate0 ?entity0 . '" +
                         "]," +
-                        "'customform:prefixes': '@prefix ex: <http://example.org> . '" +
                     "}" +
                 "]" +
             "}";
@@ -214,13 +213,13 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
                             "'forms:FormComponent'" +
                         "]," +
                         "'customform:pattern': [" +
-                            "'?subject ex:predicate1 ?uri1 . '," +
-                            "'?uri1 rdfs:label ?lit1 . '," +
-                            "'?uri1 rdf:type ex:Class1 . '" +
+                            "'?subject ex:predicate0 ?entity0 . '," +
+                            "'?entity0 rdfs:label ?label0 . '," +
+                            "'?entity0 rdf:type ex:Class0 . '" +
                         "]," +
                         "'customform:dynamic_variables': [" +
-                            "'?uri1'," +
-                            "'?lit1'" +
+                            "'?entity0'," +
+                            "'?label0'" +
                         "]," + 
                         "'customform:prefixes': '@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> . " + 
                                 "@prefix  rdfs: <http://www.w3.org/2000/01/rdf-schema#> . " +
@@ -242,28 +241,27 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
                             "'forms:FormComponent'" +
                         "]," +
                         "'customform:pattern': [" +
-                            "'?subject ex:predicate1 ?uri1 . '" +
+                            "'?subject ex:predicate0 ?entity0 . '" +
                         "]," +
-                        "'customform:prefixes': '@prefix ex: <http://example.org> . '" +
                     "}" +
                 "]" +
             "}";
     
     private static final JSONArray DYNAMIC_VARS = 
-            (JSONArray) JSONSerializer.toJSON(new String[] {"?uri1", "?lit1", "?uri2"});
+            (JSONArray) JSONSerializer.toJSON(new String[] {"?entity0", "?label0", "?entity1"});
     
     private static final JSONArray DYNAMIC_PATTERN = 
             (JSONArray) JSONSerializer.toJSON(new String[] {
-                "?subject ex:predicate1 ?uri1 . ",
-                "?uri1 rdfs:label ?lit1 . " ,
-                "?uri1 rdf:type ex:Class1 . ",
-                "?uri1 ex:predicate2 ?uri2 . "
+                "?subject ex:predicate0 ?entity0 . ",
+                "?entity0 rdfs:label ?label0 . " ,
+                "?entity0 rdf:type ex:Class0 . ",
+                "?entity0 ex:predicate1 ?entity1 . "
             });
     
     private static final JSONArray TRIPLES_MISSING_FINAL_PERIOD = 
             (JSONArray) JSONSerializer.toJSON(new String[] {
-                "?subject ex:predicate1 ?uri1 ",
-                "?uri1 rdfs:label ?lit1 . "
+                "?subject ex:predicate0 ?entity0 ",
+                "?entity0 rdfs:label ?label0 . "
             });
     
     private MinimalConfigurationPreprocessor preprocessor;
@@ -282,20 +280,19 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
     public void formWithNoDynamicN3Component_Succeeds() throws Exception {
         JSONObject config = (JSONObject) JSONSerializer.toJSON(N3_CONFIG_REQUIRED_COMPONENT);
         Map<String, String[]> params = new HashMap<>();
-        params.put("subject", new String[] {"<http://example.org/subject_value>"});
-        params.put("uri1", new String[] {"<http://example.org/uri1_value>"});
+        params.put("subject", new String[] {"<http://example.org/subject>"});
+        params.put("entity0", new String[] {"<http://example.org/entity0_local_name0>"});
         preprocessor.requiredN3Component = config.getJSONArray("@graph").getJSONObject(0);
         preprocessor.updateConfiguration(params, config);
     }
     
     @Test
-    @Ignore
     public void formWithDynamicButNoRequiredN3Component_Succeeds() throws Exception {
         JSONObject config = (JSONObject) JSONSerializer.toJSON(N3_CONFIG_NO_REQUIRED_COMPONENT);
         Map<String, String[]> params = new HashMap<>();
-        params.put("subject", new String[] {"<http://example.org/subject_value>"});
-        params.put("uri1", new String[] {"<http://example.org/uri1_value1>"});
-        params.put("lit1", new String[] {"lit1_value1"});
+        params.put("subject", new String[] {"<http://example.org/subject>"});
+        params.put("entity0", new String[] {"<http://example.org/entity0_local_name0>"});
+        params.put("label0", new String[] {"label0_value0"});
         preprocessor.dynamicN3Component = config.getJSONArray("@graph").getJSONObject(0);
         preprocessor.updateConfiguration(params, config);
     }
@@ -306,8 +303,8 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
                 "Configuration must include either a required or dynamic component");
         JSONObject config = (JSONObject) JSONSerializer.toJSON(N3_CONFIG_NO_REQUIRED_OR_DYNAMIC_COMPONENT);
         Map<String, String[]> params = new HashMap<>();
-        params.put("subject", new String[] {"<http://example.org/subject_value>"});
-        params.put("uri1", new String[] {"<http://example.org/uri1_value1>"});
+        params.put("subject", new String[] {"<http://example.org/subject>"});
+        params.put("entity0", new String[] {"<http://example.org/entity0_local_name0>"});
         preprocessor.optionalN3Component = config.getJSONArray("@graph").getJSONObject(0);
         preprocessor.updateConfiguration(params, config);
     }
@@ -355,7 +352,7 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
     
     @Test 
     public void validDynamicN3ComponentNoPrefixes_Succeeds() throws Exception {
-        validateDynamicN3Component(VALID_DYNAMIC_N3_COMPONENT_NO_PREFIXES);        
+        validateDynamicN3Component(VALID_DYNAMIC_N3_COMPONENT_NO_PREFIXES_USED);        
     }
     
     @Test 
@@ -365,33 +362,34 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
     }
 
     @Test
-    public void dynamicVariableWithNoValue_ThrowsException() throws Exception {
-        expectException(FormSubmissionException.class, "Dynamic variable requires at least one value");
+    public void entityWithNoValue_Succeeds() throws Exception {
         Map<String, String[]> params = new HashMap<>();
-        params.put("subject", new String[] {"<http://example.org/subject_value>"});
-        params.put("lit1", new String[] {"lit1_value1"});
-        params.put("uri2", new String[] {"<http://example.org/uri2_value1>"});
+        params.put("subject", new String[] {"<http://example.org/subject>"});
+        params.put("entity0", new String[] {"<http://example.org/entity0_local_name0>"});
+        params.put("label0", new String[] {"label0_value0"});
+        params.put("entity1", new String[] {"<http://example.org/entity1_local_name0>"});
         getParameterValueCount(0, DYNAMIC_VARS, params);
     }
     
     @Test
-    @Ignore
     public void testDynamicVariableValueCountOfOne() throws Exception {
         Map<String, String[]> params = new HashMap<>();
-        params.put("subject", new String[] {"<http://example.org/subject_value>"});
-        params.put("uri1", new String[] {"<http://example.org/uri1_value1>"});
+        params.put("subject", new String[] {"<http://example.org/subject>"});
+        params.put("entity0", new String[] {"<http://example.org/entity0_local_name0>"});
+        params.put("entity1", new String[] {"<http://example.org/entity1_local_name0>"});
         int count = getParameterValueCount(0, DYNAMIC_VARS, params);
         Assert.assertEquals(count, 1);
     }
     
     @Test
-    @Ignore
     public void testDynamicVariableCountGreaterThanOne() throws Exception {
         Map<String, String[]> params = new HashMap<>();
-        params.put("subject", new String[] {"<http://example.org/subject_value>"});        
-        params.put("uri1", new String[] {"<http://example.org/uri1_value1>", "<http://example.org/uri1_value2>", 
-                "<http://example.org/uri1_value3>"});
-        params.put("lit1", new String[] {"lit1_value1", "lit1_value2", "lit1_value3"});
+        params.put("subject", new String[] {"<http://example.org/subject>"});  
+        params.put("entity0", new String[] {"<http://example.org/entity0_local_name0>",  
+        		"<http://example.org/entity0_local_name1>", "<http://example.org/entity0_local_name2>"});
+        params.put("label0", new String[] {"label0_value0", "label0_value1", "label0_value2"});
+        params.put("entity1", new String[] {"<http://example.org/entity1_local_name0>", 
+        		"<http://example.org/entity1_local_name1>", "<http://example.org/entity1_local_name2>"});
         int count = getParameterValueCount(0, DYNAMIC_VARS, params);
         Assert.assertEquals(count, 3);
     }
@@ -399,10 +397,10 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
     @Test
     public void testDynamicPatternWithOneValue() throws Exception {
         Map<String, String[]> params = new HashMap<>();
-        params.put("subject", new String[] {"<http://example.org/subject_value>"});
-        params.put("uri1", new String[] {"<http://example.org/uri1_value1>"});
-        params.put("lit1", new String[] {"lit1_value1"});
-        params.put("uri2", new String[] {"<http://example.org/uri2_value1>"});
+        params.put("subject", new String[] {"<http://example.org/subject>"});
+        params.put("entity0", new String[] {"<http://example.org/entity0_local_name0>"});
+        params.put("label0", new String[] {"label0_value0"});
+        params.put("entity1", new String[] {"<http://example.org/entity1_local_name0>"});
         String pattern = buildDynamicN3Pattern(DYNAMIC_PATTERN, DYNAMIC_VARS, "", 1);
         Assert.assertEquals(DYNAMIC_PATTERN.join(" ", true), pattern);
     }
@@ -412,49 +410,50 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
     public void testDynamicPatternWithMultipleValues() throws Exception {
         Map<String, String[]> params = new HashMap<>();
         params.put("subject", new String[] {"<http://example.org/subject>"});
-        params.put("uri1", new String[] {"<http://example.org/uri1_value1>", "<http://example.org/uri1_value2>", 
-                "<http://example.org/uri1_value3>"});
-        params.put("lit1", new String[] {"lit1_value1", "lit1_value2", "lit1_value3"});
-        params.put("uri2", new String[] {"<http://example.org/uri2_value1>", "<http://example.org/uri2_value2>", 
-                "<http://example.org/uri2_value3>"});
+        params.put("entity0", new String[] {"<http://example.org/entity0_local_name0>", "<http://example.org/entity0_local_name1>", 
+                "<http://example.org/entity0_local_name2>"});
+        params.put("label0", new String[] {"label0_value0", "label0_value1", "label0_value2"});
+        params.put("entity1", new String[] {"<http://example.org/entity1_local_name0>", "<http://example.org/entity1_local_name1>", 
+                "<http://example.org/entity1_local_name2>"});
         String expected = 
-                "?subject ex:predicate1 ?uri10 . " +
-                "?subject ex:predicate1 ?uri11 . " +
-                "?subject ex:predicate1 ?uri12 . " +
-                "?uri10 rdfs:label ?lit10 . " +
-                "?uri11 rdfs:label ?lit11 . " +
-                "?uri12 rdfs:label ?lit12 . " +
-                "?uri10 rdf:type ex:Class1 . " +
-                "?uri11 rdf:type ex:Class1 . " +
-                "?uri12 rdf:type ex:Class1 . " +
-                "?uri10 ex:predicate2 ?uri20 . " +
-                "?uri11 ex:predicate2 ?uri21 . " +
-                "?uri12 ex:predicate2 ?uri22 . ";                
+                "?subject ex:predicate0 ?entity00 . " +
+                "?subject ex:predicate0 ?entity01 . " +
+                "?subject ex:predicate0 ?entity02 . " +
+                "?entity00 rdfs:label ?label00 . " +
+                "?entity01 rdfs:label ?label01 . " +
+                "?entity02 rdfs:label ?label02 . " +
+                "?entity00 rdf:type ex:Class0 . " +
+                "?entity01 rdf:type ex:Class0 . " +
+                "?entity02 rdf:type ex:Class0 . " +
+                "?entity00 ex:predicate1 ?entity10 . " +
+                "?entity01 ex:predicate1 ?entity11 . " +
+                "?entity02 ex:predicate1 ?entity12 . ";                
         String pattern = buildDynamicN3Pattern(DYNAMIC_PATTERN, DYNAMIC_VARS, "", 3);
         Assert.assertEquals(expected, pattern);
     }
     
     @Test
     public void testDynamicPatternWithNonDynamicVariable() throws Exception {
-        JSONArray dynamicVars = (JSONArray) JSONSerializer.toJSON(new String[] {"?uri1", "?lit1"});
+        JSONArray dynamicVars = (JSONArray) JSONSerializer.toJSON(new String[] {"?entity0", "?label0"});
         Map<String, String[]> params = new HashMap<>();
         params.put("subject", new String[] {"<http://example.org/subject>"});
-        params.put("uri1", new String[] {"<http://example.org/uri1_value1>", "<http://example.org/uri1_value2>", 
-                "<http://example.org/uri1_value3>"});
-        params.put("lit1", new String[] {"lit1_value1", "lit1_value2", "lit1_value3"});
+        params.put("entity0", new String[] {"<http://example.org/entity0_local_name0>", "<http://example.org/entity0_local_name1>", 
+                "<http://example.org/entity0_local_name2>"});
+        params.put("label0", new String[] {"label0_value0", "label0_value1", "label0_value2"});
+        params.put("entity1", new String[] {"<http://example.org/entity1_local_name0>"});
         String expected = 
-                "?subject ex:predicate1 ?uri10 . " +
-                "?subject ex:predicate1 ?uri11 . " +
-                "?subject ex:predicate1 ?uri12 . " +
-                "?uri10 rdfs:label ?lit10 . " +
-                "?uri11 rdfs:label ?lit11 . " +
-                "?uri12 rdfs:label ?lit12 . " +
-                "?uri10 rdf:type ex:Class1 . " +
-                "?uri11 rdf:type ex:Class1 . " +
-                "?uri12 rdf:type ex:Class1 . " +
-                "?uri10 ex:predicate2 ?uri2 . " +
-                "?uri11 ex:predicate2 ?uri2 . " +
-                "?uri12 ex:predicate2 ?uri2 . ";                
+                "?subject ex:predicate0 ?entity00 . " +
+                "?subject ex:predicate0 ?entity01 . " +
+                "?subject ex:predicate0 ?entity02 . " +
+                "?entity00 rdfs:label ?label00 . " +
+                "?entity01 rdfs:label ?label01 . " +
+                "?entity02 rdfs:label ?label02 . " +
+                "?entity00 rdf:type ex:Class0 . " +
+                "?entity01 rdf:type ex:Class0 . " +
+                "?entity02 rdf:type ex:Class0 . " +
+                "?entity00 ex:predicate1 ?entity1 . " +
+                "?entity01 ex:predicate1 ?entity1 . " +
+                "?entity02 ex:predicate1 ?entity1 . ";                
         String pattern = buildDynamicN3Pattern(DYNAMIC_PATTERN, dynamicVars, "", 3);
         Assert.assertEquals(expected, pattern);        
     }
@@ -462,64 +461,63 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
     @Test
     public void dynamicN3TripleMissingFinalPeriod_Succeeds() throws Exception {
         Map<String, String[]> params = new HashMap<>();
-        params.put("subject", new String[] {"<http://example.org/subject_value>"});
-        params.put("uri1", new String[] {"<http://example.org/uri1_value1>", "<http://example.org/uri1_value2>"});
-        params.put("lit1", new String[] {"lit1_value1", "lit1_value2"});
+        params.put("subject", new String[] {"<http://example.org/subject>"});
+        params.put("entity0", new String[] 
+        		{"<http://example.org/entity0_local_name0>", "<http://example.org/entity0_local_name1>"});
+        params.put("label0", new String[] {"label0_value0", "label0_value1"});
+        JSONArray dynamicVars =  
+        		(JSONArray) JSONSerializer.toJSON(new String[] {"?entity0", "?label0"});
         String expected = 
-                "?subject ex:predicate1 ?uri10 . " +
-                "?subject ex:predicate1 ?uri11 . " +
-                "?subject ex:predicate1 ?uri12 . " +
-                "?uri10 rdfs:label ?lit10 . " +
-                "?uri11 rdfs:label ?lit11 . " +
-                "?uri12 rdfs:label ?lit12 . ";
-        String pattern = buildDynamicN3Pattern(TRIPLES_MISSING_FINAL_PERIOD, DYNAMIC_VARS, "", 3);
+                "?subject ex:predicate0 ?entity00 . " +
+                "?subject ex:predicate0 ?entity01 . " +
+                "?entity00 rdfs:label ?label00 . " +
+                "?entity01 rdfs:label ?label01 . ";
+        String pattern = buildDynamicN3Pattern(TRIPLES_MISSING_FINAL_PERIOD, dynamicVars, "", 2);
         Assert.assertEquals(expected, pattern);
     }
 
     @Test
-    @Ignore
     public void testDynamicN3Component() throws Exception {
         Map<String, String[]> params = new HashMap<>();
         params.put("subject", new String[] {"<http://example.org/subject_value>"});
-        params.put("uri1", new String[] {"<http://example.org/uri1_value1>", "<http://example.org/uri1_value2>", 
-                "<http://example.org/uri1_value3>"});
-        params.put("lit1", new String[] {"lit1_value1", "lit1_value2", "lit1_value3"});
+        params.put("entity0", new String[] {"<http://example.org/entity0_local_name0>", "<http://example.org/entity0_local_name1>", 
+                "<http://example.org/entity0_local_name2>"});
+        params.put("label0", new String[] {"label0_value0", "label0_value1", "label0_value2"});
         String pattern = buildDynamicN3Pattern(VALID_DYNAMIC_N3_COMPONENT, params);
         String expected = 
                 "@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> . " +
                 "@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> . " +
-                    "@prefix ex: <http://example.org> . " +    
-                "?subject ex:predicate1 ?uri10 . " +
-                "?subject ex:predicate1 ?uri11 . " +
-                "?subject ex:predicate1 ?uri12 . " +
-                "?uri10 rdfs:label ?lit10 . " +
-                "?uri11 rdfs:label ?lit11 . " +
-                "?uri12 rdfs:label ?lit12 . " +
-                "?uri10 rdf:type ex:Class1 . " +
-                "?uri11 rdf:type ex:Class1 . " +
-                "?uri12 rdf:type ex:Class1 . ";
+                "@prefix ex: <http://example.org> . " +    
+                "?subject ex:predicate0 ?entity00 . " +
+                "?subject ex:predicate0 ?entity01 . " +
+                "?subject ex:predicate0 ?entity02 . " +
+                "?entity00 rdfs:label ?label00 . " +
+                "?entity01 rdfs:label ?label01 . " +
+                "?entity02 rdfs:label ?label02 . " +
+                "?entity00 rdf:type ex:Class0 . " +
+                "?entity01 rdf:type ex:Class0 . " +
+                "?entity02 rdf:type ex:Class0 . ";
         Assert.assertEquals(expected, pattern);
     }
 
     @Test
-    @Ignore
-    public void testDynamicN3ComponentNoPrefixes() throws Exception {
+    public void testDynamicN3ComponentNoPrefixesUsed() throws Exception {
         Map<String, String[]> params = new HashMap<>();
-        params.put("subject", new String[] {"<http://example.org/subject_value>"});
-        params.put("uri1", new String[] {"<http://example.org/uri1_value1>", "<http://example.org/uri1_value2>", 
-                "<http://example.org/uri1_value3>"});
-        params.put("lit1", new String[] {"lit1_value1", "lit1_value2", "lit1_value3"});
-        String pattern = buildDynamicN3Pattern(VALID_DYNAMIC_N3_COMPONENT_NO_PREFIXES, params);
+        params.put("subject", new String[] {"<http://example.org/subject>"});
+        params.put("entity0", new String[] {"<http://example.org/entity0_local_name0>", "<http://example.org/entity0_local_name1>", 
+                "<http://example.org/entity0_local_name2>"});
+        params.put("label0", new String[] {"label0_value0", "label0_value1", "label0_value2"});
+        String pattern = buildDynamicN3Pattern(VALID_DYNAMIC_N3_COMPONENT_NO_PREFIXES_USED, params);
         String expected = 
-                "?subject ex:predicate1 ?uri10 . " +
-                "?subject ex:predicate1 ?uri11 . " +
-                "?subject ex:predicate1 ?uri12 . " +
-                "?uri10 rdfs:label ?lit10 . " +
-                "?uri11 rdfs:label ?lit11 . " +
-                "?uri12 rdfs:label ?lit12 . " +
-                "?uri10 rdf:type ex:Class1 . " +
-                "?uri11 rdf:type ex:Class1 . " +
-                "?uri12 rdf:type ex:Class1 . ";
+                "?subject ex:predicate0 ?entity00 . " +
+                "?subject ex:predicate0 ?entity01 . " +
+                "?subject ex:predicate0 ?entity02 . " +
+                "?entity00 <http://www.w3.org/2000/01/rdf-schema#label> ?label00 . " +
+                "?entity01 <http://www.w3.org/2000/01/rdf-schema#label> ?label01 . " +
+                "?entity02 <http://www.w3.org/2000/01/rdf-schema#label> ?label02 . " +
+                "?entity00 <http://www.w3.org/2000/01/rdf-schema#type> <http://example.org/Class0> . " +
+                "?entity01 <http://www.w3.org/2000/01/rdf-schema#type> <http://example.org/Class0> . " +
+                "?entity02 <http://www.w3.org/2000/01/rdf-schema#type> <http://example.org/Class0> . ";
         Assert.assertEquals(expected, pattern);
     }
     

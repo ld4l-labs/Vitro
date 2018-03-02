@@ -342,20 +342,20 @@ public class MinimalConfigurationPreprocessor extends
         
         // Get the count of the largest number of dynamic variable values in the form submission. This determines
         // the number of statements added to the N3 pattern.
-        int valueCount = getLargestDynamicVariableValueCount(dynamicVars, parameterMap);
+        int dynamicVarValueCount = getLargestDynamicVariableValueCount(dynamicVars, parameterMap);
         
         String prefixes = getPrefixes(dynamicComponent);
 
-        return buildDynamicN3Pattern(dynamicN3Array, dynamicVars, prefixes, valueCount);
+        return buildDynamicN3Pattern(dynamicN3Array, dynamicVars, prefixes, dynamicVarValueCount);
     }
     
     String buildDynamicN3Pattern(JSONArray dynamicN3Array, JSONArray dynamicVars, String prefixes, 
-            int paramValueCount) throws FormSubmissionException, FormConfigurationException {
+            int dynamicVarValueCount) {
         
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append(prefixes);
         
-        if (paramValueCount == 1) {
+        if (dynamicVarValueCount == 1) {
                 // True removes the quotes around each item in the JSONArray; JSONArray.join(), unlike 
                 // StringUtils.join(), retains the quotes around each element by default.
                 stringBuilder.append(dynamicN3Array.join(" ", true));
@@ -376,7 +376,7 @@ public class MinimalConfigurationPreprocessor extends
                 String[] terms = triple.trim().split("\\s+");
                 
                 // For each set of values in the input
-                for (int valueIndex = 0; valueIndex < paramValueCount; valueIndex++) {
+                for (int valueIndex = 0; valueIndex < dynamicVarValueCount; valueIndex++) {
                     // For each term in the triple
                     String[] newTerms = new String[3];
                     for (int termIndex = 0; termIndex < 3; termIndex++) {
@@ -494,11 +494,14 @@ public class MinimalConfigurationPreprocessor extends
         // Remove initial "?" from the variable for the comparison with the params
         String var = dynamicVars.getString(index).substring(1);
         if (! params.containsKey(var)) {
-            throw new FormSubmissionException("Dynamic variable requires at least one value.");
+            return 0;
         }
-        // The param value array always contains an additional empty item. Don't know why it's there. Work around
-        // by ignoring it in the count.
-        return params.get(var).length - 1;
+        
+        String[] values = params.get(var);
+        // In a real form submission, the param value array always contains an additional empty item. Not sure why
+        // it's there. Work around by ignoring it in the count. In params from unit tests, there is no empty
+        // value.
+        return (values[0].isEmpty()) ? values.length - 1 : values.length;
     }
 
     private boolean isReservedVarName(String s) {
