@@ -31,199 +31,199 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
     private final static String BASE_DYNAMIC_N3_COMPONENT = 
             "{" +
                 "'@id': 'customform:sampleForm_dynamicN3'," +
-                    "'@type': [" +
-                        "'forms:DynamicN3Pattern'," +
-                        "'forms:FormComponent'" +
+                "'@type': [" +
+                    "'forms:DynamicN3Pattern'," +
+                    "'forms:FormComponent'" +
                 "]," +
             "}";
     
     private final static String DYNAMIC_N3_COMPONENT_EMPTY_PATTERN = 
             "{" +
-                    "'@id': 'customform:sampleForm_dynamicN3'," +
-                    "'@type': [" +
-                        "'forms:DynamicN3Pattern'," +
-                        "'forms:FormComponent'" +
+                "'@id': 'customform:sampleForm_dynamicN3'," +
+                "'@type': [" +
+                    "'forms:DynamicN3Pattern'," +
+                    "'forms:FormComponent'" +
                 "]," +
-                    "'customform:pattern': [" +
-                    "]" +
+                "'customform:pattern': [" +
+                "]" +
             "}";
     
     private final static String DYNAMIC_N3_COMPONENT_NO_DYNAMIC_VARIABLES = 
             "{" +
-                    "'@id': 'customform:sampleForm_dynamicN3'," +
-                    "'@type': [" +
-                        "'forms:DynamicN3Pattern'," +
-                        "'forms:FormComponent'" +
+                "'@id': 'customform:sampleForm_dynamicN3'," +
+                "'@type': [" +
+                    "'forms:DynamicN3Pattern'," +
+                    "'forms:FormComponent'" +
                 "]," +
-                    "'customform:pattern': [" +
+                "'customform:pattern': [" +
                     "'?subject ex:predicate1 ?uri1 . '" +
-                    "]," +
-                    "'customform:prefixes': '@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> . " + 
-                        "@prefix  rdfs: <http://www.w3.org/2000/01/rdf-schema#> . " +
-                        "@prefix ex: <http://example.org> . '" +
+                "]," +
+                "'customform:prefixes': '@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> . " + 
+                    "@prefix  rdfs: <http://www.w3.org/2000/01/rdf-schema#> . " +
+                    "@prefix ex: <http://example.org> . '" +
             "}";
 
     
     private final static String DYNAMIC_N3_COMPONENT_EMPTY_DYNAMIC_VARIABLES = 
             "{" +
-                    "'@id': 'customform:sampleForm_dynamicN3'," +
-                    "'@type': [" +
-                        "'forms:DynamicN3Pattern'," +
-                        "'forms:FormComponent'" +
+                "'@id': 'customform:sampleForm_dynamicN3'," +
+                "'@type': [" +
+                    "'forms:DynamicN3Pattern'," +
+                    "'forms:FormComponent'" +
                 "]," +
-                    "'customform:pattern': [" +
+                "'customform:pattern': [" +
                     "'?subject ex:predicate1 ?uri1 . '," +
                     "'?uri1 rdfs:label ?lit1 . '," +
                     "'?uri1 rdf:type ex:Class1 . '" +
-                    "]," +
-                    "'customform:dynamic_variables': [" +
-                    "]," + 
-                    "'customform:prefixes': '@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> . " + 
-                        "@prefix  rdfs: <http://www.w3.org/2000/01/rdf-schema#> . " +
-                        "@prefix ex: <http://example.org> . '" +
+                "]," +
+                "'customform:dynamic_variables': [" +
+                "]," + 
+                "'customform:prefixes': '@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> . " + 
+                    "@prefix  rdfs: <http://www.w3.org/2000/01/rdf-schema#> . " +
+                    "@prefix ex: <http://example.org> . '" +
             "}";
     
     private final static String INVALID_TRIPLE_WITH_TWO_TERMS = 
             "{" +
-                    "'@id': 'customform:sampleForm_dynamicN3'," +
-                    "'@type': [" +
-                        "'forms:DynamicN3Pattern'," +
-                        "'forms:FormComponent'" +
+                "'@id': 'customform:sampleForm_dynamicN3'," +
+                "'@type': [" +
+                    "'forms:DynamicN3Pattern'," +
+                    "'forms:FormComponent'" +
                 "]," +
-                    "'customform:pattern': [" +
+                "'customform:pattern': [" +
                     "'?subject ex:predicate1 ?uri1 . '," +
                     "'?uri1 rdfs:label ?lit1 . '," +
                     "'?uri1 ex:Class1 . '" +
-                    "]," +
-                    "'customform:dynamic_variables': [" +
-                        "'?uri1'," +
-                        "'?lit1'" +
-                    "]," + 
-                    "'customform:prefixes': '@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> . " + 
-                        "@prefix  rdfs: <http://www.w3.org/2000/01/rdf-schema#> . '" +
+                "]," +
+                "'customform:dynamic_variables': [" +
+                    "'?uri1'," +
+                    "'?lit1'" +
+                "]," + 
+                "'customform:prefixes': '@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> . " + 
+                    "@prefix  rdfs: <http://www.w3.org/2000/01/rdf-schema#> . '" +
             "}";
 
     private final static String INVALID_TRIPLE_WITH_FOUR_TERMS = 
             "{" +
-                    "'@id': 'customform:sampleForm_dynamicN3'," +
-                    "'@type': [" +
-                        "'forms:DynamicN3Pattern'," +
-                        "'forms:FormComponent'" +
+                "'@id': 'customform:sampleForm_dynamicN3'," +
+                "'@type': [" +
+                    "'forms:DynamicN3Pattern'," +
+                    "'forms:FormComponent'" +
                 "]," +
-                    "'customform:pattern': [" +
+                "'customform:pattern': [" +
                     "'?subject ex:predicate1 ?uri1 . '," +
                     "'?uri1 rdfs:label ?lit1 ?uri1 . '," +
                     "'?uri1 rdf:type ex:Class1 . '" +
-                    "]," +
-                    "'customform:dynamic_variables': [" +
-                        "'?uri1'," +
-                        "'?lit1'" +
-                    "]," + 
-                    "'customform:prefixes': '@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> . " + 
-                        "@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> . " +
-                        "@prefix ex: <http://example.org> . '" +
+                "]," +
+                "'customform:dynamic_variables': [" +
+                    "'?uri1'," +
+                    "'?lit1'" +
+                "]," + 
+                "'customform:prefixes': '@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> . " + 
+                    "@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> . " +
+                    "@prefix ex: <http://example.org> . '" +
             "}";
     
     private final static String VALID_DYNAMIC_N3_COMPONENT = 
             "{" +
-                    "'@id': 'customform:sampleForm_dynamicN3'," +
-                    "'@type': [" +
-                        "'forms:DynamicN3Pattern'," +
-                        "'forms:FormComponent'" +
+                "'@id': 'customform:sampleForm_dynamicN3'," +
+                "'@type': [" +
+                    "'forms:DynamicN3Pattern'," +
+                    "'forms:FormComponent'" +
                 "]," +
-                    "'customform:pattern': [" +
+                "'customform:pattern': [" +
                     "'?subject ex:predicate1 ?uri1 . '," +
                     "'?uri1 rdfs:label ?lit1 . '," +
                     "'?uri1 rdf:type ex:Class1 . '" +
-                    "]," +
-                    "'customform:dynamic_variables': [" +
-                        "'?uri1'," +
-                        "'?lit1'" +
-                    "]," +
-                    "'customform:prefixes': '@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> . " + 
-                            "@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> . " +
-                            "@prefix ex: <http://example.org> . '" +
+                "]," +
+                "'customform:dynamic_variables': [" +
+                    "'?uri1'," +
+                    "'?lit1'" +
+                "]," +
+                "'customform:prefixes': '@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> . " + 
+                    "@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> . " +
+                    "@prefix ex: <http://example.org> . '" +
             "}";
     
     private final static String VALID_DYNAMIC_N3_COMPONENT_NO_PREFIXES = 
             "{" +
-                    "'@id': 'customform:sampleForm_dynamicN3'," +
-                    "'@type': [" +
-                        "'forms:DynamicN3Pattern'," +
-                        "'forms:FormComponent'" +
+                "'@id': 'customform:sampleForm_dynamicN3'," +
+                "'@type': [" +
+                    "'forms:DynamicN3Pattern'," +
+                    "'forms:FormComponent'" +
                 "]," +
-                    "'customform:pattern': [" +
+                "'customform:pattern': [" +
                     "'?subject <http://example.org/predicate1> ?uri1 . '," +
                     "'?uri1 <http://www.w3.org/2000/01/rdf-schema#label> ?lit1 . '," +
                     "'?uri1 <http://www.w3.org/2000/01/rdf-schema#type> <http://example.org/Class1> . '" +
-                    "]," +
-                    "'customform:dynamic_variables': [" +
-                        "'?uri1'," +
-                        "'?lit1'" +
-                    "]" +
+                "]," +
+                "'customform:dynamic_variables': [" +
+                    "'?uri1'," +
+                    "'?lit1'" +
+                "]" +
             "}";
     
     private final static String VALID_DYNAMIC_N3_COMPONENT_NO_PREFIXES_DEFINED = 
             "{" +
-                    "'@id': 'customform:sampleForm_dynamicN3'," +
-                    "'@type': [" +
-                        "'forms:DynamicN3Pattern'," +
-                        "'forms:FormComponent'" +
+                "'@id': 'customform:sampleForm_dynamicN3'," +
+                "'@type': [" +
+                    "'forms:DynamicN3Pattern'," +
+                    "'forms:FormComponent'" +
                 "]," +
-                    "'customform:pattern': [" +
+                "'customform:pattern': [" +
                     "'?subject ex:predicate1 ?uri1 . '," +
                     "'?uri1 rdfs:label ?lit1 . '," +
                     "'?uri1 rdf:type ex:Class1 . '" +
-                    "]," +
-                    "'customform:dynamic_variables': [" +
-                        "'?uri1'," +
-                        "'?lit1'" +
-                    "]" +
+                "]," +
+                "'customform:dynamic_variables': [" +
+                    "'?uri1'," +
+                    "'?lit1'" +
+                "]" +
             "}";
     
     private final static String N3_CONFIG_REQUIRED_COMPONENT = 
             "{" +
                 "'@context': {" +
-                        "'owl': 'http://www.w3.org/2002/07/owl#'" +
-                    "}," + 
-                    "'@graph': [" + 
-                        "{" +
-                            "'@id': 'customform:sampleForm_requiredN3'," +
-                            "'@type': [" +
-                                "'forms:RequiredN3Pattern'," +
-                                "'forms:FormComponent'" +
-                            "]," +
-                            "'customform:pattern': [" +
-                                "'?subject ex:predicate1 ?uri1 . '" +
+                    "'owl': 'http://www.w3.org/2002/07/owl#'" +
+                "}," + 
+                "'@graph': [" + 
+                    "{" +
+                        "'@id': 'customform:sampleForm_requiredN3'," +
+                        "'@type': [" +
+                            "'forms:RequiredN3Pattern'," +
+                            "'forms:FormComponent'" +
+                        "]," +
+                        "'customform:pattern': [" +
+                            "'?subject ex:predicate1 ?uri1 . '" +
                         "]," +
                         "'customform:prefixes': '@prefix ex: <http://example.org> . '" +
-                        "}" +
-                    "]" +
+                    "}" +
+                "]" +
             "}";
     
     private final static String N3_CONFIG_NO_REQUIRED_COMPONENT = 
             "{" +
                 "'@context': {" +
-                        "'owl': 'http://www.w3.org/2002/07/owl#'" +
-                    "}," + 
-                    "'@graph': [" + 
-                        "{" +
-                            "'@id': 'customform:sampleForm_dynamicN3'," +
-                            "'@type': [" +
-                                "'forms:DynamicN3Pattern'," +
-                                "'forms:FormComponent'" +
-                            "]," +
-                                    "'customform:pattern': [" +
-                                        "'?subject ex:predicate1 ?uri1 . '," +
-                                    "'?uri1 rdfs:label ?lit1 . '," +
-                                    "'?uri1 rdf:type ex:Class1 . '" +
-                                "]," +
-                                "'customform:dynamic_variables': [" +
-                                    "'?uri1'," +
-                                    "'?lit1'" +
-                                "]," + 
-                            "'customform:prefixes': '@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> . " + 
-                                    "@prefix  rdfs: <http://www.w3.org/2000/01/rdf-schema#> . " +
+                    "'owl': 'http://www.w3.org/2002/07/owl#'" +
+                "}," + 
+                "'@graph': [" + 
+                    "{" +
+                        "'@id': 'customform:sampleForm_dynamicN3'," +
+                        "'@type': [" +
+                            "'forms:DynamicN3Pattern'," +
+                            "'forms:FormComponent'" +
+                        "]," +
+                        "'customform:pattern': [" +
+                            "'?subject ex:predicate1 ?uri1 . '," +
+                            "'?uri1 rdfs:label ?lit1 . '," +
+                            "'?uri1 rdf:type ex:Class1 . '" +
+                        "]," +
+                        "'customform:dynamic_variables': [" +
+                            "'?uri1'," +
+                            "'?lit1'" +
+                        "]," + 
+                        "'customform:prefixes': '@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> . " + 
+                                "@prefix  rdfs: <http://www.w3.org/2000/01/rdf-schema#> . " +
                                 "@prefix ex: <http://example.org> . '" +
                         "}" +
                     "]" +
@@ -232,21 +232,21 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
     private final static String N3_CONFIG_NO_REQUIRED_OR_DYNAMIC_COMPONENT = 
             "{" +
                 "'@context': {" +
-                        "'owl': 'http://www.w3.org/2002/07/owl#'" +
-                    "}," + 
-                    "'@graph': [" + 
-                        "{" +
-                            "'@id': 'customform:sampleForm_optionalN3'," +
-                            "'@type': [" +
-                                "'forms:OptionalN3Pattern'," +
-                                "'forms:FormComponent'" +
-                            "]," +
-                            "'customform:pattern': [" +
-                                "'?subject ex:predicate1 ?uri1 . '" +
+                    "'owl': 'http://www.w3.org/2002/07/owl#'" +
+                "}," + 
+                "'@graph': [" + 
+                    "{" +
+                        "'@id': 'customform:sampleForm_optionalN3'," +
+                        "'@type': [" +
+                            "'forms:OptionalN3Pattern'," +
+                            "'forms:FormComponent'" +
                         "]," +
-                            "'customform:prefixes': '@prefix ex: <http://example.org> . '" +
-                        "}" +
-                    "]" +
+                        "'customform:pattern': [" +
+                            "'?subject ex:predicate1 ?uri1 . '" +
+                        "]," +
+                        "'customform:prefixes': '@prefix ex: <http://example.org> . '" +
+                    "}" +
+                "]" +
             "}";
     
     private static final JSONArray DYNAMIC_VARS = 

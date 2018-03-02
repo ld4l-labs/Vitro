@@ -478,7 +478,7 @@ public class MinimalConfigurationPreprocessor extends
         
         if (largest == 0) {
         		throw new FormSubmissionException(
-        				"Submisstoin must include at least one value for one dynamic variable.");
+        				"Submission must include at least one value for one dynamic variable.");
         }
         
         return largest;
