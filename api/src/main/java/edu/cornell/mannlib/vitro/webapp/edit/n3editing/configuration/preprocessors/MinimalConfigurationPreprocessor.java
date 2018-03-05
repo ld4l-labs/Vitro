@@ -481,6 +481,7 @@ public class MinimalConfigurationPreprocessor extends
         				"Submission must include at least one value for one dynamic variable.");
         }
         
+        log.debug("Largest number of parameter values for a dynamic variable: " + largest);
         return largest;
     }
     

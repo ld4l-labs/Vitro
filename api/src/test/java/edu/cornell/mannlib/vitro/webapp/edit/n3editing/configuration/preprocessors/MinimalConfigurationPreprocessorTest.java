@@ -555,6 +555,7 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
     
     @Test
     @Ignore
+    // Not yet sure what should happen in this case - need to test with a form that can send multiple values.
     public void testUnequalDynamicVarParameterValueCountUses() throws Exception {
         Map<String, String[]> params = new HashMap<>();
         params.put("subject", new String[] {"<http://example.org/subject_value>"});
