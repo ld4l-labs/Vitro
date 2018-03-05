@@ -356,10 +356,10 @@ public class MinimalConfigurationPreprocessor extends
         stringBuilder.append(prefixes);
         
         if (dynamicVarValueCount == 1) {
-                // True removes the quotes around each item in the JSONArray; JSONArray.join(), unlike 
-                // StringUtils.join(), retains the quotes around each element by default.
-                stringBuilder.append(dynamicN3Array.join(" ", true));
-                return stringBuilder.toString();
+            // True removes the quotes around each item in the JSONArray; JSONArray.join(), unlike 
+            // StringUtils.join(), retains the quotes around each element by default.
+            stringBuilder.append(dynamicN3Array.join(" ", true));
+            return stringBuilder.toString();
         }
 
         // For each triple in the dynamic pattern
