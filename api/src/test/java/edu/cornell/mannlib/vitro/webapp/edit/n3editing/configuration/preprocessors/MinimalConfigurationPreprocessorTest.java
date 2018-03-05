@@ -521,6 +521,39 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
         Assert.assertEquals(expected, pattern);
     }
     
+    @Test
+    public void testLargestDynamicVarParameterValueCount() throws Exception {
+        Map<String, String[]> params = new HashMap<>();
+        params.put("subject", new String[] {"<http://example.org/subject>"});
+        params.put("entity0", new String[] {"<http://example.org/entity0_local_name0>", "<http://example.org/entity0_local_name1>"});
+        params.put("label0", new String[] {"label0_value0"});
+        params.put("entity1", new String[] {"<http://example.org/entity1_local_name0>", "<http://example.org/entity1_local_name1>", 
+    				"<http://example.org/entity1_local_name2>"});
+        int largest = getLargestDynamicVariableValueCount(DYNAMIC_VARS, params);
+        Assert.assertEquals(3, largest);    	
+    }
+    
+    @Test
+    @Ignore
+    public void testUnequalDynamicVarParameterValueCountUses() throws Exception {
+        Map<String, String[]> params = new HashMap<>();
+        params.put("subject", new String[] {"<http://example.org/subject_value>"});
+        params.put("entity0", new String[] {"<http://example.org/entity0_local_name0>", "<http://example.org/entity0_local_name1>"});
+        params.put("label0", new String[] {"label0_value0", "label0_value1", "label0_value2"});
+        String pattern = buildDynamicN3Pattern(VALID_DYNAMIC_N3_COMPONENT, params);
+        String expected = 
+                "@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> . " +
+                "@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> . " +
+                "@prefix ex: <http://example.org> . " +    
+                "?subject ex:predicate0 ?entity00 . " +
+                "?subject ex:predicate0 ?entity01 . " +
+                "?entity00 rdfs:label ?label00 . " +
+                "?entity01 rdfs:label ?label01 . " +
+                "?entity00 rdf:type ex:Class0 . " +
+                "?entity01 rdf:type ex:Class0 . ";
+        Assert.assertEquals(expected, pattern);	
+    }
+    
     // ---------------------------------------------------------------------
     // Tests to ignore (illustrative only)
     //
@@ -529,6 +562,7 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
     // by default.
     // ---------------------------------------------------------------------
 
+    /*
     @Test
     @Ignore
     public void testJSONArrayJoin() {
@@ -563,6 +597,7 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
         String expected = "a b c";
         Assert.assertEquals(expected, actual);
     }
+    */
     
     
     // ---------------------------------------------------------------------
