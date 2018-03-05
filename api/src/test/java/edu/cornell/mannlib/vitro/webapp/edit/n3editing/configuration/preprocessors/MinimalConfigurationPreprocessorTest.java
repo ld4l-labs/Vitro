@@ -124,7 +124,7 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
                     "@prefix ex: <http://example.org> . '" +
             "}";
     
-    private final static String VALID_DYNAMIC_N3_COMPONENT = 
+    private final static String VALID_DYNAMIC_N3_COMPONENT_1 = 
             "{" +
                 "'@id': 'customform:sampleForm_dynamicN3'," +
                 "'@type': [" +
@@ -135,6 +135,26 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
                     "'?subject ex:predicate0 ?entity0 . '," +
                     "'?entity0 rdfs:label ?label0 . '," +
                     "'?entity0 rdf:type ex:Class0 . '" +
+                "]," +
+                "'customform:dynamic_variables': [" +
+                    "'?entity0'," +
+                    "'?label0'" +
+                "]," +
+                "'customform:prefixes': '@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> . " + 
+                    "@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> . " +
+                    "@prefix ex: <http://example.org> . '" +
+            "}";
+    
+    private final static String VALID_DYNAMIC_N3_COMPONENT_2 = 
+            "{" +
+                "'@id': 'customform:sampleForm_dynamicN3'," +
+                "'@type': [" +
+                    "'forms:DynamicN3Pattern'," +
+                    "'forms:FormComponent'" +
+                "]," +
+                "'customform:pattern': [" +
+                    "'?subject ex:predicate0 ?entity0 . '," +
+                    "'?entity0 rdfs:label ?label0 . '," +
                 "]," +
                 "'customform:dynamic_variables': [" +
                     "'?entity0'," +
@@ -347,7 +367,7 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
     
     @Test 
     public void validDynamicN3Component_Succeeds() throws Exception {
-        validateDynamicN3Component(VALID_DYNAMIC_N3_COMPONENT);        
+        validateDynamicN3Component(VALID_DYNAMIC_N3_COMPONENT_1);        
     }
     
     @Test 
@@ -483,7 +503,7 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
         params.put("entity0", new String[] {"<http://example.org/entity0_local_name0>", "<http://example.org/entity0_local_name1>", 
                 "<http://example.org/entity0_local_name2>"});
         params.put("label0", new String[] {"label0_value0", "label0_value1", "label0_value2"});
-        String pattern = buildDynamicN3Pattern(VALID_DYNAMIC_N3_COMPONENT, params);
+        String pattern = buildDynamicN3Pattern(VALID_DYNAMIC_N3_COMPONENT_1, params);
         String expected = 
                 "@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> . " +
                 "@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> . " +
@@ -540,7 +560,7 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
         params.put("subject", new String[] {"<http://example.org/subject_value>"});
         params.put("entity0", new String[] {"<http://example.org/entity0_local_name0>", "<http://example.org/entity0_local_name1>"});
         params.put("label0", new String[] {"label0_value0", "label0_value1", "label0_value2"});
-        String pattern = buildDynamicN3Pattern(VALID_DYNAMIC_N3_COMPONENT, params);
+        String pattern = buildDynamicN3Pattern(VALID_DYNAMIC_N3_COMPONENT_2, params);
         String expected = 
                 "@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> . " +
                 "@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> . " +

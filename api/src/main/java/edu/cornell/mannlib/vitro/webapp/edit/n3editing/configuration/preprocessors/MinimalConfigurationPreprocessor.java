@@ -364,31 +364,32 @@ public class MinimalConfigurationPreprocessor extends
 
         // For each triple in the dynamic pattern
         for (int tripleCount = 0; tripleCount < dynamicN3Array.size(); tripleCount++) {
-                String triple = dynamicN3Array.getString(tripleCount);
-         
-                triple = triple.trim();
-                if (triple.endsWith(".")) {
-                    // Peel off final period
-                    triple = triple.substring(0, triple.length() - 1).trim(); // triple.lastIndexOf(".");
+            String triple = dynamicN3Array.getString(tripleCount);
+            log.debug("Triple: " + triple);
+     
+            triple = triple.trim();
+            if (triple.endsWith(".")) {
+                // Peel off final period
+                triple = triple.substring(0, triple.length() - 1).trim(); // triple.lastIndexOf(".");
+            }
+            
+            // Split the triple into terms
+            String[] terms = triple.trim().split("\\s+");
+            
+            // For each set of values in the input
+            for (int valueIndex = 0; valueIndex < dynamicVarValueCount; valueIndex++) {
+                // For each term in the triple
+                String[] newTerms = new String[3];
+                for (int termIndex = 0; termIndex < 3; termIndex++) {
+                    String term = terms[termIndex];
+                    newTerms[termIndex] = dynamicVars.contains(term) ? term + valueIndex : term;
                 }
-                
-                // Split the triple into terms
-                String[] terms = triple.trim().split("\\s+");
-                
-                // For each set of values in the input
-                for (int valueIndex = 0; valueIndex < dynamicVarValueCount; valueIndex++) {
-                    // For each term in the triple
-                    String[] newTerms = new String[3];
-                    for (int termIndex = 0; termIndex < 3; termIndex++) {
-                        String term = terms[termIndex];
-                        newTerms[termIndex] = dynamicVars.contains(term) ? term + valueIndex : term;
-                    }
-                    // Join the new terms into a triple, appending the final punctuation
-                    stringBuilder.append(StringUtils.join(newTerms, " ")).append(" . ");
-                }
+                // Join the new terms into a triple, appending the final punctuation
+                stringBuilder.append(StringUtils.join(newTerms, " ")).append(" . ");
+            }
         }
         
-        log.debug(stringBuilder.toString());
+        log.debug("Pattern: " + stringBuilder.toString());
         return stringBuilder.toString();
     }
     
@@ -416,8 +417,7 @@ public class MinimalConfigurationPreprocessor extends
      */
     private void validateDynamicN3Pattern(JSONObject dynamicN3Component) throws FormConfigurationException {    
         
-        // Check that the first element of the graph defines a non-empty pattern array.
-        
+        // Check that the first element of the graph defines a non-empty pattern array.        
         JSONArray pattern = null;
         try {
             pattern = dynamicN3Component.getJSONArray("customform:pattern");
