@@ -95,10 +95,8 @@ public class MinimalConfigurationPreprocessor extends
         } catch (Exception ex) {
             log.error("Exception occurred reading in configuration file", ex);
         }
-
     }
-    
-    
+     
     private void handleExistingValues(VitroRequest vreq) {
         String existingValues = vreq.getParameter("existingValuesRetrieved");
         if(StringUtils.isNotEmpty(existingValues)) {
@@ -470,7 +468,7 @@ public class MinimalConfigurationPreprocessor extends
 
     	    int largest = 0;    
         for (int index = 0; index < dynamicVars.size(); index++) {
-                int valueCount = getDynamicVarParameterValueCount(index, dynamicVars, params);
+                int valueCount = getDynamicVarParameterValueCount(dynamicVars.getString(index), params);
                 if (valueCount > largest) {
                     largest = valueCount;
                 }           
@@ -489,11 +487,11 @@ public class MinimalConfigurationPreprocessor extends
      * Return the number of values in the parameter map for the specified variable
      * @throws FormSubmissionException 
      */
-    int getDynamicVarParameterValueCount(int index, JSONArray dynamicVars, Map<String, String[]> params) 
+    int getDynamicVarParameterValueCount(String dynamicVar, Map<String, String[]> params) 
             throws FormSubmissionException {
         
         // Remove initial "?" from the variable for the comparison with the params
-        String var = dynamicVars.getString(index).substring(1);
+        String var = dynamicVar.substring(1);
         if (! params.containsKey(var)) {
             return 0;
         }

@@ -388,7 +388,7 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
         params.put("entity0", new String[] {"<http://example.org/entity0_local_name0>"});
         params.put("label0", new String[] {"label0_value0"});
         params.put("entity1", new String[] {"<http://example.org/entity1_local_name0>"});
-        getParameterValueCount(0, DYNAMIC_VARS, params);
+        getParameterValueCount(DYNAMIC_VARS.getString(0), params);
     }
     
     @Test
@@ -397,7 +397,7 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
         params.put("subject", new String[] {"<http://example.org/subject>"});
         params.put("entity0", new String[] {"<http://example.org/entity0_local_name0>"});
         params.put("entity1", new String[] {"<http://example.org/entity1_local_name0>"});
-        int count = getParameterValueCount(0, DYNAMIC_VARS, params);
+        int count = getParameterValueCount(DYNAMIC_VARS.getString(0), params);
         Assert.assertEquals(count, 1);
     }
     
@@ -410,7 +410,7 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
         params.put("label0", new String[] {"label0_value0", "label0_value1", "label0_value2"});
         params.put("entity1", new String[] {"<http://example.org/entity1_local_name0>", 
         		"<http://example.org/entity1_local_name1>", "<http://example.org/entity1_local_name2>"});
-        int count = getParameterValueCount(0, DYNAMIC_VARS, params);
+        int count = getParameterValueCount(DYNAMIC_VARS.getString(0), params);
         Assert.assertEquals(count, 3);
     }
     
@@ -634,9 +634,9 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
         preprocessor.validateDynamicN3Component(component);
     }
         
-    private int getParameterValueCount(int index, JSONArray dynamicVars, Map<String, String[]> params) 
+    private int getParameterValueCount(String dynamicVar, Map<String, String[]> params) 
             throws Exception {
-        return preprocessor.getDynamicVarParameterValueCount(index,  dynamicVars, params);
+        return preprocessor.getDynamicVarParameterValueCount(dynamicVar, params);
     }
     
     private int getLargestDynamicVariableValueCount(JSONArray dynamicVars, Map<String, String[]> params) 
