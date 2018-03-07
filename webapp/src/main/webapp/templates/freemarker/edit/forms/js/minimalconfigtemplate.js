@@ -339,11 +339,9 @@ function MinimalConfigTemplate(formData, displayData) {
             htmlList += "<option value='" + keyvalue + "'>" + content[keyvalue] + "</option>";
 
         });
-        /*
-        $.each(content, function(key, value) {
-            htmlList += "<option value='" + key + "'>" + value + "</option>";
-
-        });*/
+      
+        //Add select with empty string
+        htmlList = "<option value=''>---Select option---</option>" + htmlList;
         dropdownElement.empty().append(htmlList);
     }
     
@@ -361,7 +359,7 @@ function MinimalConfigTemplate(formData, displayData) {
             htmlList += "<option value='" + uri + "'>" + label + "</option>";
 
         });
-      
+        htmlList = "<option value=''>---Select option---</option>" + htmlList;
         dropdownElement.empty().append(htmlList);
     }
     
