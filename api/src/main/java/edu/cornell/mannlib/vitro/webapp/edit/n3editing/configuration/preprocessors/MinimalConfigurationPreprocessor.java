@@ -394,7 +394,12 @@ public class MinimalConfigurationPreprocessor extends
 		            		String term = terms[termIndex];
 		            		// Will the predicate ever be a dynamic variable?
 		            		// newTerms[termIndex] = (triple != 1 && dynamicVars.contains(term)) ? term + valueIndex : term;
-		            		newTerms[termIndex] = dynamicVars.contains(term) ? term + valueIndex : term;
+		            		// Not sure whether it's important to keep ?objectVar rather than change to ?objectVar0.
+		            		// Currently only ?objectVar, ?objectLabel get the form param values substituted, so 
+		            		// something is wrong further down in the processing.
+		            		// newTerms[termIndex] = dynamicVars.contains(term) ? term + valueIndex : term;
+		            		newTerms[termIndex] = (valueIndex != 0 && dynamicVars.contains(term)) 
+		            					? term + valueIndex : term;
 		            				
 		            }
 		            // Join the new terms into a triple, appending the final punctuation
