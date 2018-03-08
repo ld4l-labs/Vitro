@@ -50,6 +50,8 @@ public class MinimalConfigurationPreprocessor extends
     protected OntModel ontModel = null;
     protected WebappDaoFactory wdf = null;
 
+    private static final String DYNAMIC_OBJECT = "?objectVar";
+    
     private static MultiValueEditSubmission submission = null;
     Map<String, List<Literal>> copyLiteralsFromForm = new HashMap<String, List<Literal>>();
     Map<String, List<String>> copyUrisFromForm = new HashMap<String, List<String>>();
@@ -327,42 +329,158 @@ public class MinimalConfigurationPreprocessor extends
         }        
     }
     
-    String buildDynamicN3Pattern(JSONObject dynamicComponent, Map<String, String[]> parameterMap) 
+    /** 
+     * Validates the dynamic N3 pattern and the input parameters. Throws an exception if either is invalid. Else 
+     * builds the dynamic N3 pattern.
+     * @param dynamicComponent - the dynamic N3 component from the form configuration
+     * @param params - the form parameter map
+     * @return
+     * @throws FormConfigurationException
+     * @throws FormSubmissionException
+     */
+    String buildDynamicN3Pattern(JSONObject dynamicComponent, Map<String, String[]> params) 
             throws FormConfigurationException, FormSubmissionException {
-    
-        validateDynamicN3Component(dynamicComponent);
 
-        // Get the custom form configuration pattern
-        JSONArray dynamicN3Array = dynamicComponent.getJSONArray("customform:pattern");
+    	    // Validate the component's dynamic N3 pattern
+    		JSONArray dynamicN3Pattern = getN3Pattern(dynamicComponent);
+        validateDynamicN3Pattern(dynamicN3Pattern);
 
-        // Get the dynamic variables
-        JSONArray dynamicVars = dynamicComponent.getJSONArray("customform:dynamic_variables");
+        // Get the dynamic variables defined in the component
+        JSONArray dynamicVars = getDynamicVars(dynamicComponent);
+
+        // This determines the number of statements to be added to the N3 pattern 
+        int dynamicObjectCount = getDynamicVarParameterValueCount(DYNAMIC_OBJECT, params);
         
-        // Get the count of the largest number of dynamic variable values in the form submission. This determines
-        // the number of statements added to the N3 pattern.
-        int dynamicVarValueCount = getLargestDynamicVariableValueCount(dynamicVars, parameterMap);
-        
-        String prefixes = getPrefixes(dynamicComponent);
+        // Validate the dynamic parameter values
+        validateDynamicParameterValues(dynamicObjectCount, dynamicVars, params);
 
-        return buildDynamicN3Pattern(dynamicN3Array, dynamicVars, prefixes, dynamicVarValueCount);
+        Set<String> triples = buildDynamicN3Triples(dynamicN3Pattern, dynamicVars, dynamicObjectCount);
+        
+        StringBuilder sb = new StringBuilder();
+        sb.append(getPrefixes(dynamicComponent));
+        
+        for (String triple : triples) {
+        		sb.append(triple);
+        }
+        
+        return sb.toString();
     }
     
-    String buildDynamicN3Pattern(JSONArray dynamicN3Array, JSONArray dynamicVars, String prefixes, 
-            int dynamicVarValueCount) {
-        
+    Set<String> buildDynamicN3Triples(JSONArray dynamicN3Pattern, JSONArray dynamicVars, int dynamicObjectCount) {
+    			
+    		Set<String> triples = new HashSet<>();
+    		
+    		if (dynamicObjectCount == 1) {
+    			for (int tripleIndex = 0; tripleIndex < dynamicN3Pattern.size(); tripleIndex++) {
+    				triples.add(dynamicN3Pattern.getString(tripleIndex));
+    			}
+    		} else {
+    			// For each triple in the N3 pattern
+    			for (int tripleIndex = 0; tripleIndex < dynamicN3Pattern.size(); tripleIndex++) {
+    				String triple = dynamicN3Pattern.getString(tripleIndex);
+    				triple = triple.trim();
+    				log.debug("Triple: " + triple);
+    		        
+    		        // Split the triple into terms
+		        String[] terms = triple.trim().split("\\s+");
+    		        	
+		        // For each set of parameter values of the dynamic variables
+		        for (int valueIndex = 0; valueIndex < dynamicObjectCount; valueIndex++) {
+		        	
+		        		String[] newTerms = new String[3];
+		        	
+		            // For each of the first three terms in the triple (ignore the final period if there is one)
+		            for (int termIndex = 0; termIndex < 3; termIndex++) {
+		            		String term = terms[termIndex];
+		            		// Will the predicate ever be a dynamic variable?
+		            		// newTerms[termIndex] = (triple != 1 && dynamicVars.contains(term)) ? term + valueIndex : term;
+		            		newTerms[termIndex] = dynamicVars.contains(term) ? term + valueIndex : term;
+		            				
+		            }
+		            // Join the new terms into a triple, appending the final punctuation
+		            String newTriple = StringUtils.join(newTerms, " ") + " . ";
+		            triples.add(newTriple);
+		            log.debug(newTriple);
+		        }
+    			}
+    		}
+
+    		return triples;
+    }
+    
+    /**
+     * Returns the dynamic vars defined in the dynamic N3 component. If the primary dynamic object is not 
+     * explicitly defined, add it.
+     * @param dynamicComponent
+     * @return JSONArray
+     */
+    JSONArray getDynamicVars(JSONObject dynamicComponent) {
+    	
+    		JSONArray dynamicVars = dynamicComponent.getJSONArray("customform:dynamic_variables");
+    		if (! dynamicVars.contains(DYNAMIC_OBJECT)) {
+    			dynamicVars.add(DYNAMIC_OBJECT);
+    		}
+		return dynamicVars;  
+    }
+    
+    /**
+     * Check that all dynamic variables have the same number of values in the parameter map as the primary 
+     * dynamic variable (DYNAMIC_OBJECT).
+     * @param dynamicObjectCount - the number of parameter values for the primary dynamic object
+     * @param dynamicVars - the dynamic variables specified in the form configuration
+     * @param params - the form submission parameter map
+     * @throws FormSubmissionException
+     */
+    private void validateDynamicParameterValues(int dynamicObjectCount, JSONArray dynamicVars, 
+    			Map<String, String[]> params) throws FormSubmissionException  {
+    	
+    		if (dynamicObjectCount < 1) {
+    			throw new FormSubmissionException("Form parameters must contain at least one value for " + 
+    					DYNAMIC_OBJECT + ".");
+    		}
+  
+        for (int index = 1; index < dynamicVars.size(); index++) {
+        		String varName = dynamicVars.getString(index);
+        		
+        		// Don't re-test
+        		if (varName.equals(DYNAMIC_OBJECT)) {
+        			continue;
+        		}
+        		
+            int valueCount = getDynamicVarParameterValueCount(varName, params);
+            if (valueCount != dynamicObjectCount) {
+                throw new FormSubmissionException(
+                		"Dynamic variables must have the same number of values as " + DYNAMIC_OBJECT + ".");
+            }           
+        }
+    }
+    
+    /**
+     * Builds the dynamic N3 pattern after all validity checks have passed.
+     * @param dynamicN3Component - the dynamic component from the form configuration
+     * @param dynamicObjectCount - the number of values for the primary dynamic variable (objectVar) in the form 
+     * parameters
+     * @return String - the new dynamic N3 pattern
+     */
+    String buildDynamicN3Pattern(JSONObject dynamicN3Component, int dynamicObjectCount) {
+    	
         StringBuilder stringBuilder = new StringBuilder();
-        stringBuilder.append(prefixes);
+        stringBuilder.append(getPrefixes(dynamicN3Component));
+ 
+        JSONArray dynamicN3Pattern = dynamicN3Component.getJSONArray("customform:pattern");
         
-        if (dynamicVarValueCount == 1) {
+        if (dynamicObjectCount == 1) {
             // True removes the quotes around each item in the JSONArray; JSONArray.join(), unlike 
             // StringUtils.join(), retains the quotes around each element by default.
-            stringBuilder.append(dynamicN3Array.join(" ", true));
+            stringBuilder.append(dynamicN3Pattern.join(" ", true));
             return stringBuilder.toString();
         }
+        
+        JSONArray dynamicVars = dynamicN3Component.getJSONArray("customform:dynamic_variables");
 
         // For each triple in the dynamic pattern
-        for (int tripleCount = 0; tripleCount < dynamicN3Array.size(); tripleCount++) {
-            String triple = dynamicN3Array.getString(tripleCount);
+        for (int tripleCount = 0; tripleCount < dynamicN3Pattern.size(); tripleCount++) {
+            String triple = dynamicN3Pattern.getString(tripleCount);
             log.debug("Triple: " + triple);
      
             triple = triple.trim();
@@ -375,7 +493,7 @@ public class MinimalConfigurationPreprocessor extends
             String[] terms = triple.trim().split("\\s+");
             
             // For each set of values in the input
-            for (int valueIndex = 0; valueIndex < dynamicVarValueCount; valueIndex++) {
+            for (int valueIndex = 0; valueIndex < dynamicObjectCount; valueIndex++) {
                 // For each term in the triple
                 String[] newTerms = new String[3];
                 for (int termIndex = 0; termIndex < 3; termIndex++) {
@@ -400,91 +518,80 @@ public class MinimalConfigurationPreprocessor extends
     }
     
     /**
-     * Validates the dynamic N3 component. Throws an error if the component is invalid.
-     * @throws FormConfigurationException 
-     */
-    void validateDynamicN3Component(JSONObject dynamicN3Component) throws FormConfigurationException {
-        
-        validateDynamicN3Pattern(dynamicN3Component);    
-        validateDynamicN3Variables(dynamicN3Component);
-    }
-    
-    /**
      * Validates the dynamic N3 component pattern. Throws an error if the pattern is invalid.
      * @throws FormConfigurationException
      */
-    private void validateDynamicN3Pattern(JSONObject dynamicN3Component) throws FormConfigurationException {    
-        
-        // Check that the first element of the graph defines a non-empty pattern array.        
-        JSONArray pattern = null;
+    void validateDynamicN3Pattern(JSONArray dynamicN3Pattern) throws FormConfigurationException {    
+    	
+    		checkAllTriplesWellFormed(dynamicN3Pattern);
+    		checkDynamicPatternContainsDynamicObject(dynamicN3Pattern); 
+    }  
+    
+    /** 
+     * If the first element of the graph contains a non-empty pattern, return the pattern. Otherwise, throw a
+     * FormConfigurationException.
+     * @param component - a JSONObject representing the N3 component from the form configuration.
+     * @return JSONArray - the pattern
+     * @throws FormConfigurationException
+     */
+    JSONArray getN3Pattern(JSONObject component) throws FormConfigurationException {
+    	
+    		JSONArray pattern = null;
         try {
-            pattern = dynamicN3Component.getJSONArray("customform:pattern");
+            pattern = component.getJSONArray("customform:pattern");
         } catch (JSONException e) {
             throw new FormConfigurationException("Custom form pattern not defined or not a JSON array.", e);
         }                
         if (pattern.size() == 0) {
             throw new FormConfigurationException("Custom form pattern is empty.");
-        }
-        
-        // Check that each element of the pattern is a well-formed triple: 3 terms plus final period.
+        } 
+        return pattern;
+    }
+    
+    /** 
+     * Checks if the N3 pattern is well-formed: each triples contains 3 terms plus final period. Throws an 
+     * exception if not well-formed.
+     * @param pattern - the N3 pattern (a JSONArray) from the form configuration
+     * @throws FormConfigurationException
+     */
+    void checkAllTriplesWellFormed(JSONArray pattern) throws FormConfigurationException {
+
         for (int i = 0; i < pattern.size(); i++) {
             String triple = pattern.getString(i);
             triple = triple.trim();
             
-            // Peel off final period (in case preceded by spaces) 
-            triple = triple.substring(0, triple.length() - 1).trim(); // triple.lastIndexOf(".");
+            if (! triple.endsWith(".")) {
+            		throw new FormConfigurationException("Triple must end in a period.");
+            }
+            
+            // Peel off final period and any preceding spaces
+            triple = (StringUtils.chop(triple)).trim();
         
             String[] terms = triple.split("\\s+");
             if (terms.length != 3) {
                 throw new FormConfigurationException("Triple in pattern does not have exactly three terms.");
             }            
-        }    
+        }     	
     }
     
     /**
-     * Validates the dynamic N3 dynamic variables array. Throws an error if the array is invalid.
+     * Checks if the dynamic N3 pattern contains the dynamic object. Throws an exception if not.
+     * @param pattern - the N3 pattern (a JSONArray) from the form configuration
      * @throws FormConfigurationException
      */
-    private void validateDynamicN3Variables(JSONObject dynamicN3Component) throws FormConfigurationException {
-        
-        // Check that the first element of the graph defines a non-empty dynamic variables array. 
-        JSONArray dynamicVars = null;
-        try {
-            dynamicVars = dynamicN3Component.getJSONArray("customform:dynamic_variables");
-        } catch (JSONException e) {
-            throw new FormConfigurationException("Dynamic variables not defined or not a JSON array.", e);
-        }                
-        if (dynamicVars.size() == 0) {
-            throw new FormConfigurationException("Dynamic variables array is empty.");
-        }
-    }    
-    
-    /**
-     * Get the count of the largest number of values for a dynamic variable. This determines the number of 
-     * statements to be added to the N3 pattern.
-     */
-    int getLargestDynamicVariableValueCount(JSONArray dynamicVars, Map<String, String[]> params) 
-            throws FormSubmissionException  {
+    private void checkDynamicPatternContainsDynamicObject(JSONArray pattern) throws FormConfigurationException {
 
-    	    int largest = 0;    
-        for (int index = 0; index < dynamicVars.size(); index++) {
-                int valueCount = getDynamicVarParameterValueCount(dynamicVars.getString(index), params);
-                if (valueCount > largest) {
-                    largest = valueCount;
-                }           
+        for (int i = 0; i < pattern.size(); i++) {  
+        		if (pattern.getString(i).contains(DYNAMIC_OBJECT)) {
+        			return;
+        		}
         }
-        
-        if (largest == 0) {
-        		throw new FormSubmissionException(
-        				"Submission must include at least one value for one dynamic variable.");
-        }
-        
-        log.debug("Largest number of parameter values for a dynamic variable: " + largest);
-        return largest;
+        throw new FormConfigurationException(
+        		"Dynamic pattern must contain dynamic object " + DYNAMIC_OBJECT + "."); 
     }
     
     /** 
-     * Return the number of values in the parameter map for the specified variable
+     * Return the number of values in the parameter map for the dynamic variable
      * @throws FormSubmissionException 
      */
     int getDynamicVarParameterValueCount(String dynamicVar, Map<String, String[]> params) 
@@ -493,14 +600,11 @@ public class MinimalConfigurationPreprocessor extends
         // Remove initial "?" from the variable for the comparison with the params
         String var = dynamicVar.substring(1);
         if (! params.containsKey(var)) {
-            return 0;
+            throw new FormSubmissionException(
+            		"Form parameters must contain at least one value for " + dynamicVar + ".");
         }
         
-        String[] values = params.get(var);
-        // In a real form submission, the param value array always contains an additional empty item. Not sure why
-        // it's there. Work around by ignoring it in the count. In params from unit tests, there is no empty
-        // value.
-        return (values[0].isEmpty()) ? values.length - 1 : values.length;
+        return params.get(var).length;
     }
 
     private boolean isReservedVarName(String s) {
