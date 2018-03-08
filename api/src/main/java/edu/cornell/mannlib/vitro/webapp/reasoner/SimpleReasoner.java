@@ -185,12 +185,12 @@ public class SimpleReasoner extends StatementListener
         }
         recomputeIndividuals(individualURIs);
         //test post to inbox
-        testPostToInbox(m);
+        //testPostToInbox(m);
     }
     
     
     /**Test code being inserted to experiment with notification**/
-	private void testPostToInbox(Model inputModel) {
+	private void testPostToInbox() {
 		try {
 		String url="http://url.com";
 		URL object=new URL("https://linkedresearch.org/inbox/ld4l/");
@@ -201,11 +201,6 @@ public class SimpleReasoner extends StatementListener
 		con.setRequestProperty("Content-Type", "application/ld+json");
 		con.setRequestProperty("Accept", "application/ld+json");
 		con.setRequestMethod("POST");
-		
-		StringWriter inputWriter = new StringWriter();
-		inputModel.write(inputWriter, "JSON-LD");
-		String modelString = new String();
-		inputWriter.write(modelString);
 		
 		
 		Model m = ModelFactory.createDefaultModel();
@@ -222,7 +217,7 @@ public class SimpleReasoner extends StatementListener
 		int responseCode = con.getResponseCode();
 		System.out.println("POST Response Code :: " + responseCode);
 
-		if (responseCode == HttpURLConnection.HTTP_OK) { //success
+		if (responseCode == 201) { //success
 			BufferedReader in = new BufferedReader(new InputStreamReader(
 					con.getInputStream()));
 			String inputLine;
@@ -238,12 +233,17 @@ public class SimpleReasoner extends StatementListener
 		} else {
 			System.out.println("POST request not worked");
 		}
+		wr.close();
+
+		con.disconnect();
 		} catch(Exception ex) {
 			System.out.println("Error occurred");
 		}
 	
+	
 		
 	}
+
     
     /*
      * Performs incremental ABox reasoning based
