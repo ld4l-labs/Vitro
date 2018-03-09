@@ -115,7 +115,7 @@ public class ConfigFileImpl implements ConfigFile {
 
     @Override
     public boolean hasFieldComponent(String varName) {
-        return getFieldComponent(varName) == null;
+        return getFieldComponent(varName) != null;
     }
 
     @Override
@@ -129,7 +129,7 @@ public class ConfigFileImpl implements ConfigFile {
 
     @Override
     public boolean hasDependenciesFor(String varName) {
-        return getDependenciesFor(varName).isEmpty();
+        return !getDependenciesFor(varName).isEmpty();
     }
 
     @Override
@@ -154,7 +154,7 @@ public class ConfigFileImpl implements ConfigFile {
 
     @Override
     public boolean hasDynamicN3() {
-        return dynamic.getVariables().isEmpty();
+        return !dynamic.getVariables().isEmpty();
     }
 
     @Override
@@ -351,12 +351,12 @@ public class ConfigFileImpl implements ConfigFile {
             for (String group : groups) {
                 Set<String> varNames = parseCommaSeparatedSet(group);
                 for (String varName : varNames) {
-                    getNonNull(varName).addAll(varNames);
+                    getSet(varName).addAll(varNames);
                 }
             }
         }
 
-        private Set<String> getNonNull(String varName) {
+        private Set<String> getSet(String varName) {
             if (!map.containsKey(varName)) {
                 map.put(varName, new HashSet<>());
             }
@@ -364,7 +364,12 @@ public class ConfigFileImpl implements ConfigFile {
         }
 
         public Set<String> getFor(String varName) {
-            return new HashSet<>(getNonNull(varName));
+            return new HashSet<>(getSet(varName));
+        }
+
+        @Override
+        public String toString() {
+            return String.format("Dependencies[map=%s]", map);
         }
 
     }
@@ -379,10 +384,10 @@ public class ConfigFileImpl implements ConfigFile {
 
     @Override
     public String toString() {
-        return "JacksonConfigFile[uris=" + uris + ", literals=" + literals
-                + ", required=" + required + ", optional=" + optional
-                + ", dynamic=" + dynamic + ", dependencies=" + dependencies
-                + ", unknowns=" + unknowns + "]";
+        return String.format(
+                "%s {\n  uris: %s\n  literals: %s\n  required: %s\n  optional: %s\n  dynamic: %s\n  dependencies: %s\n  unknowns: %s\n}",
+                getClass().getName(), uris, literals, required, optional,
+                dynamic, dependencies, unknowns);
     }
 
 }

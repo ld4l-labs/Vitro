@@ -81,7 +81,7 @@ public interface ConfigFile {
 
         /** Combine the prefixes and the patterns into a single String. */
         default String getJoined() {
-            return getJoinedPrefixes() + " " + getJoinedPattern();
+            return (getJoinedPrefixes() + " " + getJoinedPattern()).trim();
         }
 
     }
