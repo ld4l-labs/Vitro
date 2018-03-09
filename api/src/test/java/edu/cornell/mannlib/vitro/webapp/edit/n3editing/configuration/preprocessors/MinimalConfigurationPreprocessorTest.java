@@ -415,8 +415,8 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
 		JSONArray dynamicVars = getJSONArray(new String[] {"?objectVar", "?objectLabel"});
 		Set<String> actual = preprocessor.buildDynamicN3Triples(pattern, dynamicVars, 2);
 		Set<String> expected = new HashSet<>();
-		expected.add("?subject ex:predicate0 ?objectVar . ");
-        expected.add("?objectVar rdfs:label ?objectLabel . ");
+		expected.add("?subject ex:predicate0 ?objectVar0 . ");
+        expected.add("?objectVar0 rdfs:label ?objectLabel0 . ");
 		expected.add("?subject ex:predicate0 ?objectVar1 . ");
         expected.add("?objectVar1 rdfs:label ?objectLabel1 . ");
 		Assert.assertEquals(expected, actual);
@@ -429,9 +429,9 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
 		JSONArray dynamicVars = getJSONArray(new String[] {"?objectVar", "?objectLabel"});
 		Set<String> actual = preprocessor.buildDynamicN3Triples(pattern, dynamicVars, 2);
 		Set<String> expected = new HashSet<>();
-		expected.add("?subject ex:predicate0 ?objectVar . ");
-        expected.add("?objectVar rdfs:label ?objectLabel . ");
-        expected.add("?objectVar ex:predicate1 ?entity0 . ");
+		expected.add("?subject ex:predicate0 ?objectVar0 . ");
+        expected.add("?objectVar0 rdfs:label ?objectLabel0 . ");
+        expected.add("?objectVar0 ex:predicate1 ?entity0 . ");
 		expected.add("?subject ex:predicate0 ?objectVar1 . ");
         expected.add("?objectVar1 rdfs:label ?objectLabel1 . ");
         expected.add("?objectVar1 ex:predicate1 ?entity0 . ");
