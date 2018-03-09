@@ -88,11 +88,10 @@ public class ConfigFileImplTest extends AbstractTestClass {
             .remove("the_required_n3");
 
     private ConfigFileStructure EMPTY_REQUIRED_N3 = BASIC_N3 //
-            .replace( //
-                    new ConfigFileComponent("the_required_n3",
-                            TYPE_REQUIRED_N3_PATTERN)
-                                    .property(PROPERTY_PREFIXES)
-                                    .property(PROPERTY_PATTERN));
+            .replace(new ConfigFileComponent("the_required_n3",
+                    TYPE_REQUIRED_N3_PATTERN) //
+                            .property(PROPERTY_PREFIXES)
+                            .property(PROPERTY_PATTERN));
 
     private ConfigFileStructure MULTIPLE_REQUIRED_N3 = BASIC_N3 //
             .add(new ConfigFileComponent("another_required_n3",
@@ -156,11 +155,10 @@ public class ConfigFileImplTest extends AbstractTestClass {
             .remove("the_optional_n3");
 
     private ConfigFileStructure EMPTY_OPTIONAL_N3 = BASIC_N3 //
-            .replace( //
-                    new ConfigFileComponent("the_optional_n3",
-                            TYPE_OPTIONAL_N3_PATTERN)
-                                    .property(PROPERTY_PREFIXES)
-                                    .property(PROPERTY_PATTERN));
+            .replace(new ConfigFileComponent("the_optional_n3",
+                    TYPE_OPTIONAL_N3_PATTERN) //
+                            .property(PROPERTY_PREFIXES)
+                            .property(PROPERTY_PATTERN));
 
     private ConfigFileStructure MULTIPLE_OPTIONAL_N3 = BASIC_N3 //
             .add(new ConfigFileComponent("another_optional_n3",

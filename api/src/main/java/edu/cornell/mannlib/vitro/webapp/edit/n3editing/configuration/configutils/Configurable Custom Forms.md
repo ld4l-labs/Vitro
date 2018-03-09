@@ -83,20 +83,95 @@ As shown above, the `@graph` section of the file contains an array of JavaScript
 
 ### Required N3
 
-#### Purpose
+Describes the triples that are required for the form submission to be successful. Values from the HTML form are bound to variables in the N3 pattern. If any of the variables are not bound by the form submission, then the submission fails.
 
-#### Type
 #### Properties
+
+| name | description |
+|----|----|
+| `@id` | Required. Must be unique within the configuration.
+| `@type` | Required. Must be `forms:RequiredN3Pattern`|
+| `customform:prefixes` | Optional. Specifies namespace prefixes for the triples in the pattern, by one or more N3 `@prefix` statements. May be a single string, or an array of strings to improve readability. |
+| `customform:pattern` | Required. Specifies the triples pattern. May be a single string, or an array of strings to improve readability. |
+
 #### Examples
-####TBD
+
+```
+{
+  "@id": "customform:whcor_requiredN3",
+  "@type": [
+    "forms:RequiredN3Pattern"
+  ],
+  "customform:pattern": [
+    "?objectVar bib:hasAgent ?agent . ?agent bib:isAgentOf ?objectVar .    ",
+    "?objectVar a bib:Activity . ?objectVar a ?activityType . ?objectVar rdfs:label ?activityLabel .     ",
+    "?subject bib:hasActivity ?objectVar . ?objectVar bib:isActivityOf ?subject .    "
+  ],
+  "customform:prefixes": "@prefix bib: <http://bibliotek-o.org/ontology/> . @prefix bibframe: <http://id.loc.gov/ontologies/bibframe/> .   @prefix  rdfs: <http://www.w3.org/2000/01/rdf-schema#>  .     "
+},
+```
+
+```
+{
+  "@id": "customform:ap2p_requiredN3",
+  "@type": "forms:RequiredN3Pattern",
+  "customform:prefixes": "PREFIX core: <http://vivoweb.org/ontology/core#>\n",
+  "customform:pattern": "?objectVar \n   a core:Authorship ;\n.  core:relates ?subject .\n"
+},
+```
 
 ### Optional N3
 
-####TBD
+Describes the triples that will be included if (and only if) their variables are bound to values on the HTML form. Any triples with unbound variables will not be included, but will not cause an error.
+
+#### Properties
+
+| name | description |
+|----|----|
+| `@id` | Required. Must be unique within the configuration.
+| `@type` | Required. Must be `forms:OptionalN3Pattern`|
+| `customform:prefixes` | Optional. Specifies namespace prefixes for the triples in the pattern, by one or more N3 `@prefix` statements. May be a single string, or an array of strings to improve readability. |
+| `customform:pattern` | Required. Specifies the triples pattern. May be a single string, or an array of strings to improve readability. |
+
+#### Examples
+
+```
+{
+  "@id": "customform:whcor_optionalN3",
+  "@type": [
+    "forms:OptionalN3Pattern"
+  ],
+  "customform:prefixes": [
+    "@prefix  bib: <http://bibliotek-o.org/ontology/> . ", 
+    "@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>  . ", 
+    "@prefix  foaf: <http://xmlns.com/foaf/0.1/> .  "
+  ],
+  "customform:pattern": ["?agent a ?agentType.  ?agent rdfs:label ?agentName.  ?agent foaf:name ?agentName .  "]
+},
+```
 
 ### Dynamic N3
 
+Describes a pattern of triples that may be included zero or more times, each time bound to a different set of values from the HTML form. 
+
+In addition to the prefixes and pattern, as found in the other N3 specifiers, the Dynamic N3 component contains a list of variables that may have multiple values in the form. If the list contains more than one variable name, then there must be the same number of values for each name in the list.
+
+The pattern may contain other variables, but each of these is expected to have exactly one value from the HTML form. Like the required N3 pattern, these variables must be bound to values in the form or the submission fails.
+
+The pattern of triples in the Dynamic N3 component is less flexible than in the Required N3 or Optional N3 components. Each string value must contain a single triple with subject, predicate, object, and a terminating period.
+
+| name | description |
+|----|----|
+| `@id` | Required. Must be unique within the configuration.
+| `@type` | Required. Must be `forms:DynamicN3Pattern`|
+| `customform:prefixes` | Optional. Specifies namespace prefixes for the triples in the pattern, by one or more N3 `@prefix` statements. May be a single string, or an array of strings to improve readability. |
+| `customform:pattern` | Required. Specifies the triples pattern. May be a single string, or an array of strings if there is more than one triple. _Each string must contain exactly one triple, terminated by a period (`.`)._ |
+| `customform:dynamic_variables` | A list of variable names which may have zero or more values in the HTML form. |
+
+#### Examples
+
 ####TBD
+
 
 ### URI fields
 
@@ -113,6 +188,10 @@ As shown above, the `@graph` section of the file contains an array of JavaScript
 
 
 #### TBD Lots of details about the JSON-LD
+
+## A longer example
+
+####TBD
 
 # The display configuration file
 
