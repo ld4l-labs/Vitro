@@ -263,8 +263,11 @@ public class MinimalConfigurationPreprocessor extends
 			this.editConfiguration.addN3Required(requiredN3String);
 		}
 		
-		// Attach allowedN3 as n3 required
-		this.editConfiguration.addN3Required(allowedN3);
+		// Attach allowedN3 as n3 optional (AllowedN3 is generated in part by optional N3 - retractions are based on required/optional 
+		//and a situation can occur when optional N3 was not defined initially but if we add everything to required, the retractions
+		//will require values where there weren't any to begin with due to those being optional the first time the info was added.
+		
+		this.editConfiguration.addN3Optional(allowedN3);
 		
 		// Add dynamic N3 pattern to the edit configuration's required N3
 		if (dynamicN3Component != null) {

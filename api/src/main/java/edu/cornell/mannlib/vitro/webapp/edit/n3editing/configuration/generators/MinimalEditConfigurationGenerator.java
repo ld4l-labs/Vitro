@@ -28,6 +28,7 @@ import edu.cornell.mannlib.vitro.webapp.edit.n3editing.VTwo.EditConfigurationVTw
 import edu.cornell.mannlib.vitro.webapp.edit.n3editing.VTwo.fields.FieldVTwo;
 import edu.cornell.mannlib.vitro.webapp.edit.n3editing.configuration.IdModelSelector;
 import edu.cornell.mannlib.vitro.webapp.edit.n3editing.configuration.StandardModelSelector;
+import edu.cornell.mannlib.vitro.webapp.edit.n3editing.configuration.preprocessors.AuthorityHackPreprocessor;
 import edu.cornell.mannlib.vitro.webapp.edit.n3editing.configuration.preprocessors.MinimalConfigurationPreprocessor;
 import edu.cornell.mannlib.vitro.webapp.modelaccess.ModelAccess;
 import edu.cornell.mannlib.vitro.webapp.modelaccess.ModelNames;
@@ -106,9 +107,8 @@ public class MinimalEditConfigurationGenerator  implements EditConfigurationGene
 	    	
 	    	//preprocessor
 	    	editConfiguration.addEditSubmissionPreprocessor(new MinimalConfigurationPreprocessor(editConfiguration));
-	    	
-
-	    	
+	    	//This is hardcoded for now but can be read in with a configuration later
+	    	editConfiguration.addModelChangePreprocessor(new AuthorityHackPreprocessor(vreq.getWebappDaoFactory().getDefaultNamespace()));
 	    	return editConfiguration;
 	    }
 	
