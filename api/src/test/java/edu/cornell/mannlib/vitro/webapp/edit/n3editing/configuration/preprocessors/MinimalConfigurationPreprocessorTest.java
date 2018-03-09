@@ -3,6 +3,7 @@ package edu.cornell.mannlib.vitro.webapp.edit.n3editing.configuration.preprocess
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -24,10 +25,6 @@ import net.sf.json.JSONSerializer;
  *
  */
 public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
-            
-    // Strings representing dynamic N3 components do not include the entire configuration, but only the
-    // portion (the component) that gets sent to MinimalConfigurationPreprocessor.buildDynamicN3Pattern(); that 
-    // is, one element of the @graph array.
     
     private final static String BASE_DYNAMIC_N3_COMPONENT = 
             "{" +
@@ -83,25 +80,15 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
                     "@prefix ex: <http://example.org> . '" +
             "}";
     
-    private final static String DYNAMIC_N3_COMPONENT_NO_EXPLICIT_OBJECT_VAR_DEFINITION = 
-            "{" +
-                "'@id': 'customform:sampleForm_dynamicN3'," +
-                "'@type': [" +
-                    "'forms:DynamicN3Pattern'," +
-                    "'forms:FormComponent'" +
-                "]," +
-                "'customform:pattern': [" +
-                    "'?subject ex:predicate0 ?objectVar . '," +
-                    "'?objectVar rdfs:label ?objectLabel . '," +
-                    "'?objectVar rdf:type ex:Class0 . '" +
-                "]," +
-                "'customform:dynamic_variables': [" +
-                	    "'?objectLabel'" +
-                "]," + 
-                "'customform:prefixes': '@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> . " + 
-                    "@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> . " +
-                    "@prefix ex: <http://example.org> . '" +
-            "}";
+    private final static String[] DYNAMIC_VARS = {
+    			"?objectVar",
+    			"?objectLabel"
+    		};
+    
+    private final static String[] DYNAMIC_VARS_WITH_NO_OBJECT_VAR = {
+    			"?objectLabel"
+    		};
+
     
     private final static String[] INVALID_TRIPLE_WITH_TWO_TERMS = {
             "?subject ex:predicate0 ?objectVar . ",
@@ -143,25 +130,7 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
                     "@prefix ex: <http://example.org> . '" +
             "}";
     
-    private final static String VALID_DYNAMIC_N3_COMPONENT_WITH_NO_DEFINED_OBJECT_VAR = 
-            "{" +
-                "'@id': 'customform:sampleForm_dynamicN3'," +
-                "'@type': [" +
-                    "'forms:DynamicN3Pattern'," +
-                    "'forms:FormComponent'" +
-                "]," +
-                "'customform:pattern': [" +
-                    "'?subject ex:predicate0 ?objectVar . '," +
-                    "'?objectVar rdfs:label ?objectLabel . '," +
-                "]," +
-                "'customform:dynamic_variables': [" +
-                    "'?objectLabel'" +
-                "]," +
-                "'customform:prefixes': '@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> . " + 
-                    "@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> . " +
-                    "@prefix ex: <http://example.org> . '" +
-            "}";
-    
+
     private final static String N3_CONFIG_REQUIRED_COMPONENT = 
             "{" +
                 "'@context': {" +
@@ -289,28 +258,31 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
     @Test
     public void dynamicN3ComponentWithNoPattern_ThrowsException() throws Exception {
         expectException(FormConfigurationException.class, "Custom form pattern not defined or not a JSON array");
-        validateDynamicN3Pattern(BASE_DYNAMIC_N3_COMPONENT);
+        preprocessor.getN3Pattern(getJSONObject(BASE_DYNAMIC_N3_COMPONENT));
     }
     
     @Test
     public void dynamicN3ComponentWithEmptyPattern_ThrowsException() throws Exception {
-        expectException(FormConfigurationException.class, "Custom form pattern is empty");        
-        validateDynamicN3Pattern(DYNAMIC_N3_COMPONENT_EMPTY_PATTERN);    
+        expectException(FormConfigurationException.class, "Custom form pattern is empty");   
+        preprocessor.getN3Pattern(getJSONObject(DYNAMIC_N3_COMPONENT_EMPTY_PATTERN));   
     }
     
     @Test 
-    public void dynamicN3ComponentWithNoDynamicVariables_Succeeds() throws Exception {
-        validateDynamicN3Pattern(DYNAMIC_N3_COMPONENT_NO_DYNAMIC_VARIABLES);
+    public void dynamicN3ComponentWithNoDynamicVariables_ThrowsException() throws Exception {
+		expectException(FormConfigurationException.class, "Dynamic variables not defined or not a JSON array");
+		preprocessor.getDynamicVars(getJSONObject(DYNAMIC_N3_COMPONENT_NO_DYNAMIC_VARIABLES));
     }
     
     @Test 
-    public void dynamicN3ComponentWithEmptyDynamicVariables_Succeeds() throws Exception {
-        validateDynamicN3Pattern(DYNAMIC_N3_COMPONENT_EMPTY_DYNAMIC_VARIABLES);
+    public void dynamicN3ComponentWithEmptyDynamicVariables_ThrowsException() throws Exception {
+    		expectException(FormConfigurationException.class, "Dynamic variables cannot be empty");
+        preprocessor.getDynamicVars(getJSONObject(DYNAMIC_N3_COMPONENT_EMPTY_DYNAMIC_VARIABLES));
     }    
     
     @Test
-    public void dynamicN3ComponentWithNoExplicitObjectVarDefinition_Succeeds() throws Exception {
-        validateDynamicN3Pattern(DYNAMIC_N3_COMPONENT_NO_EXPLICIT_OBJECT_VAR_DEFINITION);
+    public void dynamicVarsWithNoObjectVar_ThrowsException() throws Exception {
+		expectException(FormConfigurationException.class, "Dynamic vars must include \"?objectVar\"");
+        preprocessor.validateDynamicVars(getJSONArray(DYNAMIC_VARS_WITH_NO_OBJECT_VAR));
     }    
     
     @Test
@@ -330,58 +302,23 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
     		expectException(FormConfigurationException.class, "Triple must end in a period");
     		preprocessor.checkAllTriplesWellFormed(getJSONArray(TRIPLE_MISSING_FINAL_PERIOD));
     }
-
-    @Test 
-    public void validDynamicN3Component_Succeeds() throws Exception {
-    		validateDynamicN3Pattern(VALID_DYNAMIC_N3_COMPONENT);        
-    }
     
     @Test
     public void dynamicPatternWithNoObjectVar_ThrowsException() throws Exception { 
         expectException(FormConfigurationException.class, "Dynamic pattern must contain dynamic object");
-    		validateDynamicN3Pattern(getJSONArray(DYNAMIC_PATTERN_WITH_NO_OBJECT_VAR));
+    		preprocessor.validateDynamicN3Pattern(getJSONArray(DYNAMIC_PATTERN_WITH_NO_OBJECT_VAR));
     }
-    
-    @Test
-    public void testAddPrimaryDynamicVarToComponent() throws Exception {
-    		JSONObject dynamicN3Component = getJSONObject(VALID_DYNAMIC_N3_COMPONENT_WITH_NO_DEFINED_OBJECT_VAR);
-        JSONArray dynamicVars = preprocessor.getDynamicVars(dynamicN3Component);
-        @SuppressWarnings("unchecked")
-		Set<String> actual = new HashSet<String>(dynamicVars);
-        Set<String> expected = new HashSet<>(Arrays.asList(new String[] { "?objectVar", "?objectLabel" }));
-        Assert.assertEquals(expected, actual);
-    }
-    
-    @Test
-    public void testDontAddDuplicatePrimaryDynamicVarToComponent() throws Exception {
-		JSONObject dynamicN3Component = getJSONObject(VALID_DYNAMIC_N3_COMPONENT);
-	    JSONArray dynamicVars = preprocessor.getDynamicVars(dynamicN3Component);
-	    @SuppressWarnings("unchecked")
-		Set<String> actual = new HashSet<String>(dynamicVars);
-	    Set<String> expected = new HashSet<>(Arrays.asList(new String[] { "?objectVar", "?objectLabel" }));
-	    Assert.assertEquals(expected, actual);
-    }
-   
-    
-    @Test
-    public void noObjectVarInFormParams_ThrowsException() throws Exception {
-    		expectException(FormSubmissionException.class, "Form parameters must contain at least one value");
-		Map<String, String[]> params = new HashMap<>();
-		params.put("subject", new String[] {"<http://example.org/subject_localName>"});  
-		params.put("objectVar", new String[] {"<http://example.org/objectVar_localName0>"});
-    		preprocessor.getDynamicVarParameterValueCount("?objectLabel", params);
-    }
-    
+
     @Test
     public void noDynamicVarInFormParams_ThrowsException() throws Exception {
-    		expectException(FormSubmissionException.class, "Form parameters must contain at least one value");
+    		expectException(FormSubmissionException.class, "Form parameters must contain at least one value for");
 		Map<String, String[]> params = new HashMap<>();
 		params.put("subject", new String[] {"<http://example.org/subject_localName>"});  		
-    		preprocessor.buildDynamicN3Pattern(getJSONObject(VALID_DYNAMIC_N3_COMPONENT), params);
+    		preprocessor.preprocessDynamicN3(getJSONObject(VALID_DYNAMIC_N3_COMPONENT), params);
     }
-    
+ 
     @Test
-    public void testDynamicVarValueCount() throws Exception {
+    public void testDynamicVarParameterValueCount() throws Exception {
 		Map<String, String[]> params = new HashMap<>();
 		params.put("subject", new String[] {"<http://example.org/subject_localName>"});  
 		params.put("objectVar", new String[] {"<http://example.org/objectVar_localName0>", 
@@ -392,12 +329,13 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
     @Test
     public void invalidDynamicVarParameterValueCounts_ThrowsException() throws Exception {
 		expectException(FormSubmissionException.class, "Dynamic variables must have the same number of values");
+		JSONArray dynamicVars = getJSONArray(new String[] { "?objectVar", "?objectLabel" }); 
 		Map<String, String[]> params = new HashMap<>();
 		params.put("subject", new String[] {"<http://example.org/subject_localName>"});  
 		params.put("objectVar", new String[] {"<http://example.org/objectVar_localName0>", 
 				"<http://example.org/objectVar_localName1>"});
 		params.put("objectLabel", new String[] {"objectLabel_value0"}); 
-		preprocessor.buildDynamicN3Pattern(getJSONObject(VALID_DYNAMIC_N3_COMPONENT), params);
+		preprocessor.validateDynamicParameterValues(dynamicVars, 2, params);
     }
 
 	@Test
@@ -436,6 +374,25 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
         expected.add("?objectVar1 rdfs:label ?objectLabel1 . ");
         expected.add("?objectVar1 ex:predicate1 ?entity0 . ");
 		Assert.assertEquals(expected, actual);		
+	}
+	
+	@Test
+	@Ignore
+	public void testRewriteParameterMap() {
+		JSONArray dynamicVars = getJSONArray(DYNAMIC_VARS);
+		Map<String, String[]> params = new HashMap<>();
+		params.put("subject", new String[] {"<http://example.org/subject_localName>"});  
+		params.put("objectVar", new String[] {"<http://example.org/objectVar_localName0>", 
+				"<http://example.org/objectVar_localName1>"});
+		params.put("objectLabel", new String[] {"objectLabel_value0", "objectLabel_value1"}); 
+		Map<String, String[]> actual = preprocessor.rewriteParameterMap(dynamicVars, params);
+		Map<String, String[]> expected = new LinkedHashMap<>();
+		params.put("subject", new String[] {"<http://example.org/subject_localName>"});
+		expected.put("objectVar0", new String[] { "<http://example.org/objectVar_localName0>" });
+		expected.put("objectVar1", new String[] { "<http://example.org/objectVar_localName1>" });
+		expected.put("objectLabel0", new String[] { "objectLabel_value0" });
+		expected.put("objectLabel1", new String[] { "objectLabel_value1" });
+		Assert.assertEquals(expected, actual);	
 	}
 
 
@@ -489,19 +446,6 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
     // Helper methods
     // ---------------------------------------------------------------------
 
-    private void validateDynamicN3Pattern(JSONArray dynamicPattern) throws Exception {
-        preprocessor.validateDynamicN3Pattern(dynamicPattern);
-    }
-    
-    private void validateDynamicN3Pattern(String componentString) throws Exception {
-    		JSONObject dynamicComponent = getJSONObject(componentString);
-        validateDynamicN3Pattern(dynamicComponent);
-    }
-    
-    private void validateDynamicN3Pattern(JSONObject component) throws Exception {
-		JSONArray dynamicN3Pattern = preprocessor.getN3Pattern(component);
-        preprocessor.validateDynamicN3Pattern(dynamicN3Pattern);
-    }
 
     private JSONObject getJSONObject(String jsonString) {
         return (JSONObject) JSONSerializer.toJSON(jsonString);
