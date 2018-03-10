@@ -5,10 +5,12 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import edu.cornell.mannlib.vitro.testing.AbstractTestClass;
@@ -377,7 +379,6 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
 	}
 	
 	@Test
-	@Ignore
 	public void testRewriteParameterMap() {
 		JSONArray dynamicVars = getJSONArray(DYNAMIC_VARS);
 		Map<String, String[]> params = new HashMap<>();
@@ -386,13 +387,13 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
 				"<http://example.org/objectVar_localName1>"});
 		params.put("objectLabel", new String[] {"objectLabel_value0", "objectLabel_value1"}); 
 		Map<String, String[]> actual = preprocessor.rewriteParameterMap(dynamicVars, params);
-		Map<String, String[]> expected = new LinkedHashMap<>();
-		params.put("subject", new String[] {"<http://example.org/subject_localName>"});
+		Map<String, String[]> expected = new HashMap<>();
+		expected.put("subject", new String[] {"<http://example.org/subject_localName>"});
 		expected.put("objectVar0", new String[] { "<http://example.org/objectVar_localName0>" });
 		expected.put("objectVar1", new String[] { "<http://example.org/objectVar_localName1>" });
 		expected.put("objectLabel0", new String[] { "objectLabel_value0" });
 		expected.put("objectLabel1", new String[] { "objectLabel_value1" });
-		Assert.assertEquals(expected, actual);	
+		Assert.assertTrue(mapDeepEquals(expected, actual));
 	}
 
 
@@ -453,6 +454,20 @@ public class MinimalConfigurationPreprocessorTest extends AbstractTestClass {
 
     private JSONArray getJSONArray(String[] strings) {
     		return (JSONArray) JSONSerializer.toJSON(strings);    	
+    }
+    
+    private boolean mapDeepEquals(Map<String, String[]> map1, Map<String, String[]> map2) {
+    		if (! map1.keySet().equals(map2.keySet())) {
+    			return false;
+    		}
+    		for (String key1 : map1.keySet()) {
+    			String[] value1 = map1.get(key1);
+    			String[] value2 = map2.get(key1);
+    			if (! Arrays.deepEquals(value1, value2)) {
+    				return false;
+    			}
+    		}
+    		return true;
     }
 
 }
