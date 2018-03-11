@@ -17,7 +17,7 @@ As originally implemented, each custom form was built from a Java class (the for
 * a JSON-LD file to describe the fields and their relationships,
 * an optional JSON file to describe the layout of the form on the screen.
 
-These tools do not replace the original implementation of custom entry forms. Rather, the intent is to make the development of _most_ custom forms easier.
+These tools do not replace the original implementation of custom entry forms. Rather, the intent is to make the development of **most** custom forms easier.
 
 
 # The form definition file
@@ -85,6 +85,8 @@ As shown above, the `@graph` section of the file contains an array of JavaScript
 
 Describes the triples that are required for the form submission to be successful. Values from the HTML form are bound to variables in the N3 pattern. If any of the variables are not bound by the form submission, then the submission fails.
 
+If there is more than one Required N3 component, the prefixes of the components will be concatenated, as will the patterns.
+
 #### Properties
 
 | name | description |
@@ -124,6 +126,8 @@ Describes the triples that are required for the form submission to be successful
 
 Describes the triples that will be included if (and only if) their variables are bound to values on the HTML form. Any triples with unbound variables will not be included, but will not cause an error.
 
+If there is more than one Optional N3 component, the prefixes of the components will be concatenated, as will the patterns.
+
 #### Properties
 
 | name | description |
@@ -160,6 +164,8 @@ The pattern may contain other variables, but each of these is expected to have e
 
 The pattern of triples in the Dynamic N3 component is less flexible than in the Required N3 or Optional N3 components. Each string value must contain a single triple with subject, predicate, object, and a terminating period.
 
+A form may not contain more than one Dynamic N3 component.
+
 | name | description |
 |----|----|
 | `@id` | Required. Must be unique within the configuration.
@@ -170,8 +176,27 @@ The pattern of triples in the Dynamic N3 component is less flexible than in the 
 
 #### Examples
 
-####TBD
-
+```
+{
+  "@id": "customform:addWork_dynamicN3",
+  "@type": "forms:DynamicN3Pattern",
+  "customform:pattern": [
+    "?subject bibframe:genreForm ?objectUri .",
+    "?objectUri rdfs:label ?objectLabel .",
+    "?objectUri rdf:type owl:Thing ."
+  ],
+  "customform:dynamic_variables" : [
+    "?objectUri",
+    "?objectLabel"
+  ],
+  "customform:prefixes": [
+    "@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> . ",
+    "@prefix bibframe: <http://id.loc.gov/ontologies/bibframe/> .",
+    "@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .",
+    "@prefix owl: <http://www.w3.org/2002/07/owl#> ."
+  ]
+},
+```
 
 ### URI fields
 
@@ -182,14 +207,6 @@ The pattern of triples in the Dynamic N3 component is less flexible than in the 
 ####TBD
 
 ### Inter-field dependencies
-
-####TBD
-
-
-
-#### TBD Lots of details about the JSON-LD
-
-## A longer example
 
 ####TBD
 
@@ -214,6 +231,7 @@ local:fpgenconfig289
         "edu.cornell.mannlib.vitro.webapp.edit.n3editing.configuration.generators.MinimalEditConfigurationGenerator"^^xsd:string ;
     vitro:customConfigFileAnnot "audioInstanceHasActivity.jsonld" . 
 ```
+
 # Developer notes
 
 ## Source code
