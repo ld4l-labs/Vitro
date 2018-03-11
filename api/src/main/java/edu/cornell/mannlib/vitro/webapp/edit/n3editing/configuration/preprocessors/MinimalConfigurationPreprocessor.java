@@ -93,7 +93,7 @@ public class MinimalConfigurationPreprocessor extends
         try {
             String contents = new String(Files.readAllBytes(Paths.get(configjsonString)));
             JSONObject contentsJSON = (JSONObject) JSONSerializer.toJSON(contents);
-            processConfigurationJSONFields(contentsJSON);
+            processConfigurationJSONFields(contentsJSON, vreq);
             updateConfiguration(vreq.getParameterMap(), contentsJSON);
             handleExistingValues(vreq);
             
@@ -133,14 +133,20 @@ public class MinimalConfigurationPreprocessor extends
         }
     }
 
-    private void processConfigurationJSONFields(JSONObject contentsJSON) {
+    private void processConfigurationJSONFields(JSONObject contentsJSON, VitroRequest vreq) 
+    			throws FormConfigurationException, FormSubmissionException {
 
         String fieldNameProperty =  "customform:varName";
         JSONArray graph = contentsJSON.getJSONArray("@graph");
         
         for(int i = 0; i < graph.size(); i++) {
-            JSONObject component = graph.getJSONObject(i);
+            JSONObject component = graph.getJSONObject(i);          
             JSONArray types = component.getJSONArray("@type");
+            
+            if (component.has("customform:dynamic_variables")) {
+            		preprocessDynamicComponent(component, vreq);
+            }
+            
             //Get field name info
             Object fieldInfo = component.get(fieldNameProperty);
             if(fieldInfo != null) {
@@ -169,9 +175,9 @@ public class MinimalConfigurationPreprocessor extends
                 this.optionalN3Component = component;            
             } 
             
-            if (types.contains("forms:DynamicN3Pattern")) {
-                this.dynamicN3Component = component;
-            }
+//            if (types.contains("forms:DynamicN3Pattern")) {
+//                this.dynamicN3Component = component;
+//            }
 
             //TODO: New resources now identified on field itself as proeprty not type
             //"http://vitro.mannlib.cornell.edu/ns/vitro/CustomFormConfiguration#mayUseNewResource": true,
@@ -268,11 +274,15 @@ public class MinimalConfigurationPreprocessor extends
             this.editConfiguration.addN3Required(allowedN3);
         }
         
-        // Add dynamic N3 pattern to the edit configuration's required N3
-        if (dynamicN3Component != null) {
-        		// TODO RY Make sure modifying the parameter map modifies the vreq parameter map
-        		preprocessDynamicN3(dynamicN3Component, parameterMap);
-        }
+        
+//        // Add dynamic N3 pattern to the edit configuration's required N3
+//        if (dynamicN3Component != null) {
+//        		//parameterMap = 
+//        	preprocessDynamicN3(dynamicN3Component, parameterMap);
+////        		this.allowedVarNames.addAll(parameterMap.keySet());
+////        		satisfiedVarNames.addAll(parameterMap.keySet());
+//        }
+
 
         //For each satisfiedVarName: get component and check if URI field, string field, or new resource and add 
         // accordingly
@@ -329,6 +339,38 @@ public class MinimalConfigurationPreprocessor extends
         }        
     }
     
+    void preprocessDynamicComponent(JSONObject component, VitroRequest vreq) 
+    				throws FormConfigurationException, FormSubmissionException {
+ 
+    		Map<String, String[]> params = vreq.getParameterMap();
+    		
+		// Get and validate the N3 pattern from the configuration component
+		JSONArray dynamicN3Pattern = getN3Pattern(component);
+	    validateDynamicN3Pattern(dynamicN3Pattern); 
+	    
+	    // Get and validate the dynamic vars from the configuration component
+	    JSONArray dynamicVars = getDynamicVars(component);
+	    validateDynamicVars(dynamicVars);
+	    
+	    // Get the number of parameter values submitted for the primary dynamic object. This determines the number 
+	    // of  statements to be added to the N3 pattern. 
+	    int dynamicObjectCount = getDynamicVarParameterValueCount(DYNAMIC_OBJECT, params);
+	    
+	    if (dynamicObjectCount > 1) {
+		    	validateDynamicParameterValues(dynamicVars, dynamicObjectCount, params);
+		    
+		    //List<String> newPattern = buildDynamicN3Triples(component, dynamicObjectCount);
+		    rewriteN3Pattern(component, dynamicObjectCount);
+		
+	//	    String dynamicN3PatternString = buildDynamicN3PatternString(component, dynamicObjectCount);
+	//	    log.debug("dynamicN3Pattern = " + dynamicN3PatternString);
+		    
+	    
+		    rewriteParameterMap(dynamicVars, vreq);
+	    }
+	    
+    }
+    
     /** 
      * Validates the dynamic N3 configuration and the input parameters, throwing an exception if either is   
      * invalid. Builds the dynamic N3 pattern and rewrites the parameter map to match the new N3 pattern.
@@ -338,32 +380,32 @@ public class MinimalConfigurationPreprocessor extends
      * @throws FormConfigurationException
      * @throws FormSubmissionException
      */
-    void preprocessDynamicN3(JSONObject dynamicN3Component, Map<String, String[]> params) 
-            throws FormConfigurationException, FormSubmissionException {
-
-    		// Get and validate the N3 pattern from the configuration component
-    		JSONArray dynamicN3Pattern = getN3Pattern(dynamicN3Component);
-        validateDynamicN3Pattern(dynamicN3Pattern); 
-        
-        // Get and validate the dynamic vars from the configuration component
-        JSONArray dynamicVars = getDynamicVars(dynamicN3Component);
-        validateDynamicVars(dynamicVars);
-        
-        // Get the number of parameter values submitted for the primary dynamic object. This determines the number 
-        // of  statements to be added to the N3 pattern. 
-        int dynamicObjectCount = getDynamicVarParameterValueCount(DYNAMIC_OBJECT, params);
-        
-        validateDynamicParameterValues(dynamicVars, dynamicObjectCount, params);
-
-        String dynamicN3PatternString = buildDynamicN3PatternString(dynamicN3Component, dynamicObjectCount);
-        log.debug("dynamicN3Pattern = " + dynamicN3PatternString);
-        this.editConfiguration.addN3Required(dynamicN3PatternString);
-        
-        // TODO RY make sure modifying the params here actually modifies the params in the vreq. Otherwise we need
-        // to pass in the vreq to reassign the params
-        
-        params = rewriteParameterMap(dynamicVars, params);
-    }
+//    void preprocessDynamicN3(JSONObject dynamicN3Component, Map<String, String[]> params) 
+//            throws FormConfigurationException, FormSubmissionException {
+//
+//    		// Get and validate the N3 pattern from the configuration component
+//    		JSONArray dynamicN3Pattern = getN3Pattern(dynamicN3Component);
+//        validateDynamicN3Pattern(dynamicN3Pattern); 
+//        
+//        // Get and validate the dynamic vars from the configuration component
+//        JSONArray dynamicVars = getDynamicVars(dynamicN3Component);
+//        validateDynamicVars(dynamicVars);
+//        
+//        // Get the number of parameter values submitted for the primary dynamic object. This determines the number 
+//        // of  statements to be added to the N3 pattern. 
+//        int dynamicObjectCount = getDynamicVarParameterValueCount(DYNAMIC_OBJECT, params);
+//        
+//        validateDynamicParameterValues(dynamicVars, dynamicObjectCount, params);
+//
+//        String dynamicN3PatternString = buildDynamicN3PatternString(dynamicN3Component, dynamicObjectCount);
+//        log.debug("dynamicN3Pattern = " + dynamicN3PatternString);
+//        this.editConfiguration.addN3Required(dynamicN3PatternString);
+//        
+//        // TODO RY make sure modifying the params here actually modifies the params in the vreq. Otherwise we need
+//        // to pass in the vreq to reassign the params        
+//        params = rewriteParameterMap(dynamicVars, params);
+//        return params;
+//    }
     
     /**
      * Rewrites the parameter map to separate values originally assigned to a single dynamic variable to assign
@@ -373,87 +415,148 @@ public class MinimalConfigurationPreprocessor extends
      * @param params
      * @return
      */
-    Map<String, String[]> rewriteParameterMap(JSONArray dynamicVars, Map<String, String[]> params) {
+    void rewriteParameterMap(JSONArray dynamicVars, VitroRequest vreq) {
 
-		Map<String, String[]> newParams = new LinkedHashMap<String, String[]>();
+    		Map<String, String[]> params = vreq.getParameterMap();
 		
-		for (Entry<String, String[]> entry : params.entrySet()) {
-			String key = entry.getKey();
-			String[] value = entry.getValue();
-			// Dynamic var has initial "?", but param key does not. Strip off for comparison.
-			// Don't alter entry with key not a dynamic variable.
-			if (! dynamicVars.contains("?" + entry.getKey())) {				 
-				newParams.put(key, value);
-			} else {				
-				String[] values = params.get(key);
-				for (int valueIndex = 0; valueIndex < values.length; valueIndex++) {
-					newParams.put(key + Integer.toString(valueIndex), 
-							new String[] { values[valueIndex] });
-				}				
-			}
-		}
-		
-		return newParams;
+//		for (Entry<String, String[]> entry : params.entrySet()) {
+//			String key = entry.getKey();
+//			String[] value = entry.getValue();
+//			// Dynamic var has initial "?", but param key does not. Strip off for comparison.
+//			// Don't alter entry with key not a dynamic variable.
+//			if (! dynamicVars.contains("?" + entry.getKey())) {				 
+//				params.put(key, value);
+//			} else {				
+//				String[] values = params.get(key);
+//				for (int valueIndex = 0; valueIndex < values.length; valueIndex++) {
+//					params.put(key + Integer.toString(valueIndex), 
+//							new String[] { values[valueIndex] });
+//				}				
+//			}
+//		}
+    		
+    		for (int varIndex = 0; varIndex < dynamicVars.size(); varIndex++) {
+    			String var = dynamicVars.getString(varIndex);
+    			// The form parameter does not include the initial "?"
+    			String key = var.substring(1);
+    			String[] values = params.get(key);
+    			for (int valueIndex = 0; valueIndex < values.length; valueIndex++) {
+    				params.put(key + Integer.toString(valueIndex), 
+    						new String[] { values[valueIndex] } );
+    			}
+    			params.remove(key);
+    		}
 	}
 
-	String buildDynamicN3PatternString(JSONObject dynamicN3Component, int dynamicObjectCount) {
+//	String buildDynamicN3PatternString(JSONObject dynamicN3Component, int dynamicObjectCount) {
+//
+//		JSONArray dynamicN3Pattern =  dynamicN3Component.getJSONArray("customform:pattern");
+//		JSONArray dynamicVars = dynamicN3Component.getJSONArray("customform:dynamic_variables");
+//		
+//        Set<String> triples = buildDynamicN3TriplesOld(dynamicN3Pattern, dynamicVars, dynamicObjectCount);
+//        
+//        StringBuilder sb = new StringBuilder();
+//        sb.append(getPrefixes(dynamicN3Component));
+//        
+//        for (String triple : triples) {
+//        		sb.append(triple);
+//        }
+//        
+//        return sb.toString();    	
+//    }   
+	
 
-		JSONArray dynamicN3Pattern =  dynamicN3Component.getJSONArray("customform:pattern");
+	@SuppressWarnings("unchecked")
+	void rewriteN3Pattern(JSONObject dynamicN3Component, int dynamicObjectCount) {
+
+		JSONArray N3Pattern =  dynamicN3Component.getJSONArray("customform:pattern");
 		JSONArray dynamicVars = dynamicN3Component.getJSONArray("customform:dynamic_variables");
 		
-        Set<String> triples = buildDynamicN3Triples(dynamicN3Pattern, dynamicVars, dynamicObjectCount);
-        
-        StringBuilder sb = new StringBuilder();
-        sb.append(getPrefixes(dynamicN3Component));
-        
-        for (String triple : triples) {
-        		sb.append(triple);
-        }
-        
-        return sb.toString();    	
-    }    
-    
-    Set<String> buildDynamicN3Triples(JSONArray dynamicN3Pattern, JSONArray dynamicVars, int dynamicObjectCount) {
-		
-    		Set<String> triples = new HashSet<>();
+		List<String> newTriples = buildDynamicN3Triples(N3Pattern, dynamicVars, dynamicObjectCount);
+		JSONArray newPattern = JSONArray.fromObject(newTriples);
+
+		dynamicN3Component.replace("customform:pattern", newPattern);
+	
+    }
+  
+    List<String> buildDynamicN3Triples(JSONArray N3Pattern, JSONArray dynamicVars, int dynamicObjectCount) {
+	
+    		List<String> triples = new ArrayList<>();
     		
-    		if (dynamicObjectCount == 1) {
-    			for (int tripleIndex = 0; tripleIndex < dynamicN3Pattern.size(); tripleIndex++) {
-    				triples.add(dynamicN3Pattern.getString(tripleIndex));
-    			}
-    		} else {
-    			// For each triple in the N3 pattern
-    			for (int tripleIndex = 0; tripleIndex < dynamicN3Pattern.size(); tripleIndex++) {
-    				String triple = dynamicN3Pattern.getString(tripleIndex);
-    				triple = triple.trim();
-    				log.debug("Triple: " + triple);
-    		        
-    		        // Split the triple into terms
-		        String[] terms = triple.trim().split("\\s+");
-    		        	
-		        // For each set of parameter values of the dynamic variables
-		        for (int valueIndex = 0; valueIndex < dynamicObjectCount; valueIndex++) {
-		        	
-		        		String[] newTerms = new String[3];
-		        	
-		            // For each of the first three terms in the triple (ignore the final period if there is one)
-		            for (int termIndex = 0; termIndex < 3; termIndex++) {
-		            		String term = terms[termIndex];
-		            		// Will the predicate ever be a dynamic variable?
-		            		// newTerms[termIndex] = (triple != 1 && dynamicVars.contains(term)) ? term + valueIndex : term;
-		            		newTerms[termIndex] = dynamicVars.contains(term) ? term + valueIndex : term;
-		            				
-		            }
-		            // Join the new terms into a triple, appending the final punctuation
-		            String newTriple = StringUtils.join(newTerms, " ") + " . ";
-		            triples.add(newTriple);
-		            log.debug(newTriple);
-		        }
-    			}
-    		}
+
+		// For each triple in the N3 pattern
+		for (int tripleIndex = 0; tripleIndex < N3Pattern.size(); tripleIndex++) {
+			String triple = N3Pattern.getString(tripleIndex);
+			triple = triple.trim();
+			log.debug("Triple: " + triple);
+	        
+	        // Split the triple into terms
+			String[] terms = triple.trim().split("\\s+");
+	        	
+	        // For each set of parameter values of the dynamic variables
+	        for (int valueIndex = 0; valueIndex < dynamicObjectCount; valueIndex++) {
+	        	
+	        		String[] newTerms = new String[3];
+	        	
+	            // For each of the first three terms in the triple (ignore the final period if there is one)
+	            for (int termIndex = 0; termIndex < 3; termIndex++) {
+	            		String term = terms[termIndex];
+	            		// Will the predicate ever be a dynamic variable?
+	            		// newTerms[termIndex] = (triple != 1 && dynamicVars.contains(term)) ? term + valueIndex : term;
+	            		newTerms[termIndex] = dynamicVars.contains(term) ? term + valueIndex : term;
+	            				
+	            }
+	            // Join the new terms into a triple, appending the final punctuation
+	            String newTriple = StringUtils.join(newTerms, " ") + " . ";
+	            triples.add(newTriple);
+	            log.debug(newTriple);
+	        }
+		}
 
     		return triples;
     }
+    
+//    Set<String> buildDynamicN3TriplesOld(JSONArray dynamicN3Pattern, JSONArray dynamicVars, int dynamicObjectCount) {
+//		
+//    		Set<String> triples = new HashSet<>();
+//    		
+//    		if (dynamicObjectCount == 1) {
+//    			for (int tripleIndex = 0; tripleIndex < dynamicN3Pattern.size(); tripleIndex++) {
+//    				triples.add(dynamicN3Pattern.getString(tripleIndex));
+//    			}
+//    		} else {
+//    			// For each triple in the N3 pattern
+//    			for (int tripleIndex = 0; tripleIndex < dynamicN3Pattern.size(); tripleIndex++) {
+//    				String triple = dynamicN3Pattern.getString(tripleIndex);
+//    				triple = triple.trim();
+//    				log.debug("Triple: " + triple);
+//    		        
+//    		        // Split the triple into terms
+//		        String[] terms = triple.trim().split("\\s+");
+//    		        	
+//		        // For each set of parameter values of the dynamic variables
+//		        for (int valueIndex = 0; valueIndex < dynamicObjectCount; valueIndex++) {
+//		        	
+//		        		String[] newTerms = new String[3];
+//		        	
+//		            // For each of the first three terms in the triple (ignore the final period if there is one)
+//		            for (int termIndex = 0; termIndex < 3; termIndex++) {
+//		            		String term = terms[termIndex];
+//		            		// Will the predicate ever be a dynamic variable?
+//		            		// newTerms[termIndex] = (triple != 1 && dynamicVars.contains(term)) ? term + valueIndex : term;
+//		            		newTerms[termIndex] = dynamicVars.contains(term) ? term + valueIndex : term;
+//		            				
+//		            }
+//		            // Join the new terms into a triple, appending the final punctuation
+//		            String newTriple = StringUtils.join(newTerms, " ") + " . ";
+//		            triples.add(newTriple);
+//		            log.debug(newTriple);
+//		        }
+//    			}
+//    		}
+//
+//    		return triples;
+//    }
     
     /**
      * Returns the dynamic variables defined in the dynamic N3 component. Throws an error if they are null or 
