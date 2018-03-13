@@ -8,13 +8,16 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletRequestWrapper;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
@@ -63,10 +66,10 @@ public class MinimalConfigurationPreprocessor extends
     List<String> allowedVarNames = new ArrayList<String>();
     JSONObject optionalN3Component = null;
     JSONObject requiredN3Component = null;
-    JSONObject dynamicN3Component = null;
     JSONObject newResourcesComponent = null;
     HashSet<String> newResourcesSet = new HashSet<String>();
     HashMap<String, HashSet<String>> dependencies = new HashMap<String, HashSet<String>>();
+    
     //N3 optional
     
     // String datatype
@@ -74,17 +77,16 @@ public class MinimalConfigurationPreprocessor extends
     // Will be editing the edit configuration as well as edit submission here
 
     public MinimalConfigurationPreprocessor(EditConfigurationVTwo editConfig) {
-        super(editConfig);
-        
+        super(editConfig);     
     }
 
     public void preprocess(MultiValueEditSubmission inputSubmission, VitroRequest vreq) {
+    		vreq = new VitroRequest(new HttpServletRequestWrapperWithMutableParameterMap(vreq));
         submission = inputSubmission;
         this.wdf = vreq.getWebappDaoFactory();
         this.ontModel = ModelAccess.on(vreq).getOntModel();
         //Need to keep independent 
-        copySubmissionValues();
-        
+        copySubmissionValues();        
         String configjsonString = vreq.getParameter("configFile");
         //This needs to be based on the VIVO app itself and deployment, not installation directory
         configjsonString = ApplicationUtils.instance().getServletContext().getRealPath(
@@ -95,41 +97,44 @@ public class MinimalConfigurationPreprocessor extends
             JSONObject contentsJSON = (JSONObject) JSONSerializer.toJSON(contents);
             processConfigurationJSONFields(contentsJSON, vreq);
             updateConfiguration(vreq.getParameterMap(), contentsJSON);
-            handleExistingValues(vreq);
+            handleExistingValues(vreq.getParameterMap());
             
         } catch (Exception ex) {
             log.error("Exception occurred reading in configuration file", ex);
         }
     }
      
-    private void handleExistingValues(VitroRequest vreq) {
-        String existingValues = vreq.getParameter("existingValuesRetrieved");
-        if(StringUtils.isNotEmpty(existingValues)) {
-            //Convert to JSON object
-            JSONObject existingValuesObject = (JSONObject) JSONSerializer.toJSON(existingValues);
-            @SuppressWarnings("unchecked")
-            Set<String> keys = existingValuesObject.keySet();
-            for(String key: keys) {
-                if(fieldNameToConfigurationComponent.containsKey(key)) {
-                    JSONObject configurationComponent = fieldNameToConfigurationComponent.get(key);
-                    JSONArray values = existingValuesObject.getJSONArray(key);
-                    JSONArray types = configurationComponent.getJSONArray("@type");
-                    if(types.contains("forms:UriField")) {
-                        List<String> urisInScope = new ArrayList<String>();
-                        for(int v = 0; v < values.size(); v++) {
-                            urisInScope.add(values.getString(v));
-                        }
-                        this.editConfiguration.addUrisInScope(key, urisInScope);
-                    } else if(types.contains("forms:LiteralField")) {
-                        for(int v = 0; v < values.size(); v++) {
-                            String value = values.getString(v);
-                            Literal valueLiteral = ResourceFactory.createPlainLiteral(value);
-                            this.editConfiguration.addLiteralInScope(key,valueLiteral);
-                        }
-                        
-                    }
-                }
-            }
+    private void handleExistingValues(Map<String, String[]> mutableParameterMap) {
+    		String[] existingValuesArray = mutableParameterMap.get("existingValuesRetrieved");
+        if (existingValuesArray != null && existingValuesArray.length > 0) {
+        		// There should be only one value
+        		String existingValues = existingValuesArray[0];
+        		if (! existingValues.isEmpty()) {
+	            //Convert to JSON object
+	            JSONObject existingValuesObject = (JSONObject) JSONSerializer.toJSON(existingValues);
+	            @SuppressWarnings("unchecked")
+	            Set<String> keys = existingValuesObject.keySet();
+	            for(String key: keys) {
+	                if(fieldNameToConfigurationComponent.containsKey(key)) {
+	                    JSONObject configurationComponent = fieldNameToConfigurationComponent.get(key);
+	                    JSONArray values = existingValuesObject.getJSONArray(key);
+	                    JSONArray types = configurationComponent.getJSONArray("@type");
+	                    if(types.contains("forms:UriField")) {
+	                        List<String> urisInScope = new ArrayList<String>();
+	                        for(int v = 0; v < values.size(); v++) {
+	                            urisInScope.add(values.getString(v));
+	                        }
+	                        this.editConfiguration.addUrisInScope(key, urisInScope);
+	                    } else if(types.contains("forms:LiteralField")) {
+	                        for(int v = 0; v < values.size(); v++) {
+	                            String value = values.getString(v);
+	                            Literal valueLiteral = ResourceFactory.createPlainLiteral(value);
+	                            this.editConfiguration.addLiteralInScope(key,valueLiteral);
+	                        }	                        
+	                    }
+	                }
+	            }
+        		}
         }
     }
 
@@ -174,10 +179,6 @@ public class MinimalConfigurationPreprocessor extends
             if (types.contains("forms:OptionalN3Pattern")) {
                 this.optionalN3Component = component;            
             } 
-            
-//            if (types.contains("forms:DynamicN3Pattern")) {
-//                this.dynamicN3Component = component;
-//            }
 
             //TODO: New resources now identified on field itself as proeprty not type
             //"http://vitro.mannlib.cornell.edu/ns/vitro/CustomFormConfiguration#mayUseNewResource": true,
@@ -239,9 +240,8 @@ public class MinimalConfigurationPreprocessor extends
             }
         }*/
         
-        if (requiredN3Component == null && dynamicN3Component == null) {
-            throw new FormConfigurationException(
-                    "Configuration must include either a required or dynamic component.");
+        if (requiredN3Component == null) {
+            throw new FormConfigurationException("Configuration must include a required component.");                   
         }
         
         HashSet<String> satisfiedVarNames = getSatisfiedVarNames(parameterMap);
@@ -274,16 +274,6 @@ public class MinimalConfigurationPreprocessor extends
             this.editConfiguration.addN3Required(allowedN3);
         }
         
-        
-//        // Add dynamic N3 pattern to the edit configuration's required N3
-//        if (dynamicN3Component != null) {
-//        		//parameterMap = 
-//        	preprocessDynamicN3(dynamicN3Component, parameterMap);
-////        		this.allowedVarNames.addAll(parameterMap.keySet());
-////        		satisfiedVarNames.addAll(parameterMap.keySet());
-//        }
-
-
         //For each satisfiedVarName: get component and check if URI field, string field, or new resource and add 
         // accordingly
         for(String s: satisfiedVarNames) {
@@ -341,223 +331,106 @@ public class MinimalConfigurationPreprocessor extends
     
     void preprocessDynamicComponent(JSONObject component, VitroRequest vreq) 
     				throws FormConfigurationException, FormSubmissionException {
- 
-    		Map<String, String[]> params = vreq.getParameterMap();
     		
 		// Get and validate the N3 pattern from the configuration component
 		JSONArray dynamicN3Pattern = getN3Pattern(component);
-	    validateDynamicN3Pattern(dynamicN3Pattern); 
-	    
+		validateDynamicN3Pattern(dynamicN3Pattern);
+
 	    // Get and validate the dynamic vars from the configuration component
 	    JSONArray dynamicVars = getDynamicVars(component);
 	    validateDynamicVars(dynamicVars);
 	    
+	    Map<String, String[]> parameterMap = vreq.getParameterMap();
+
 	    // Get the number of parameter values submitted for the primary dynamic object. This determines the number 
 	    // of  statements to be added to the N3 pattern. 
-	    int dynamicObjectCount = getDynamicVarParameterValueCount(DYNAMIC_OBJECT, params);
+	    int dynamicObjectParameterValueCount = getDynamicVarParameterValueCount(DYNAMIC_OBJECT, parameterMap);
 	    
-	    if (dynamicObjectCount > 1) {
-		    	validateDynamicParameterValues(dynamicVars, dynamicObjectCount, params);
-		    
-		    //List<String> newPattern = buildDynamicN3Triples(component, dynamicObjectCount);
-		    rewriteN3Pattern(component, dynamicObjectCount);
-		
-	//	    String dynamicN3PatternString = buildDynamicN3PatternString(component, dynamicObjectCount);
-	//	    log.debug("dynamicN3Pattern = " + dynamicN3PatternString);
-		    
-	    
+	    if (dynamicObjectParameterValueCount > 1) {
+		    	validateDynamicParameterValues(dynamicVars, dynamicObjectParameterValueCount, parameterMap);
+		    rewriteN3Pattern(component, dynamicObjectParameterValueCount);
 		    rewriteParameterMap(dynamicVars, vreq);
-	    }
-	    
+	    }    
     }
     
-    /** 
-     * Validates the dynamic N3 configuration and the input parameters, throwing an exception if either is   
-     * invalid. Builds the dynamic N3 pattern and rewrites the parameter map to match the new N3 pattern.
-     * @param dynamicComponent - the dynamic N3 component from the form configuration
-     * @param params - the form parameter map
-     * @return void
-     * @throws FormConfigurationException
-     * @throws FormSubmissionException
-     */
-//    void preprocessDynamicN3(JSONObject dynamicN3Component, Map<String, String[]> params) 
-//            throws FormConfigurationException, FormSubmissionException {
-//
-//    		// Get and validate the N3 pattern from the configuration component
-//    		JSONArray dynamicN3Pattern = getN3Pattern(dynamicN3Component);
-//        validateDynamicN3Pattern(dynamicN3Pattern); 
-//        
-//        // Get and validate the dynamic vars from the configuration component
-//        JSONArray dynamicVars = getDynamicVars(dynamicN3Component);
-//        validateDynamicVars(dynamicVars);
-//        
-//        // Get the number of parameter values submitted for the primary dynamic object. This determines the number 
-//        // of  statements to be added to the N3 pattern. 
-//        int dynamicObjectCount = getDynamicVarParameterValueCount(DYNAMIC_OBJECT, params);
-//        
-//        validateDynamicParameterValues(dynamicVars, dynamicObjectCount, params);
-//
-//        String dynamicN3PatternString = buildDynamicN3PatternString(dynamicN3Component, dynamicObjectCount);
-//        log.debug("dynamicN3Pattern = " + dynamicN3PatternString);
-//        this.editConfiguration.addN3Required(dynamicN3PatternString);
-//        
-//        // TODO RY make sure modifying the params here actually modifies the params in the vreq. Otherwise we need
-//        // to pass in the vreq to reassign the params        
-//        params = rewriteParameterMap(dynamicVars, params);
-//        return params;
-//    }
     
     /**
      * Rewrites the parameter map to separate values originally assigned to a single dynamic variable to assign
      * them to the new variables added to the dynamic pattern. That is, an original mapping "objectVar" =>
      * [ "uri0", "uri1", "uri2" ] becomes "objectVar0" => [ "uri0" ], "objectVar1" => [ "uri1" ], and
      * "objectVar2" => [ "uri2" ]
-     * @param params
-     * @return
+     * @param params - the mutable parameter map
+     * @return the modified parameter map
      */
     void rewriteParameterMap(JSONArray dynamicVars, VitroRequest vreq) {
 
-    		Map<String, String[]> params = vreq.getParameterMap();
-		
-//		for (Entry<String, String[]> entry : params.entrySet()) {
-//			String key = entry.getKey();
-//			String[] value = entry.getValue();
-//			// Dynamic var has initial "?", but param key does not. Strip off for comparison.
-//			// Don't alter entry with key not a dynamic variable.
-//			if (! dynamicVars.contains("?" + entry.getKey())) {				 
-//				params.put(key, value);
-//			} else {				
-//				String[] values = params.get(key);
-//				for (int valueIndex = 0; valueIndex < values.length; valueIndex++) {
-//					params.put(key + Integer.toString(valueIndex), 
-//							new String[] { values[valueIndex] });
-//				}				
-//			}
-//		}
+    		Map<String, String[]> parameterMap = vreq.getParameterMap();
     		
     		for (int varIndex = 0; varIndex < dynamicVars.size(); varIndex++) {
     			String var = dynamicVars.getString(varIndex);
     			// The form parameter does not include the initial "?"
     			String key = var.substring(1);
-    			String[] values = params.get(key);
+    			String[] values = parameterMap.get(key);
     			for (int valueIndex = 0; valueIndex < values.length; valueIndex++) {
-    				params.put(key + Integer.toString(valueIndex), 
+    				parameterMap.put(key + Integer.toString(valueIndex), 
     						new String[] { values[valueIndex] } );
     			}
-    			params.remove(key);
+    			parameterMap.remove(key);
     		}
 	}
 
-//	String buildDynamicN3PatternString(JSONObject dynamicN3Component, int dynamicObjectCount) {
-//
-//		JSONArray dynamicN3Pattern =  dynamicN3Component.getJSONArray("customform:pattern");
-//		JSONArray dynamicVars = dynamicN3Component.getJSONArray("customform:dynamic_variables");
-//		
-//        Set<String> triples = buildDynamicN3TriplesOld(dynamicN3Pattern, dynamicVars, dynamicObjectCount);
-//        
-//        StringBuilder sb = new StringBuilder();
-//        sb.append(getPrefixes(dynamicN3Component));
-//        
-//        for (String triple : triples) {
-//        		sb.append(triple);
-//        }
-//        
-//        return sb.toString();    	
-//    }   
-	
-
 	@SuppressWarnings("unchecked")
-	void rewriteN3Pattern(JSONObject dynamicN3Component, int dynamicObjectCount) {
+	void rewriteN3Pattern(JSONObject dynamicN3Component, int dynamicObjectParameterValueCount) {
 
 		JSONArray N3Pattern =  dynamicN3Component.getJSONArray("customform:pattern");
 		JSONArray dynamicVars = dynamicN3Component.getJSONArray("customform:dynamic_variables");
 		
-		List<String> newTriples = buildDynamicN3Triples(N3Pattern, dynamicVars, dynamicObjectCount);
+		Set<String> newTriples = buildDynamicN3Triples(N3Pattern, dynamicVars, dynamicObjectParameterValueCount);
 		JSONArray newPattern = JSONArray.fromObject(newTriples);
-
-		dynamicN3Component.replace("customform:pattern", newPattern);
-	
+		dynamicN3Component.replace("customform:pattern", N3Pattern, newPattern);
     }
   
-    List<String> buildDynamicN3Triples(JSONArray N3Pattern, JSONArray dynamicVars, int dynamicObjectCount) {
+    Set<String> buildDynamicN3Triples(JSONArray N3Pattern, JSONArray dynamicVars, 
+    			int dynamicObjectParameterValueCount) {
 	
-    		List<String> triples = new ArrayList<>();
-    		
+    		Set<String> triples = new HashSet<>();
 
 		// For each triple in the N3 pattern
 		for (int tripleIndex = 0; tripleIndex < N3Pattern.size(); tripleIndex++) {
 			String triple = N3Pattern.getString(tripleIndex);
 			triple = triple.trim();
+			if (triple.endsWith(".")) {
+				triple = triple.replaceAll("\\s*\\.$", "");
+			}
 			log.debug("Triple: " + triple);
 	        
 	        // Split the triple into terms
 			String[] terms = triple.trim().split("\\s+");
 	        	
 	        // For each set of parameter values of the dynamic variables
-	        for (int valueIndex = 0; valueIndex < dynamicObjectCount; valueIndex++) {
+	        for (int valueIndex = 0; valueIndex < dynamicObjectParameterValueCount; valueIndex++) {
 	        	
 	        		String[] newTerms = new String[3];
 	        	
-	            // For each of the first three terms in the triple (ignore the final period if there is one)
+	            // For each of the first three terms in the triple
 	            for (int termIndex = 0; termIndex < 3; termIndex++) {
 	            		String term = terms[termIndex];
-	            		// Will the predicate ever be a dynamic variable?
-	            		// newTerms[termIndex] = (triple != 1 && dynamicVars.contains(term)) ? term + valueIndex : term;
+	            		// Will a predicate ever be a dynamic variable? Allow for now.
+	            		// newTerms[termIndex] = 
+	            		//     (termIndex != 1 && dynamicVars.contains(term)) ? term + valueIndex : term;
 	            		newTerms[termIndex] = dynamicVars.contains(term) ? term + valueIndex : term;
 	            				
 	            }
 	            // Join the new terms into a triple, appending the final punctuation
 	            String newTriple = StringUtils.join(newTerms, " ") + " . ";
-	            triples.add(newTriple);
 	            log.debug(newTriple);
+	            triples.add(newTriple);
 	        }
 		}
 
     		return triples;
     }
-    
-//    Set<String> buildDynamicN3TriplesOld(JSONArray dynamicN3Pattern, JSONArray dynamicVars, int dynamicObjectCount) {
-//		
-//    		Set<String> triples = new HashSet<>();
-//    		
-//    		if (dynamicObjectCount == 1) {
-//    			for (int tripleIndex = 0; tripleIndex < dynamicN3Pattern.size(); tripleIndex++) {
-//    				triples.add(dynamicN3Pattern.getString(tripleIndex));
-//    			}
-//    		} else {
-//    			// For each triple in the N3 pattern
-//    			for (int tripleIndex = 0; tripleIndex < dynamicN3Pattern.size(); tripleIndex++) {
-//    				String triple = dynamicN3Pattern.getString(tripleIndex);
-//    				triple = triple.trim();
-//    				log.debug("Triple: " + triple);
-//    		        
-//    		        // Split the triple into terms
-//		        String[] terms = triple.trim().split("\\s+");
-//    		        	
-//		        // For each set of parameter values of the dynamic variables
-//		        for (int valueIndex = 0; valueIndex < dynamicObjectCount; valueIndex++) {
-//		        	
-//		        		String[] newTerms = new String[3];
-//		        	
-//		            // For each of the first three terms in the triple (ignore the final period if there is one)
-//		            for (int termIndex = 0; termIndex < 3; termIndex++) {
-//		            		String term = terms[termIndex];
-//		            		// Will the predicate ever be a dynamic variable?
-//		            		// newTerms[termIndex] = (triple != 1 && dynamicVars.contains(term)) ? term + valueIndex : term;
-//		            		newTerms[termIndex] = dynamicVars.contains(term) ? term + valueIndex : term;
-//		            				
-//		            }
-//		            // Join the new terms into a triple, appending the final punctuation
-//		            String newTriple = StringUtils.join(newTerms, " ") + " . ";
-//		            triples.add(newTriple);
-//		            log.debug(newTriple);
-//		        }
-//    			}
-//    		}
-//
-//    		return triples;
-//    }
-    
+  
     /**
      * Returns the dynamic variables defined in the dynamic N3 component. Throws an error if they are null or 
      * empty.
@@ -595,38 +468,30 @@ public class MinimalConfigurationPreprocessor extends
     /**
      * Check that all dynamic variables have the same number of values in the parameter map as the primary 
      * dynamic variable (DYNAMIC_OBJECT).
-     * @param dynamicObjectCount - the number of parameter values for the primary dynamic object
+     * @param dynamicObjectParameterValueCount - the number of parameter values for the primary dynamic object
      * @param dynamicVars - the dynamic variables specified in the form configuration
      * @param params - the form submission parameter map
      * @throws FormSubmissionException
      */
-     void validateDynamicParameterValues(JSONArray dynamicVars, int dynamicObjectCount,
+     void validateDynamicParameterValues(JSONArray dynamicVars, int dynamicObjectParameterValueCount,
     			Map<String, String[]> params) throws FormSubmissionException  {
   
         for (int index = 1; index < dynamicVars.size(); index++) {
         		String varName = dynamicVars.getString(index);
         		
-        		// Don't re-test
+        		// Don't test against itself
         		if (varName.equals(DYNAMIC_OBJECT)) {
         			continue;
         		}
         		
             int valueCount = getDynamicVarParameterValueCount(varName, params);
-            if (valueCount != dynamicObjectCount) {
+            if (valueCount != dynamicObjectParameterValueCount) {
                 throw new FormSubmissionException(
                 		"Dynamic variables must have the same number of values as " + DYNAMIC_OBJECT + ".");
             }           
         }
     }    
-    
-    private String getPrefixes(JSONObject component) {
-        String prefixes = "";
-        if (component.containsKey("customform:prefixes")) {
-            prefixes = component.getString("customform:prefixes");
-        }
-        return prefixes;
-    }
-    
+
     /** 
      * Returns a non-null, non-empty N3 pattern from the N3 component. Throws an error if it is null or empty.
      * @param N3Component - the form configuration component
@@ -652,47 +517,11 @@ public class MinimalConfigurationPreprocessor extends
     }
     
     /**
-     * Validates the dynamic N3 component pattern. Throws an error if the pattern is invalid.
-     * @throws FormConfigurationException
-     */
-    void validateDynamicN3Pattern(JSONArray dynamicN3Pattern) throws FormConfigurationException {    
-        
-    		checkAllTriplesWellFormed(dynamicN3Pattern);
-    		checkDynamicPatternContainsDynamicObject(dynamicN3Pattern); 
-    }  
-    
-    /** 
-     * Checks if the N3 pattern is well-formed: each triples contains 3 terms plus final period. Throws an 
-     * exception if not well-formed.
-     * @param pattern - the N3 pattern (a JSONArray) from the form configuration
-     * @throws FormConfigurationException
-     */
-    void checkAllTriplesWellFormed(JSONArray pattern) throws FormConfigurationException {
-
-        for (int i = 0; i < pattern.size(); i++) {
-            String triple = pattern.getString(i);
-            triple = triple.trim();
-            
-            if (! triple.endsWith(".")) {
-            		throw new FormConfigurationException("Triple must end in a period.");
-            }
-            
-            // Peel off final period and any preceding spaces
-            triple = (StringUtils.chop(triple)).trim();
-        
-            String[] terms = triple.split("\\s+");
-            if (terms.length != 3) {
-                throw new FormConfigurationException("Triple in pattern does not have exactly three terms.");
-            }            
-        }     	
-    }
-    
-    /**
      * Checks if the dynamic N3 pattern contains the dynamic object. Throws an exception if not.
      * @param pattern - the N3 pattern (a JSONArray) from the form configuration
      * @throws FormConfigurationException
      */
-     void checkDynamicPatternContainsDynamicObject(JSONArray pattern) throws FormConfigurationException {
+     void validateDynamicN3Pattern(JSONArray pattern) throws FormConfigurationException {
 
         for (int i = 0; i < pattern.size(); i++) {  
         		if (pattern.getString(i).contains(DYNAMIC_OBJECT)) {
@@ -702,6 +531,10 @@ public class MinimalConfigurationPreprocessor extends
         throw new FormConfigurationException(
         		"Dynamic pattern must contain dynamic object " + DYNAMIC_OBJECT + "."); 
     }
+     
+    static String getDynamicObjectName() {
+ 	    return DYNAMIC_OBJECT;
+    }	
     
     /** 
      * Return the number of values in the parameter map for the dynamic variable
@@ -870,23 +703,6 @@ public class MinimalConfigurationPreprocessor extends
         return allowedN3Model;
     }
     
-    /*
-    private void addConfigurationComponent(JSONObject component) {
-        //Get the N3 
-        //Create field        
-    }
-    */
-
-    /*
-    private JSONObject getConfigurationComponent(String fieldName, JSONObject json) {
-        if(this.fieldNameToConfigurationComponent.containsKey(fieldName)) {
-            return this.fieldNameToConfigurationComponent.get(fieldName);
-        }
-        
-        return null;
-    }
-    */
-
     //Since we will change the uris and literals from form, we should make copies
     //of the original values and store them, this will also make iterations
     //and updates to the submission independent from accessing the values
@@ -896,6 +712,48 @@ public class MinimalConfigurationPreprocessor extends
         //Copy
         copyUrisFromForm.putAll(urisFromForm);
         copyLiteralsFromForm.putAll(literalsFromForm);
-    }    
+    }  
+
+    private static class HttpServletRequestWrapperWithMutableParameterMap extends HttpServletRequestWrapper {
+        private final Map<String, String[]> mutableParameterMap;
+ 
+        public HttpServletRequestWrapperWithMutableParameterMap(
+                HttpServletRequest req) {
+            super(req);
+            this.mutableParameterMap = copyParameterMap(req);
+        }
+ 
+        @SuppressWarnings("unchecked")
+        private Map<String, String[]> copyParameterMap(HttpServletRequest req) {
+            return new HashMap<>(req.getParameterMap());
+        }
+ 
+        @Override
+        public String getParameter(String name) {
+            String[] values = mutableParameterMap.get(name);
+            if (values != null && values.length > 0) {
+                return values[0];
+            } else {
+                return null;
+            }
+        }       
+ 
+        @Override
+        @SuppressWarnings("rawtypes")
+        public Map getParameterMap() {
+            return mutableParameterMap;
+        }
+ 
+        @Override
+        @SuppressWarnings("rawtypes")
+        public Enumeration getParameterNames() {
+            return Collections.enumeration(mutableParameterMap.keySet());
+        }
+ 
+        @Override
+        public String[] getParameterValues(String name) {
+            return mutableParameterMap.get(name);
+        }
+    }
 
 }
