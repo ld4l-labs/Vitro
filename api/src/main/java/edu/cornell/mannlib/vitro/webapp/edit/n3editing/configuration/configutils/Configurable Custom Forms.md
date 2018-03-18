@@ -22,7 +22,7 @@ These tools do not replace the original implementation of custom entry forms. Ra
 
 # The form definition file
 
-The form definition file describes the form using JSON-LD syntax. The file describes the fields on the form, and the RDF triples that the form will create.
+The file describes the fields on the form, and the RDF triples that the form will create. The file uses JSON-LD syntax.
 
 The description of each field may include its data type, validation methods, and a recipe for finding existing data that will pre-populate the field.
 
@@ -166,6 +166,8 @@ The pattern of triples in the Dynamic N3 component is less flexible than in the 
 
 A form may not contain more than one Dynamic N3 component.
 
+#### Properties
+
 | name | description |
 |----|----|
 | `@id` | Required. Must be unique within the configuration.
@@ -200,15 +202,101 @@ A form may not contain more than one Dynamic N3 component.
 
 ### URI fields
 
-####TBD
+Describes a field on the HTML form whose value will be bound as a URI in the N3 patterns. The `varName` is both the name of the field on the form, and also the name of the N3 variable to which the field value will be bound.
+
+Field descriptions may include a `queryForExistingValue` property. This is a SPARQL SELECT query which is used to populate the field when the form is presented. 
+
+URI field descriptions may include a `mayUseNewResource` flag. If a field has this flag, and the submitted form does not include a value for the field, then a new URI will be minted and used as the value of the field.
+
+#### Properties
+
+| name | description |
+|----|----|
+| `@id` | Required. Must be unique within the configuration.
+| `@type` | Required. Must be `forms:UriField` |
+| `customform:varName` | Required. Must be a string or an array of strings. A description with more than one `varName` is equivalent to multiple descriptions with the same optional properties. |
+| `customform:queryForExistingValue` | Optional. If present, must be a single string. this query will be executed, and the returned value will become the initial value of the field. If the SPARQL query contains the variable `?objectVar`, it will be bound to the URI of the individual being edited. |
+| `customform:mayUseNewResource` | Optional. If `true`, and the form submission does not include a value for this field, then a new URI will be minted and used as the value. |
+
+#### Examples
+
+```
+{
+  "@id": "customform:whcor_fieldAgent",
+  "@type": [
+    "forms:UriField"
+  ],
+  "customform:mayUseNewResource": true,
+  "customform:queryForExistingValue": "PREFIX bib: <http://bibliotek-o.org/ontology/>   SELECT ?existingAgent WHERE {  ?objectVar bib:hasAgent ?existingAgent . }   ",
+  "customform:varName": "agent"
+},
+```
+```
+{
+  "@id": "customform:noteValue",
+  "@type": "forms:LiteralField",
+  "customform:varName": "objectValue",
+  "customform:queryForExistingValue": "PREFIX bib: <http://bibliotek-o.org/ontology/>  PREFIX vitro: <http://vitro.mannlib.cornell.edu/ns/vitro/0.7#>   PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>  SELECT ?existingObjectValue   WHERE {?objectVar rdf:value ?existingObjectValue .} "
+}
+```
 
 ### Literal fields
 
-####TBD
+Describes a field on the HTML form whose value will be bound as a Literal in the N3 patterns. The `varName` is both the name of the field on the form, and also the name of the N3 variable to which the field value will be bound.
+
+Field descriptions may include a `queryForExistingValue` property. This is a SPARQL SELECT query which is used to populate the field when the form is presented. 
+
+#### Properties
+
+| name | description |
+|----|----|
+| `@id` | Required. Must be unique within the configuration.
+| `@type` | Required. Must be `forms:LiteralField` |
+| `customform:varName` | _Same as for URI field._ |
+| `customform:queryForExistingValue` | _Same as for URI field._ |
+
+#### Examples
+
+```
+{
+  "@id": "customform:noteValue",
+  "@type": [
+    "forms:LiteralField"
+  ],
+  "customform:varName": "objectValue",
+  "customform:queryForExistingValue": "PREFIX bib: <http://bibliotek-o.org/ontology/>  PREFIX vitro: <http://vitro.mannlib.cornell.edu/ns/vitro/0.7#>   PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>  SELECT ?existingObjectValue   WHERE {?objectVar rdf:value ?existingObjectValue .} "
+}
+```
 
 ### Inter-field dependencies
 
-####TBD
+Describes one or more co-dependent groups of fields on the HTML form. If any field in a group has no value, then all fields in that group are considered to have no values.
+
+This may mean that variables in the required N3 pattern go unbound, causing the submission to fail. Or it may mean that variables in the optional N3 pattern go unbound, causing triples that are otherwise valid to be ignored.
+
+#### Properties
+
+| name | description |
+|----|----|
+| `@id` | Required. Must be unique within the configuration.
+| `@type` | Required. Must be `forms: FieldDependencies ` |
+| `customform: dependencies ` | Required. Must be a string or an array of strings. Each string contains a comma-separated list of field names which make up a co-dependent group. |
+
+#### Examples
+
+```
+{
+  "@id": "customform:field_dependencies",
+  "@type": "forms:FieldDependencies",
+  "customform:dependencies": [
+    "newEditor,editor,vcardEditor,vcardName",
+    "newBook,book",
+    "newEvent,event",
+    "dateTimeNode,dateTime-value"
+  ]
+}
+
+```
 
 # The display configuration file
 
