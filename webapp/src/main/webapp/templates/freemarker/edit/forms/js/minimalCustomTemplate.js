@@ -106,7 +106,7 @@ var minimalCustomTemplate = {
         	minimalCustomTemplate.updateFieldWithExistingContent(fieldName, content[fieldName]);
         }
         //Create a hidden input with Stringified version 
-        $("form").append("<input type='hidden' name='existingValuesRetrieved' id='existingValuesRetrieved' value='" + JSON.stringify(content)  + "'>");
+        $("form.customForm").append("<input type='hidden' name='existingValuesRetrieved' id='existingValuesRetrieved' value='" + JSON.stringify(content)  + "'>");
     },
     
     updateFieldWithExistingContent:function(fieldName, existingValue) {
@@ -261,14 +261,13 @@ var minimalCustomTemplate = {
 	        	return content[a].localeCompare(content[b]);
 	        });
 	        $.each(keysSortedByValue, function(index, keyvalue) {
-	            htmlList += "<option value='" + keyvalue + "'>" + content[keyvalue] + "</option>";
-
+	            htmlList += "<option value='" + keyvalue + "'";
+	            //todo: put in default value handling here later
+	            htmlList += ">" + content[keyvalue] + "</option>";
 	        });
-	        /*
-		  $.each(content, function(key, value) {
-			  htmlList += "<option value='" + key + "'>" + value + "</option>";
-			 
-		  });*/
+	       
+	      htmlList = "<option value=''>---Select option---</option>" + htmlList;
+
 		  dropdownElement.empty().append(htmlList);
     },
     getVarName:function(configComponent) {
@@ -330,7 +329,7 @@ var minimalCustomTemplate = {
             htmlList += "<option value='" + uri + "'>" + label + "</option>";
 
         });
-      
+        htmlList = "<option value=''>---Select option---</option>" + htmlList;
         dropdownElement.empty().append(htmlList);
     }
     

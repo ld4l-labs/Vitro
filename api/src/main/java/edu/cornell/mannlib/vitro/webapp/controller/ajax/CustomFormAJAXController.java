@@ -10,6 +10,7 @@ import java.io.PrintWriter;
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -131,8 +132,26 @@ public class CustomFormAJAXController extends VitroAjaxController {
 		        	returnValues.put(varName, literalValues);
 	        	}
 	        }
-
 		}
+		//Alsi include the original uris and literals in scope in the return values
+		Set<String> literalsInScopeKeys = literalScope.keySet();
+		for(String lk: literalsInScopeKeys) {
+			List<Literal> lVals = literalScope.get(lk);
+			List<String> lStringVals = new ArrayList<String>();
+			for(Literal l: lVals) {
+				lStringVals.add(l.getString());
+			}
+			
+			returnValues.put(lk, lStringVals);
+			
+		}
+		//TODO: check if keys already here that may be overwritten
+		for(String uriKey: uriScope.keySet()) {
+			if(returnValues.keySet().contains(uriKey)) {
+				log.error("Return values has variable being overwritten wtih uris in scope");
+			}
+		}
+		returnValues.putAll(uriScope);
 		//Output return values as json
 		JSONObject returnObject = new JSONObject();
 		Set<String> keys = returnValues.keySet();

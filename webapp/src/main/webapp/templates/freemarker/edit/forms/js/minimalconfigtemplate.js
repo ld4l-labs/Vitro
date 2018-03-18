@@ -93,7 +93,8 @@ function MinimalConfigTemplate(formData, displayData) {
             updateFieldWithExistingContent(fieldName, content[fieldName]);
         }
         //Create a hidden input with Stringified version 
-        $("form").append("<input type='hidden' name='existingValuesRetrieved' id='existingValuesRetrieved' value='" + JSON.stringify(content)  + "'>");
+       
+        $("form.customForm").append("<input type='hidden' name='existingValuesRetrieved' id='existingValuesRetrieved' value='" + JSON.stringify(content)  + "'>");
     }
     
     function updateFieldWithExistingContent(fieldName, existingValue) {
@@ -339,11 +340,9 @@ function MinimalConfigTemplate(formData, displayData) {
             htmlList += "<option value='" + keyvalue + "'>" + content[keyvalue] + "</option>";
 
         });
-        /*
-        $.each(content, function(key, value) {
-            htmlList += "<option value='" + key + "'>" + value + "</option>";
-
-        });*/
+      
+        //Add select with empty string
+        htmlList = "<option value=''>---Select option---</option>" + htmlList;
         dropdownElement.empty().append(htmlList);
     }
     
@@ -361,7 +360,7 @@ function MinimalConfigTemplate(formData, displayData) {
             htmlList += "<option value='" + uri + "'>" + label + "</option>";
 
         });
-      
+        htmlList = "<option value=''>---Select option---</option>" + htmlList;
         dropdownElement.empty().append(htmlList);
     }
     

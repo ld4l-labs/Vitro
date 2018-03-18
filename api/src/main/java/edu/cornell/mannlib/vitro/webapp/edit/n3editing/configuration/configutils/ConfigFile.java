@@ -18,6 +18,7 @@ public interface ConfigFile {
     String TYPE_DYNAMIC_N3_PATTERN = "forms:DynamicN3Pattern";
     String TYPE_LITERAL_FIELD = "forms:LiteralField";
     String TYPE_URI_FIELD = "forms:UriField";
+    String TYPE_CONSTANT_OPTIONS_FIELD = "forms:ConstantOptionsField";
     String PROPERTY_ID = "@id";
     String PROPERTY_TYPE = "@type";
     String PROPERTY_DEPENDENCIES = "customform:dependencies";
