@@ -6,11 +6,13 @@ import static edu.cornell.mannlib.vitro.webapp.edit.n3editing.configuration.conf
 import static edu.cornell.mannlib.vitro.webapp.edit.n3editing.configuration.configutils.ConfigFile.TYPE_LITERAL_FIELD;
 import static edu.cornell.mannlib.vitro.webapp.edit.n3editing.configuration.configutils.ConfigFile.TYPE_URI_FIELD;
 
+import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -30,6 +32,8 @@ import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdf.model.StmtIterator;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import edu.cornell.mannlib.vitro.webapp.application.ApplicationUtils;
 import edu.cornell.mannlib.vitro.webapp.controller.VitroRequest;
 import edu.cornell.mannlib.vitro.webapp.dao.WebappDaoFactory;
@@ -43,9 +47,6 @@ import edu.cornell.mannlib.vitro.webapp.edit.n3editing.configuration.configutils
 import edu.cornell.mannlib.vitro.webapp.edit.n3editing.configuration.configutils.ConfigFile.ConfigFileN3Pattern;
 import edu.cornell.mannlib.vitro.webapp.edit.n3editing.configuration.configutils.ConfigFileImpl;
 import edu.cornell.mannlib.vitro.webapp.modelaccess.ModelAccess;
-import net.sf.json.JSONArray;
-import net.sf.json.JSONObject;
-import net.sf.json.JSONSerializer;
 
 public class MinimalConfigurationPreprocessor extends
 		BaseEditSubmissionPreprocessorVTwo {
@@ -85,32 +86,23 @@ public class MinimalConfigurationPreprocessor extends
 
     }
 	
-	private void handleExistingValues(VitroRequest vreq) {
+	private void handleExistingValues(VitroRequest vreq) throws IOException {
 		String existingValues = vreq.getParameter("existingValuesRetrieved");
 		if(StringUtils.isNotEmpty(existingValues)) {
-			//Convert to JSON object
-			JSONObject existingValuesObject = (JSONObject) JSONSerializer.toJSON(existingValues);
-			@SuppressWarnings("unchecked")
-			Set<String> keys = existingValuesObject.keySet();
-			for(String key: keys) {
+			//Convert to JSON object - each key has an array of string values
+            @SuppressWarnings("unchecked")
+            Map<String, List<String>> existingValuesObject = new ObjectMapper().readValue(existingValues, HashMap.class);
+			for(String key: existingValuesObject.keySet()) {
                 if(configFile.hasFieldComponent(key)) {
                     ConfigFileField configurationComponent = configFile.getFieldComponent(key);
-					JSONArray values = existingValuesObject.getJSONArray(key);
-					int valuesLength = values.size();
-					int v;
+                    List<String> values = existingValuesObject.get(key);
                     if(configurationComponent.hasType(TYPE_URI_FIELD)) {
-						List<String> urisInScope = new ArrayList<String>();
-						for(v = 0; v < valuesLength; v++) {
-							urisInScope.add(values.getString(v));
-						}
-						this.editConfiguration.addUrisInScope(key, urisInScope);
+						this.editConfiguration.addUrisInScope(key, new ArrayList<String>(values));
                     } else if(configurationComponent.hasType(TYPE_LITERAL_FIELD)) {
-						for(v = 0; v < valuesLength; v++) {
-							String value = values.getString(v);
+						for(String value: values) {
 							Literal valueLiteral = ResourceFactory.createPlainLiteral(value);
 							this.editConfiguration.addLiteralInScope(key,valueLiteral);
 						}
-						
 					}
 				}
 			}
