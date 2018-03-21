@@ -205,14 +205,15 @@ public class SimpleReasoner extends StatementListener
 		con.setRequestProperty("Content-Type", "application/ld+json");
 		con.setRequestProperty("Accept", "application/ld+json");
 		con.setRequestMethod("POST");
-		
+		con.setAllowUserInteraction(true);
+		OutputStreamWriter wr = new OutputStreamWriter(con.getOutputStream());
+
 		
 		//m = ModelFactory.createDefaultModel();
 		//m.add(ResourceFactory.createResource("http://example.org"), RDF.type, ResourceFactory.createResource("http://ldnexampletest.org"));
 		StringWriter s = new StringWriter();
 		m.write(s, "JSON-LD");
 		System.out.println(s.toString());
-		OutputStreamWriter wr = new OutputStreamWriter(con.getOutputStream());
 		wr.write(s.toString());
 		wr.flush();
 		wr.close();
@@ -237,6 +238,7 @@ public class SimpleReasoner extends StatementListener
 		//}
 		
 		con.disconnect();
+		
 		} catch(Exception ex) {
 			System.out.println("Error occurred");
 			ex.printStackTrace();
