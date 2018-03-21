@@ -185,14 +185,18 @@ public class SimpleReasoner extends StatementListener
         }
         recomputeIndividuals(individualURIs);
         //test post to inbox
-        //testPostToInbox(m);
+        testPostToInbox(m);
     }
     
     
     /**Test code being inserted to experiment with notification**/
-	private void testPostToInbox() {
+	private void testPostToInbox(Model m) {
+		
 		try {
-		String url="http://url.com";
+			//The changed model will be sent along
+		//Write out model as test
+		//System.out.println("Printing out model of changes");
+		//m.write(System.out, "N3");
 		URL object=new URL("https://linkedresearch.org/inbox/ld4l/");
 
 		HttpURLConnection con = (HttpURLConnection) object.openConnection();
@@ -203,21 +207,19 @@ public class SimpleReasoner extends StatementListener
 		con.setRequestMethod("POST");
 		
 		
-		Model m = ModelFactory.createDefaultModel();
-		m.add(ResourceFactory.createResource("http://example.org"), RDF.type, ResourceFactory.createResource("http://ldnexampletest.org"));
+		//m = ModelFactory.createDefaultModel();
+		//m.add(ResourceFactory.createResource("http://example.org"), RDF.type, ResourceFactory.createResource("http://ldnexampletest.org"));
 		StringWriter s = new StringWriter();
 		m.write(s, "JSON-LD");
 		System.out.println(s.toString());
-		String output = new String();
-		s.write(output);
 		OutputStreamWriter wr = new OutputStreamWriter(con.getOutputStream());
 		wr.write(s.toString());
 		wr.flush();
-		
-		int responseCode = con.getResponseCode();
-		System.out.println("POST Response Code :: " + responseCode);
-
-		if (responseCode == 201) { //success
+		wr.close();
+		//int responseCode = con.getResponseCode();
+		//System.out.println("POST Response Code :: " + responseCode);
+		//System.out.println("POST response message ::" + con.getResponseMessage());
+		//if (responseCode == 201) { //success
 			BufferedReader in = new BufferedReader(new InputStreamReader(
 					con.getInputStream()));
 			String inputLine;
@@ -230,14 +232,14 @@ public class SimpleReasoner extends StatementListener
 
 			// print result
 			System.out.println(response.toString());
-		} else {
-			System.out.println("POST request not worked");
-		}
-		wr.close();
-
+		//} else {
+		//	System.out.println("POST request not worked");
+		//}
+		
 		con.disconnect();
 		} catch(Exception ex) {
 			System.out.println("Error occurred");
+			ex.printStackTrace();
 		}
 	
 	
