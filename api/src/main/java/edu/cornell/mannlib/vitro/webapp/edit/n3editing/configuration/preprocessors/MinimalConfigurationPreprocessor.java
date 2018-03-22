@@ -241,8 +241,9 @@ public class MinimalConfigurationPreprocessor extends
 		String uriizedAllN3 = createN3WithFakeNS(fakeNS);
 		//Add to a model
 		Model allowedN3Model = createAllowedModel(satisfiedVarNames, fakeNS, uriizedAllN3);
-		
-		String allowedN3 = unURIize(fakeNS, allowedN3Model);
+		//Breaking up into individual statements as opposed to one big string that 
+		//can be accepted or rejected together if any part of it is wrong/incorrect
+		List<String> allowedN3 = unURIize(fakeNS, allowedN3Model);
 		//System.out.println(allowedN3);
 		//Hardcoding here - will do the rest above
 		//N3 required
@@ -266,8 +267,11 @@ public class MinimalConfigurationPreprocessor extends
 		// Attach allowedN3 as n3 optional (AllowedN3 is generated in part by optional N3 - retractions are based on required/optional 
 		//and a situation can occur when optional N3 was not defined initially but if we add everything to required, the retractions
 		//will require values where there weren't any to begin with due to those being optional the first time the info was added.
-		
+		//Additionally, try to split into an array instead of a single line that must be evaluated or discarded
+		//Technically at this point, we only have the RDF for submission but useful to split in case of errors so at least some of the RDF is submitted
+		//This way is a little hacky but we're trying it
 		this.editConfiguration.addN3Optional(allowedN3);
+		
 		
 		// Add dynamic N3 pattern to the edit configuration's required N3
 		if (dynamicN3Component != null) {
@@ -329,6 +333,8 @@ public class MinimalConfigurationPreprocessor extends
 		}		
 	}
 	
+	
+
 	String buildDynamicN3Pattern(JSONObject dynamicComponent, Map<String, String[]> parameterMap) 
 			throws FormConfigurationException, FormSubmissionException {
 	
@@ -499,20 +505,33 @@ public class MinimalConfigurationPreprocessor extends
 		return (s.equals("subject") || s.equals("predicate") || s.equals("objectVar"));
 	}
 
-	private String unURIize(String fakeNS, Model allowedN3Model) {
+	private List<String> unURIize(String fakeNS, Model allowedN3Model) {
 		//Un uriize
 		StringWriter sw = new StringWriter();
 		//Turtle is a subset of N3 and should use short prefix format
 		allowedN3Model.write(sw, "ttl");
 		String allowedN3 = sw.toString().trim();
-		//Substitute v: with 
-		//Remove fakeNS line
-		// String fakeNSPrefix = "@prefix v: <" + fakeNS + "> .";
-		
 		allowedN3 = allowedN3.replaceAll("@prefix\\s*v:.*fake-ns#>\\s*\\.", "");
 		allowedN3 = allowedN3.replaceAll("v:", "?");
-		System.out.println("Resubstituting");
-		return allowedN3;
+		log.debug("As a whole, allowed N3 is " + allowedN3);
+		
+		List<String> optionalStrings = new ArrayList<String>();
+		List<Statement> stmts = allowedN3Model.listStatements().toList();
+		for(Statement stmt: stmts) {
+			//For each statement, add to Model and then output as ttl string
+			Model stmtModel = ModelFactory.createDefaultModel();
+			stmtModel.setNsPrefix("v", fakeNS);
+			stmtModel.add(stmt);
+			StringWriter stmtWriter = new StringWriter();
+			stmtModel.write(stmtWriter, "ttl");
+			String optString = stmtWriter.toString();
+			//Do the same replacements at this level that you would do above
+			optString = optString.replaceAll("@prefix\\s*v:.*fake-ns#>\\s*\\.", "");
+			optString = optString.replaceAll("v:", "?");
+			optionalStrings.add(optString);
+		}
+		
+		return optionalStrings;
 	}
 
 	private String createN3WithFakeNS(String fakeNS) {
@@ -538,7 +557,7 @@ public class MinimalConfigurationPreprocessor extends
 				uriizedN3.add(substitutedN3String);
 				//one at a time so we can see which N3 statement might be a problem
 				try {
-					System.out.println(allPrefixes + substitutedN3String);
+					log.debug(allPrefixes + substitutedN3String);
 					 StringReader reader = new StringReader(allPrefixes + substitutedN3String.replaceAll("\n", "").replaceAll("\r",""));
 					testModel.read(reader, "", "N3");
 				} catch(Exception ex) {
@@ -547,12 +566,10 @@ public class MinimalConfigurationPreprocessor extends
 				
 			}
 			uriizedAllN3 = StringUtils.join(uriizedN3, " ");
-			System.out.println("Pre carriage return removal");
-			System.out.println(uriizedAllN3);
 			//remove newline/carriage return characters
 			uriizedAllN3 = uriizedAllN3.replaceAll("\n", "").replaceAll("\r","");
-			System.out.println("N3 after newline removal");
-			System.out.println(uriizedAllN3);
+			log.debug("N3 after newline removal");
+			log.debug(uriizedAllN3);
 		}
 		return uriizedAllN3;
 	}
