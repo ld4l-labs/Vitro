@@ -93,7 +93,7 @@ public class MinimalConfigurationPreprocessor extends
 			handleExistingValues(vreq);
 			
 		} catch (Exception ex) {
-			log.error("Exception occurred reading in configuration file", ex);
+			log.error("Exception occurred reading in/parsing configuration file", ex);
 		}
 
 	}
@@ -132,7 +132,7 @@ public class MinimalConfigurationPreprocessor extends
 		}
 	}
 
-	private void processConfigurationJSONFields(JSONObject contentsJSON) {
+	private void processConfigurationJSONFields(JSONObject contentsJSON) throws Error {
 		String fieldNameProperty =  "customform:varName";
 		JSONArray graph = contentsJSON.getJSONArray("@graph");
 		
@@ -179,20 +179,18 @@ public class MinimalConfigurationPreprocessor extends
 			//Earlier, there was a separate component entirely with id new resources which listed the new resources
 			//so it would be a the component level
 			if(component.containsKey("customform:mayUseNewResource")) {
+				if(types.contains("forms:LiteralField")) {
+					//This is an error condition and the JSON is wrong
+					throw new Error("CustomForm component " + component.toString() + " - specifies literal field as using new resource which is incorrect");
+				}
 				
 				Boolean mayUseNewResource = component.getBoolean("customform:mayUseNewResource");
 				if(mayUseNewResource) {
 					newResourcesSet.add(component.getString(fieldNameProperty));
 				}
 			}
-			/*
-			if(types.contains("forms:NewResource")) {
-				this.newResourcesComponent = component;
-				JSONArray newResourceFieldNames = component.getJSONArray("customform:varName");
-				String[] newResourcesArray = new String[newResourceFieldNames.size()];
-				newResourcesArray = (String []) newResourceFieldNames.toArray(newResourcesArray);
-				newResourcesSet.addAll(new ArrayList<String>(Arrays.asList(newResourcesArray)));
-			}*/
+			
+			
 			//Check for dependencies components
 			//TODO:Assume these will be modeled exactly the same way
 			if(types.contains( "forms:FieldDependencies")) {
