@@ -70,8 +70,7 @@ public class MinimalConfigurationPreprocessor extends
         submission = inputSubmission;
         this.wdf = vreq.getWebappDaoFactory();
         this.ontModel = ModelAccess.on(vreq).getOntModel();
-        //Need to keep independent 
-		    copySubmissionValues();
+        
         
         String configjsonString = vreq.getParameter("configFile");
         //This needs to be based on the VIVO app itself and deployment, not installation directory
