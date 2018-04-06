@@ -32,11 +32,10 @@ The RDF triples may be designated as required or optional, depending on whether 
 
 The basic purpose of the form definition is to provide a recipe for translating values from the HTML form into RDF. 
 
-The RDF must be defined, in terms of patterns. N3 syntax is used. When an HTML form is submitted, variables in the RDF are bound to values in the form. Each triple in the RDF pattern may be treated as required, optional, or dynamic. 
+The RDF must be defined, in terms of patterns. N3 syntax is used. When an HTML form is submitted, variables in the RDF are bound to values in the form. Each triple in the RDF pattern may be treated as required or optional. 
 
 * Required N3 - If any variables in a required triple are not bound by the form, the submission fails. 
 * Optional N3 - If any variables in an optional triple are not bound by the form, then that triple is ignored, but the submission does not fail.
-* Dynamic N3 - A pattern may consist of one or more triples, Each variable in the pattern must be bound to the same number of values in the form (zero or more). The pattern of N3 is submitted once with each set of values. 
 
 Each field in the HTML form must be defined in the file. We need to state whether the value in the field will be used as a URI or a Literal in the RDF triples that are created. Other information may be provided also, as needed.
 
@@ -151,52 +150,6 @@ If there is more than one Optional N3 component, the prefixes of the components 
     "@prefix  foaf: <http://xmlns.com/foaf/0.1/> .  "
   ],
   "customform:pattern": ["?agent a ?agentType.  ?agent rdfs:label ?agentName.  ?agent foaf:name ?agentName .  "]
-},
-```
-
-### Dynamic N3
-
-Describes a pattern of triples that may be included zero or more times, each time bound to a different set of values from the HTML form. 
-
-In addition to the prefixes and pattern, as found in the other N3 specifiers, the Dynamic N3 component contains a list of variables that may have multiple values in the form. If the list contains more than one variable name, then there must be the same number of values for each name in the list.
-
-The pattern may contain other variables, but each of these is expected to have exactly one value from the HTML form. Like the required N3 pattern, these variables must be bound to values in the form or the submission fails.
-
-The pattern of triples in the Dynamic N3 component is less flexible than in the Required N3 or Optional N3 components. Each string value must contain a single triple with subject, predicate, object, and a terminating period.
-
-A form may not contain more than one Dynamic N3 component.
-
-#### Properties
-
-| name | description |
-|----|----|
-| `@id` | Required. Must be unique within the configuration.
-| `@type` | Required. Must be `forms:DynamicN3Pattern`|
-| `customform:prefixes` | Optional. Specifies namespace prefixes for the triples in the pattern, by one or more N3 `@prefix` statements. May be a single string, or an array of strings to improve readability. |
-| `customform:pattern` | Required. Specifies the triples pattern. May be a single string, or an array of strings if there is more than one triple. _Each string must contain exactly one triple, terminated by a period (`.`)._ |
-| `customform:dynamic_variables` | A list of variable names which may have zero or more values in the HTML form. |
-
-#### Examples
-
-```
-{
-  "@id": "customform:addWork_dynamicN3",
-  "@type": "forms:DynamicN3Pattern",
-  "customform:pattern": [
-    "?subject bibframe:genreForm ?objectUri .",
-    "?objectUri rdfs:label ?objectLabel .",
-    "?objectUri rdf:type owl:Thing ."
-  ],
-  "customform:dynamic_variables" : [
-    "?objectUri",
-    "?objectLabel"
-  ],
-  "customform:prefixes": [
-    "@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> . ",
-    "@prefix bibframe: <http://id.loc.gov/ontologies/bibframe/> .",
-    "@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .",
-    "@prefix owl: <http://www.w3.org/2002/07/owl#> ."
-  ]
 },
 ```
 

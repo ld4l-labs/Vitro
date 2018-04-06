@@ -82,7 +82,6 @@ public class ConfigFileImpl implements ConfigFile {
     private FieldMap<LiteralField> literals = new FieldMap<>();
     private N3Patterns required = new N3Patterns();
     private N3Patterns optional = new N3Patterns();
-    private DynamicN3Patterns dynamic = new DynamicN3Patterns();
     private Dependencies dependencies = new Dependencies();
     private List<Unknown> unknowns = new ArrayList<>();
 
@@ -99,8 +98,6 @@ public class ConfigFileImpl implements ConfigFile {
                 required.addComponent(component);
             } else if (types.contains(TYPE_OPTIONAL_N3_PATTERN)) {
                 optional.addComponent(component);
-            } else if (types.contains(TYPE_DYNAMIC_N3_PATTERN)) {
-                dynamic.addComponent(component);
             } else if (types.contains(TYPE_URI_FIELD)) {
                 uris.add(new UriField(component));
             } else if (types.contains(TYPE_LITERAL_FIELD)) {
@@ -150,16 +147,6 @@ public class ConfigFileImpl implements ConfigFile {
     @Override
     public ConfigFileN3Pattern getOptionalN3() {
         return optional;
-    }
-
-    @Override
-    public boolean hasDynamicN3() {
-        return !dynamic.getVariables().isEmpty();
-    }
-
-    @Override
-    public ConfigFileDynamicN3Pattern getDynamicN3() {
-        return dynamic;
     }
 
     @Override
@@ -310,38 +297,6 @@ public class ConfigFileImpl implements ConfigFile {
 
     }
 
-    private static class DynamicN3Patterns extends N3Patterns
-            implements ConfigFile.ConfigFileDynamicN3Pattern {
-        private final List<String> variables = new ArrayList<>();
-
-        @Override
-        public void addComponent(Map<String, Object> component)
-                throws InvalidConfigFileException {
-            super.addComponent(component);
-            if (this.variables.isEmpty()) {
-                this.variables.addAll(toListOfStrings(
-                        component.get(PROPERTY_DYNAMIC_VARIABLES)));
-            } else {
-                throw new InvalidConfigFileException(
-                        "Config file contains more than one '"
-                                + TYPE_DYNAMIC_N3_PATTERN + "' component.");
-            }
-        }
-
-        @Override
-        public List<String> getVariables() {
-            return new ArrayList<>(variables);
-        }
-
-        @Override
-        public String toString() {
-            return "DynamicN3Patterns[variables=" + variables
-                    + ", getPrefixes()=" + getPrefixes() + ", getPattern()="
-                    + getPattern() + "]";
-        }
-
-    }
-
     private static class Dependencies {
         private Map<String, Set<String>> map = new HashMap<>();
 
@@ -385,9 +340,10 @@ public class ConfigFileImpl implements ConfigFile {
     @Override
     public String toString() {
         return String.format(
-                "%s {\n  uris: %s\n  literals: %s\n  required: %s\n  optional: %s\n  dynamic: %s\n  dependencies: %s\n  unknowns: %s\n}",
+                "%s {\n  uris: %s\n  literals: %s\n  required: %s\n"
+                        + "  optional: %s\n  dependencies: %s\n  unknowns: %s\n}",
                 getClass().getName(), uris, literals, required, optional,
-                dynamic, dependencies, unknowns);
+                dependencies, unknowns);
     }
 
 }

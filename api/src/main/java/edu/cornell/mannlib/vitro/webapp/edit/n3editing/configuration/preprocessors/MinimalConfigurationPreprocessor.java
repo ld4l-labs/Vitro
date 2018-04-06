@@ -42,7 +42,6 @@ import edu.cornell.mannlib.vitro.webapp.edit.n3editing.VTwo.EditConfigurationVTw
 import edu.cornell.mannlib.vitro.webapp.edit.n3editing.VTwo.MultiValueEditSubmission;
 import edu.cornell.mannlib.vitro.webapp.edit.n3editing.VTwo.fields.FieldVTwo;
 import edu.cornell.mannlib.vitro.webapp.edit.n3editing.configuration.configutils.ConfigFile;
-import edu.cornell.mannlib.vitro.webapp.edit.n3editing.configuration.configutils.ConfigFile.ConfigFileDynamicN3Pattern;
 import edu.cornell.mannlib.vitro.webapp.edit.n3editing.configuration.configutils.ConfigFile.ConfigFileField;
 import edu.cornell.mannlib.vitro.webapp.edit.n3editing.configuration.configutils.ConfigFile.ConfigFileN3Pattern;
 import edu.cornell.mannlib.vitro.webapp.edit.n3editing.configuration.configutils.ConfigFileImpl;
@@ -62,15 +61,13 @@ public class MinimalConfigurationPreprocessor extends
     
 	public MinimalConfigurationPreprocessor(EditConfigurationVTwo editConfig) {
 		super(editConfig);
-		
 	}
 
-
+    @Override
     public void preprocess(MultiValueEditSubmission inputSubmission, VitroRequest vreq) {
         submission = inputSubmission;
         this.wdf = vreq.getWebappDaoFactory();
         this.ontModel = ModelAccess.on(vreq).getOntModel();
-        
         
         String configjsonString = vreq.getParameter("configFile");
         //This needs to be based on the VIVO app itself and deployment, not installation directory
@@ -85,8 +82,6 @@ public class MinimalConfigurationPreprocessor extends
         } catch (Exception ex) {
             log.error("Exception occurred reading in configuration file", ex);
         }
-
-
     }
 	
 	private void handleExistingValues(VitroRequest vreq) throws IOException {
@@ -106,8 +101,6 @@ public class MinimalConfigurationPreprocessor extends
 							Literal valueLiteral = ResourceFactory.createPlainLiteral(value);
 							this.editConfiguration.addLiteralInScope(key,valueLiteral);
 						}
-
-
 					}
 				}
 			}
@@ -115,7 +108,7 @@ public class MinimalConfigurationPreprocessor extends
 	}
 
 	// Add fields, etc. for what we see
-	void updateConfiguration(Map<String, String[]> parameterMap) 
+	private void updateConfiguration(Map<String, String[]> parameterMap) 
 			throws FormConfigurationException, FormSubmissionException {
 		//Normally, would get fields from json? or just see everything within vreq param and check from json config
 		//The latter parallels the javascript approach
@@ -152,13 +145,6 @@ public class MinimalConfigurationPreprocessor extends
 		//This way is a little hacky but we're trying it
 		this.editConfiguration.addN3Optional(allowedN3);
 		
-		
-		// Add dynamic N3 pattern to the edit configuration's required N3
-        if (configFile.hasDynamicN3()) {
-            String dynamicN3Pattern = buildDynamicN3Pattern(configFile.getDynamicN3(), parameterMap);
-			this.editConfiguration.addN3Required(dynamicN3Pattern);
-		}
-
 		//For each satisfiedVarName: get component and check if URI field, string field, or new resource and add accordingly
 		for(String s: satisfiedVarNames) {
 			//reserved names subject, predicate, objectVar do not need to be processed
@@ -212,153 +198,6 @@ public class MinimalConfigurationPreprocessor extends
 		}		
 	}
 	
-    String buildDynamicN3Pattern(ConfigFileDynamicN3Pattern dynamicComponent, Map<String, String[]> parameterMap) 
-            throws FormConfigurationException, FormSubmissionException {
-    
-        validateDynamicN3Component(dynamicComponent);
-
-
-        // Get the custom form configuration pattern
-        List<String> dynamicN3Array = dynamicComponent.getPattern();
-
-        // Get the dynamic variables
-        List<String> dynamicVars = dynamicComponent.getVariables();
-        
-        // Get the count of the dynamic variable values in the form submission
-        // TODO - maybe don't define dynamic variables, just get all the params that have multiple values
-        int valueCount = getDynamicVariableValueCount(dynamicVars, parameterMap);
-        
-        String prefixes = dynamicComponent.getJoinedPrefixes();
-
-        return buildDynamicN3Pattern(dynamicN3Array, dynamicVars, prefixes, valueCount);
-    }
-
-    String buildDynamicN3Pattern(List<String> dynamicN3Array, List<String> dynamicVars, String prefixes, 
-            int paramValueCount) {
-		
-	    StringBuilder stringBuilder = new StringBuilder();
-	    stringBuilder.append(prefixes);
-	    
-	    if (paramValueCount == 1) {
-            stringBuilder.append(StringUtils.join(dynamicN3Array, " "));
-    			return stringBuilder.toString();
-	    }
-
-	    // For each triple in the dynamic pattern
-        for (String triple: dynamicN3Array) {
- 		
-	    		triple = triple.trim();
-	    		if (triple.endsWith(".")) {
-	    			// Peel off final period
-	    			triple = triple.substring(0, triple.length() - 1).trim(); // triple.lastIndexOf(".");
-	    		}
-	    		
-	    		// Split the triple into terms
-	    		String[] terms = triple.trim().split("\\s+");
-	    		
-	    		// For each set of values in the input
-	    		for (int valueIndex = 0; valueIndex < paramValueCount; valueIndex++) {
-	    			// For each term in the triple
-    				String[] newTerms = new String[3];
-    				for (int termIndex = 0; termIndex < 3; termIndex++) {
-    					String term = terms[termIndex];
-    				    newTerms[termIndex] = dynamicVars.contains(term) ? term + valueIndex : term;
-    				}
-	    		    // Join the new terms into a triple, appending the final punctuation
-		    		stringBuilder.append(StringUtils.join(newTerms, " ")).append(" . ");
-	    		}
-	    }
-	    
-	    return stringBuilder.toString();
-	}
-	
-	/**
-	 * Validates the dynamic N3 component. Throws an error if the component is invalid.
-	 * @throws FormConfigurationException 
-	 */
-    void validateDynamicN3Component(ConfigFileDynamicN3Pattern dynamicN3Component) throws FormConfigurationException {
-
-        validateDynamicN3Pattern(dynamicN3Component);	
-		validateDynamicN3Variables(dynamicN3Component);
-	}
-	
-	/**
-	 * Validates the dynamic N3 component pattern. Throws an error if the pattern is invalid.
-	 * @throws FormConfigurationException
-	 */
-    private void validateDynamicN3Pattern(ConfigFileDynamicN3Pattern dynamicN3Component) throws FormConfigurationException {   
-		
-		// Check that the first element of the graph defines a non-empty pattern array.
-		
-        List<String> pattern = dynamicN3Component.getPattern();
-		if (pattern.size() == 0) {
-			throw new FormConfigurationException("Custom form pattern is empty.");
-		}
-		
-		// Check that each element of the pattern is a well-formed triple: 3 terms plus final period.
-        for (String triple : pattern) {
-			triple = triple.trim();
-			
-			// Peel off final period (in case preceded by spaces) 
-			triple = triple.substring(0, triple.length() - 1).trim(); // triple.lastIndexOf(".");
-		
-			String[] terms = triple.split("\\s+");
-			if (terms.length != 3) {
-				throw new FormConfigurationException("Triple in pattern does not have exactly three terms.");
-			}			
-		}	
-	}
-	
-	/**
-	 * Validates the dynamic N3 dynamic variables array. Throws an error if the array is invalid.
-	 * @throws FormConfigurationException
-	 */
-    private void validateDynamicN3Variables(ConfigFileDynamicN3Pattern dynamicN3Component) throws FormConfigurationException {
-		
-		// Check that the first element of the graph defines a non-empty dynamic variables array. 
-        List<String> dynamicVars = dynamicN3Component.getVariables();
-		if (dynamicVars.size() == 0) {
-			throw new FormConfigurationException("Dynamic variables array is empty.");
-		}
-	}	
-	
-	/**
-	 * Returns true iff the count of values in the form submission is the same for each dynamic variable. 
-	 * @throws FormSubmissionException 
-	 */
-    int getDynamicVariableValueCount(List<String> dynamicVars, Map<String, String[]> params) 
-			throws FormSubmissionException  {
-
-	    // Get the first dynamic variable to compare to the others.
-        int firstValueCount = getDynamicVarParameterValueCount(dynamicVars.get(0), params);
-
-	    // Match the dynamic variables to the input parameter values and make sure all variables have the same 
-	    // number of inputs.	 
-        for (String var: dynamicVars.subList(1, dynamicVars.size())) {
-            int valueCount = getDynamicVarParameterValueCount(var, params);
-	    		if (valueCount != firstValueCount) {
-	    			throw new FormSubmissionException("Dynamic variables must have the same number of values.");
-	    		}   		
-	    }
-	    
-	    return firstValueCount;
-	}
-	
-	/** 
-	 * Return the number of values in the parameter map for the specified variable
-	 * @throws FormSubmissionException 
-	 */
-    int getDynamicVarParameterValueCount(String var, Map<String, String[]> params) 
-    		throws FormSubmissionException {
-    	
-    		// Remove initial "?" from the variable for the comparison with the params
-        String varName = var.substring(1);
-        if (! params.containsKey(varName)) {
-			throw new FormSubmissionException("Dynamic variable requires at least one value.");
-		}
-        return params.get(varName).length;
-    }
-
 	private boolean isReservedVarName(String s) {
 		return (s.equals("subject") || s.equals("predicate") || s.equals("objectVar"));
 	}

@@ -3,7 +3,6 @@
 package edu.cornell.mannlib.vitro.webapp.edit.n3editing.configuration.configutils;
 
 import static edu.cornell.mannlib.vitro.webapp.edit.n3editing.configuration.configutils.ConfigFile.PROPERTY_DEPENDENCIES;
-import static edu.cornell.mannlib.vitro.webapp.edit.n3editing.configuration.configutils.ConfigFile.PROPERTY_DYNAMIC_VARIABLES;
 import static edu.cornell.mannlib.vitro.webapp.edit.n3editing.configuration.configutils.ConfigFile.PROPERTY_ID;
 import static edu.cornell.mannlib.vitro.webapp.edit.n3editing.configuration.configutils.ConfigFile.PROPERTY_MAY_USE_NEW_RESOURCE;
 import static edu.cornell.mannlib.vitro.webapp.edit.n3editing.configuration.configutils.ConfigFile.PROPERTY_PATTERN;
@@ -11,14 +10,12 @@ import static edu.cornell.mannlib.vitro.webapp.edit.n3editing.configuration.conf
 import static edu.cornell.mannlib.vitro.webapp.edit.n3editing.configuration.configutils.ConfigFile.PROPERTY_TYPE;
 import static edu.cornell.mannlib.vitro.webapp.edit.n3editing.configuration.configutils.ConfigFile.PROPERTY_VAR_NAME;
 import static edu.cornell.mannlib.vitro.webapp.edit.n3editing.configuration.configutils.ConfigFile.TYPE_DEPENDENCIES;
-import static edu.cornell.mannlib.vitro.webapp.edit.n3editing.configuration.configutils.ConfigFile.TYPE_DYNAMIC_N3_PATTERN;
 import static edu.cornell.mannlib.vitro.webapp.edit.n3editing.configuration.configutils.ConfigFile.TYPE_LITERAL_FIELD;
 import static edu.cornell.mannlib.vitro.webapp.edit.n3editing.configuration.configutils.ConfigFile.TYPE_OPTIONAL_N3_PATTERN;
 import static edu.cornell.mannlib.vitro.webapp.edit.n3editing.configuration.configutils.ConfigFile.TYPE_REQUIRED_N3_PATTERN;
 import static edu.cornell.mannlib.vitro.webapp.edit.n3editing.configuration.configutils.ConfigFile.TYPE_URI_FIELD;
 import static java.util.Collections.emptyList;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -63,9 +60,6 @@ public class ConfigFileImplTest extends AbstractTestClass {
                             "@prefix opt2: <http://optional2#>")
                     .property(PROPERTY_PATTERN,
                             "opt:sub opt:pred ?var1 . opt:sub opt:pred ?var2 ."),
-            new ConfigFileComponent("the_dynamic_n3", TYPE_DYNAMIC_N3_PATTERN)
-                    .property(PROPERTY_PATTERN, "?var1 a ?var2 .")
-                    .property(PROPERTY_DYNAMIC_VARIABLES, "?var1", "?var2"),
             new ConfigFileComponent("first_uri_fields", TYPE_URI_FIELD)
                     .property(PROPERTY_VAR_NAME, "uri1", "uri2"),
             new ConfigFileComponent("second_uri_fields", TYPE_URI_FIELD)
@@ -223,41 +217,6 @@ public class ConfigFileImplTest extends AbstractTestClass {
     }
 
     // ----------------------------------------------------------------------
-    // test dynamic N3
-    // ----------------------------------------------------------------------
-
-    private ConfigFileStructure NO_DYNAMIC_N3 = BASIC_N3
-            .remove("the_dynamic_n3");
-    private ConfigFileStructure MULTIPLE_DYNAMIC_N3 = BASIC_N3
-            .add(new ConfigFileComponent("another_dynamic_n3",
-                    TYPE_DYNAMIC_N3_PATTERN));
-
-    @Test
-    public void emptyDynamicN3_NoProblem() {
-        parse(NO_DYNAMIC_N3);
-        assertEquals(false, cfi.hasDynamicN3());
-        assertEquals(list(), cfi.getDynamicN3().getVariables());
-    }
-
-    @Test
-    public void basicDynamicN3_NoProblem() {
-        parse(BASIC_N3);
-        assertEquals(true, cfi.hasDynamicN3());
-        assertEquals(list("?var1", "?var2"), cfi.getDynamicN3().getVariables());
-    }
-
-    @Test
-    public void multipleDynamicN3_ThrowsException() throws Exception {
-        try {
-            parse(MULTIPLE_DYNAMIC_N3);
-            fail("Expected an exception.");
-        } catch (Exception e) {
-            assertInExceptionChain(e, InvalidConfigFileException.class,
-                    "more than one");
-        }
-    }
-
-    // ----------------------------------------------------------------------
     // test URI Fields and Literal fields
     // ----------------------------------------------------------------------
 
@@ -352,25 +311,6 @@ public class ConfigFileImplTest extends AbstractTestClass {
     @SuppressWarnings("unchecked")
     private <T> Set<T> set(T... items) {
         return new HashSet<>(Arrays.asList(items));
-    }
-
-    private void assertInExceptionChain(Throwable e,
-            Class<? extends Throwable> expectedCauseClass,
-            String expectedMessageSubstring) {
-        Throwable cause = e;
-        while (cause != null) {
-            if (expectedCauseClass.isInstance(cause)) {
-                if (cause.getMessage() != null && cause.getMessage()
-                        .contains(expectedMessageSubstring)) {
-                    return;
-                }
-            }
-            cause = cause.getCause();
-        }
-        throw new RuntimeException("Expected an exception of type '"
-                + expectedCauseClass.getSimpleName()
-                + "', with message containing '" + expectedMessageSubstring
-                + "'.", e);
     }
 
     // ----------------------------------------------------------------------

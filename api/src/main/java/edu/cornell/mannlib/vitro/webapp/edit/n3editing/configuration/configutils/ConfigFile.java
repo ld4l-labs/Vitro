@@ -15,7 +15,6 @@ public interface ConfigFile {
     String TYPE_DEPENDENCIES = "forms:FieldDependencies";
     String TYPE_OPTIONAL_N3_PATTERN = "forms:OptionalN3Pattern";
     String TYPE_REQUIRED_N3_PATTERN = "forms:RequiredN3Pattern";
-    String TYPE_DYNAMIC_N3_PATTERN = "forms:DynamicN3Pattern";
     String TYPE_LITERAL_FIELD = "forms:LiteralField";
     String TYPE_URI_FIELD = "forms:UriField";
     String TYPE_CONSTANT_OPTIONS_FIELD = "forms:ConstantOptionsField";
@@ -25,7 +24,6 @@ public interface ConfigFile {
     String PROPERTY_PATTERN = "customform:pattern";
     String PROPERTY_PREFIXES = "customform:prefixes";
     String PROPERTY_VAR_NAME = "customform:varName";
-    String PROPERTY_DYNAMIC_VARIABLES = "customform:dynamic_variables";
     String PROPERTY_MAY_USE_NEW_RESOURCE = "customform:mayUseNewResource";
 
     boolean hasFieldComponent(String varName);
@@ -41,10 +39,6 @@ public interface ConfigFile {
     boolean hasOptionalN3();
 
     ConfigFileN3Pattern getOptionalN3();
-
-    boolean hasDynamicN3();
-
-    ConfigFileDynamicN3Pattern getDynamicN3();
 
     Set<String> getNewResourceVarNames();
 
@@ -84,15 +78,6 @@ public interface ConfigFile {
         default String getJoined() {
             return (getJoinedPrefixes() + " " + getJoinedPattern()).trim();
         }
-
-    }
-
-    /**
-     * Describes the Dynamic N3 component of the config file.
-     */
-    interface ConfigFileDynamicN3Pattern extends ConfigFileN3Pattern {
-
-        List<String> getVariables();
 
     }
 
