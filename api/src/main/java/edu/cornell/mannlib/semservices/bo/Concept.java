@@ -23,7 +23,7 @@ public class Concept {
    private List<RelatedTermInfo> closeMatchURIList;
    private List<String> altLabelList;
    /** Additional information to be stored here **/
-   private Map<String, String> additionalInformation;
+   private Map<String, Object> additionalInformation;
    
    /**
     * default constructor
@@ -33,7 +33,7 @@ public class Concept {
       this.narrowerURIList = new ArrayList<RelatedTermInfo>();
       this.exactMatchURIList = new ArrayList<RelatedTermInfo>();
       this.closeMatchURIList = new ArrayList<RelatedTermInfo>();
-      this.additionalInformation = new HashMap<String, String>();
+      this.additionalInformation = new HashMap<String, Object>();
    }
    
    /**
@@ -165,11 +165,11 @@ public void setAltLabelList(List<String> altLabelList) {
 	this.altLabelList = altLabelList;
 }
 
-public void setAdditionalInformation(HashMap<String, String> info) {
+public void setAdditionalInformation(HashMap<String, Object> info) {
 	this.additionalInformation = info;
 }
 
-public Map<String, String> getAdditionalInformation() {
+public Map<String, Object> getAdditionalInformation() {
 	return this.additionalInformation;
 }
 

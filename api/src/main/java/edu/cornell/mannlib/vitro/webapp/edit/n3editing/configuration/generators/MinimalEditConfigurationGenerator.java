@@ -29,6 +29,7 @@ import edu.cornell.mannlib.vitro.webapp.edit.n3editing.VTwo.fields.FieldVTwo;
 import edu.cornell.mannlib.vitro.webapp.edit.n3editing.configuration.IdModelSelector;
 import edu.cornell.mannlib.vitro.webapp.edit.n3editing.configuration.StandardModelSelector;
 import edu.cornell.mannlib.vitro.webapp.edit.n3editing.configuration.preprocessors.MinimalConfigurationPreprocessor;
+import edu.cornell.mannlib.vitro.webapp.edit.n3editing.configuration.preprocessors.ModelChangePreprocessor;
 import edu.cornell.mannlib.vitro.webapp.modelaccess.ModelAccess;
 import edu.cornell.mannlib.vitro.webapp.modelaccess.ModelNames;
 import edu.cornell.mannlib.vitro.webapp.rdfservice.RDFService;
@@ -106,14 +107,114 @@ public class MinimalEditConfigurationGenerator  implements EditConfigurationGene
 	    	
 	    	//preprocessor
 	    	editConfiguration.addEditSubmissionPreprocessor(new MinimalConfigurationPreprocessor(editConfiguration));
-	    	
-
-	    	
+	    	//Add additional preprocessors, currently only model change preprocessors and only those that don't require additional work with constructors
+	    	addAdditionalPreprocessors(editConfiguration, vreq);
 	    	return editConfiguration;
 	    }
 	
-	
-	  private void setTemplate(VitroRequest vreq, EditConfigurationVTwo editConfiguration) {
+	//EditSubmission preprocessors need to be added separately
+	//TODO: How to handle constructor arguments, right now just doing
+	//a constructor without arguments
+	  private void addAdditionalPreprocessors(EditConfigurationVTwo editConfiguration, VitroRequest vreq) {
+		//Check for model change preprocessors
+		  List<String> preprocessorClassNames = getModelChangePreprocessorClassNames(vreq);
+		  for(String p:preprocessorClassNames) {
+			  //Create class from class name
+			  ModelChangePreprocessor mcp = createModelChangePreprocessorFromClassName(p);
+			  //Associate class with edit configuration
+			  if(mcp != null) {
+				  editConfiguration.addModelChangePreprocessor(mcp);
+			  }
+		  }
+		  
+		  
+		
+	}
+	  
+	  private ModelChangePreprocessor createModelChangePreprocessorFromClassName(String preprocessorName) {
+			ModelChangePreprocessor mcp = null;
+	    	
+	        Object object = null;
+	        try {
+	            Class classDefinition = Class.forName(preprocessorName);
+	            object = classDefinition.newInstance();
+	            mcp = (ModelChangePreprocessor) object;
+	        } catch (InstantiationException e) {
+	            System.out.println(e);
+	        } catch (IllegalAccessException e) {
+	            System.out.println(e);
+	        } catch (ClassNotFoundException e) {
+	            System.out.println(e);
+	        }    
+	        return mcp;
+	  }
+
+
+	private List<String> getModelChangePreprocessorClassNames(VitroRequest vreq) {
+		List<String> preprocessorFiles = getCustomModelChangePreprocessorForProperty(vreq);
+		if(preprocessorFiles.size() == 0) {
+			preprocessorFiles = getCustomModelChangePreprocessorForFauxProperty(vreq);
+		}
+		return preprocessorFiles;
+		
+	}
+
+
+	private List<String> getCustomModelChangePreprocessorForFauxProperty(VitroRequest vreq) {
+		List<String> configFiles = new ArrayList<String>();
+		String configTemplatePredicate = "http://vitro.mannlib.cornell.edu/ns/vitro/0.7#customModelChangePreprocessorAnnot";		
+    	String predicateUri = EditConfigurationUtils.getPredicateUri(vreq);
+    	//Check and see if domain/range exist, if so, then this may be a faux property
+    	String rangeUri = EditConfigurationUtils.getRangeUri(vreq);
+    	String domainUri = EditConfigurationUtils.getDomainUri(vreq);
+		//Get everything really
+		
+		//Do we need BOTH for a faux property or just one?
+		if(StringUtils.isNotEmpty(domainUri) && StringUtils.isNotEmpty(rangeUri)) {
+			String query = "SELECT ?configTemplateFile WHERE ";
+			query += "{ ?fauxProperty <http://vitro.mannlib.cornell.edu/ns/vitro/ApplicationConfiguration#configContextFor> <" + predicateUri + "> ." + 
+					" ?fauxProperty <http://vitro.mannlib.cornell.edu/ns/vitro/ApplicationConfiguration#hasConfiguration> ?fauxConfig ." + 
+					"?fauxConfig <" + configTemplatePredicate + "> ?configTemplateFile . " + 
+					"?fauxProperty <http://vitro.mannlib.cornell.edu/ns/vitro/ApplicationConfiguration#qualifiedByDomain> <" + domainUri + "> ." + 
+					"?fauxProperty <http://vitro.mannlib.cornell.edu/ns/vitro/ApplicationConfiguration#qualifiedBy> <" + rangeUri + "> . }" ;
+	        try {
+	        	configFiles.addAll(createSelectQueryContext(ModelAccess.on(vreq).getOntModel(ModelNames.DISPLAY),query).execute().toStringFields("configTemplateFile").flatten());	        	
+	        } catch(Exception ex) {
+	        	log.error("Error occurred in retrieving template file", ex);
+	        }
+	        
+		}
+		return configFiles;
+	}
+
+	private List<String> getCustomModelChangePreprocessorForProperty(VitroRequest vreq) {
+		List<String> files = new ArrayList<String>();
+	String configFilePredicate = "http://vitro.mannlib.cornell.edu/ns/vitro/0.7#customModelChangePreprocessorAnnot";
+		
+		
+    	String predicateUri = EditConfigurationUtils.getPredicateUri(vreq);
+		
+		//Get everything really
+		String query = "SELECT ?file WHERE {<" + predicateUri + ">  <" + configFilePredicate + "> ?file .}";
+
+		 
+	        try {
+	        	ResultSet rs = QueryUtils.getQueryResults(query, vreq);
+	        	while(rs.hasNext()) {
+	        		QuerySolution qs = rs.nextSolution();
+	        		Literal configFileLiteral = qs.getLiteral("file");
+	        		if(configFileLiteral != null && StringUtils.isNotEmpty(configFileLiteral.getString())) {
+	        			files.add(configFileLiteral.getString());
+	        		}
+	        	}
+	        	
+	        } catch (Exception ex) {
+	        	log.error("Exception occurred in query retrieving information for this field", ex);
+	        }
+		return files;
+	}
+
+	private void setTemplate(VitroRequest vreq, EditConfigurationVTwo editConfiguration) {
 		  String customTemplate = getCustomTemplateFile(vreq);
 		  if(customTemplate != null) {
 			  editConfiguration.setTemplate(customTemplate);

@@ -94,7 +94,7 @@ function MinimalConfigTemplate(formData, displayData) {
         }
         //Create a hidden input with Stringified version 
        
-        $("form").append("<input type='hidden' name='existingValuesRetrieved' id='existingValuesRetrieved' value='" + JSON.stringify(content)  + "'>");
+        $("form.customForm").append("<input type='hidden' name='existingValuesRetrieved' id='existingValuesRetrieved' value='" + JSON.stringify(content)  + "'>");
     }
     
     function updateFieldWithExistingContent(fieldName, existingValue) {
